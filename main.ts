@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 	firstCallFileChange: boolean;
+	keyCtrlFlag: boolean;
 	keySetNotUpdate: Set<string>;
 
 
@@ -19,6 +20,7 @@ export default class MyPlugin extends Plugin {
 
 		await this.loadSettings();
 		this.firstCallFileChange = true;
+		this.keyCtrlFlag = false;
 		this.keySetNotUpdate = new Set(['Control', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Alt', 'Backspace', 'Escape', 'Delete', 'NumLock']);
 
 		// this.addRibbonIcon('dice', 'Sample Plugin', () => {
@@ -59,6 +61,10 @@ export default class MyPlugin extends Plugin {
 		// 'keyup' is better than 'keydown'
 		this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
 			codeMirrorEditor.on('keyup', this.handleKeyUp);
+		});
+
+		this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
+			codeMirrorEditor.on('keydown', this.handleKeyDown);
 		});
 
 		// this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
@@ -104,10 +110,26 @@ export default class MyPlugin extends Plugin {
 		});
 		editor.focus();
 	}
-
+	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
+	{
+		if(event.key === 'Control')
+		{
+			this.keyCtrlFlag = true;
+		}
+	}
 	private readonly handleKeyUp = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
 		console.log(event.key)
+		if(event.key === 'Control')
+		{
+			this.keyCtrlFlag = false;
+			return;
+		}
+		if(this.keyCtrlFlag && event.key === 'z')
+		{
+			console.log('Find undo, continue!');
+			return;
+		}
 		if(this.keySetNotUpdate.has(event.key))
 		{
 			return;
