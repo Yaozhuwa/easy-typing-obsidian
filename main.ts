@@ -119,7 +119,8 @@ export default class MyPlugin extends Plugin {
 	}
 	private readonly handleKeyUp = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
-		console.log(event.key)
+		console.log('key: ',event.key, ',coursor: ',editor.getCursor().ch)
+		// editor.
 		if(event.key === 'Control')
 		{
 			this.keyCtrlFlag = false;
@@ -130,6 +131,20 @@ export default class MyPlugin extends Plugin {
 			console.log('Find undo, continue!');
 			return;
 		}
+		
+		if(event.key==='F4')
+		{
+			console.log("Test begin======================")
+			// let s = editor.getValue()
+			// console.log(s);
+			let cursor = editor.getCursor();
+			console.log(cursor)
+			editor.replaceRange('0', cursor)
+			console.log(editor.getCursor())
+			console.log("Test end======================")
+			return;
+		}
+
 		if(this.keySetNotUpdate.has(event.key))
 		{
 			return;
@@ -144,14 +159,14 @@ export default class MyPlugin extends Plugin {
 		let selectSatrt:CodeMirror.Position = {ch:0, line:line_number};
 		let selectEnd:CodeMirror.Position = {ch:cursor.ch, line:line_number};
 		// console.log("cursor.ch: ",cursor.ch);
-		editor.setSelection(selectSatrt, selectEnd);
-		let selectedText = editor.getSelection();
+		// editor.setSelection(selectSatrt, selectEnd);
+		let selectedText = editor.getRange(selectSatrt, selectEnd);
 		// console.log("selectedText: ",selectedText);
 		let newStr = this.insert_spacing(selectedText);
 		newStr = this.handleInlineElement(newStr, '\$')
 		newStr = this.handleInlineElement(newStr, '\`')
 		// console.log("new string: ",newStr);
-		editor.replaceSelection(newStr);
+		editor.replaceRange(newStr, selectSatrt, selectEnd);
 		var cursorOffset = newStr.length - selectedText.length;
 		editor.setCursor({
 			line: line_number,
