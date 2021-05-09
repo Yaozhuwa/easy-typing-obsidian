@@ -16,7 +16,7 @@
 	- [ ] 行内自动格式化功能可以关闭、打开
 - [ ] 将本插件添加到 Obsidian 社区插件列表中
 ### bugs
-- [ ] 撤销操作出现问题
+- [x] 撤销操作出现问题==>solved
 
 
 This plugin designed for better typing experience, especially for Chinese users.
