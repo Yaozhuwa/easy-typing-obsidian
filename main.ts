@@ -153,9 +153,7 @@ export default class MyPlugin extends Plugin {
 
 		let cursor = editor.getCursor();
 		let line = editor.getLine(cursor.line);
-		console.log(line)
 		let ret = this.formatLine(line, cursor.ch, this);
-		console.log(ret);
 		if(ret[0])
 		{
 			let lineStart:CodeMirror.Position = {ch:0, line:cursor.line};
@@ -250,8 +248,8 @@ export default class MyPlugin extends Plugin {
 			if(item[1]===InlineFlag.notinline)
 			{
 				if(plugin.ChineseEnglishSpace){
-					var reg1=/([A-Za-z0-9,.;?:])([\u4e00-\u9fa5]+)/gi;
-					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
+					var reg1=/([A-Za-z0-9,.;?:\)])([\u4e00-\u9fa5]+)/gi;
+					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9\(])/gi;
 					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
 
@@ -266,8 +264,9 @@ export default class MyPlugin extends Plugin {
 
 				if(plugin.EnglishSpace)
 				{
-					var reg = /([,.;?:])([A-Za-z0-9])/gi;
-					tempString = tempString.replace(reg, "$1 $2");
+					var reg1 = /([,.;?:\)])([A-Za-z0-9])/gi;
+					var reg2 = /([A-Za-z0-9])(\()/gi;
+					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
 
 				if(plugin.Capitalization)
