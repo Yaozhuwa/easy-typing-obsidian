@@ -13,6 +13,7 @@ export default class MyPlugin extends Plugin {
 	firstCallFileChange: boolean;
 	keyCtrlFlag: boolean;
 	keySetNotUpdate: Set<string>;
+	inputChineseFlag: boolean;
 
 
 	async onload() {
@@ -21,8 +22,8 @@ export default class MyPlugin extends Plugin {
 		await this.loadSettings();
 		this.firstCallFileChange = true;
 		this.keyCtrlFlag = false;
+		this.inputChineseFlag = false;
 		this.keySetNotUpdate = new Set(['Control', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Alt', 'Backspace', 'Escape', 'Delete', 'NumLock']);
-
 		// this.addRibbonIcon('dice', 'Sample Plugin', () => {
 		// 	new Notice('This is a notice!');
 		// });
@@ -112,6 +113,13 @@ export default class MyPlugin extends Plugin {
 	}
 	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
+		console.log('=========================')
+		console.log('keydown', event.key);
+
+		if(event.key === 'Process')
+		{
+			this.inputChineseFlag = true;
+		}
 		if(event.key === 'Control')
 		{
 			this.keyCtrlFlag = true;
@@ -119,13 +127,28 @@ export default class MyPlugin extends Plugin {
 	}
 	private readonly handleKeyUp = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
-		console.log('key: ',event.key, ',coursor: ',editor.getCursor().ch)
+		console.log('keyup: ',event.key, ',coursor: ',editor.getCursor().ch)
+		console.log('=========================')
 		// editor.
 		if(event.key === 'Control')
 		{
 			this.keyCtrlFlag = false;
 			return;
 		}
+		if(this.inputChineseFlag)
+		{
+			// 判断中文输入的结束点，检测到数字或者空格就是输入中文结束，Shift是中文输入法输入英文。
+			if(event.key.match(/[0-9 ]/gi)!=null || event.key==='Shift')
+			{
+				console.log("chinese input done!");
+				this.inputChineseFlag = false;
+			}
+			else
+			{
+				return;
+			}
+		}
+		
 		if(this.keyCtrlFlag && event.key === 'z')
 		{
 			console.log('Find undo, continue!');
@@ -145,6 +168,7 @@ export default class MyPlugin extends Plugin {
 			return;
 		}
 
+		// console.log("Has: ", this.keySetNotUpdate.has(' '));
 		if(this.keySetNotUpdate.has(event.key))
 		{
 			return;
@@ -235,13 +259,11 @@ export default class MyPlugin extends Plugin {
 	insert_spacing(str:string):string {
 		var p1=/([A-Za-z0-9,.])([\u4e00-\u9fa5]+)/gi;
 		var p2=/([\u4e00-\u9fa5,]+)([A-Za-z0-9])/gi;
-		var p3=/([\u4e00-\u9fa5]+) ([\u4e00-\u9fa5]+)/gi;
+		// var p4=/([,.])([A-Za-z0-9])/gi;
+		var p3=/([\u4e00-\u9fa5，。]+)(\s+)([\u4e00-\u9fa5，。]+)/g;
 		// var formula1 = /([A-Za-z0-9\u4e00-\u9fa5]+)(\$[^\s]+.*[^\s]+\$)/gi;
 		// var formula2 = /(\$[^\s]+.*[^\s]+\$)([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
-		return str.replace(p1, "$1 $2").replace(p2, "$1 $2").replace(p3, "$1$2");
-
-		var p4=/([,.])([A-Za-z0-9])/gi;
-		return str.replace(p1, "$1 $2").replace(p2, "$1 $2").replace(p3, "$1$2").replace(p4, "$1 $2");
+		return str.replace(p1, "$1 $2").replace(p2, "$1 $2").replace(p3, "$1$3");	
 	}
 }
 
