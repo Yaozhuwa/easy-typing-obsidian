@@ -1,6 +1,9 @@
 ## Easy Typing Plugin
 本插件可以在中英文之间自动补全空格，还有行内公式和文字之间自动补全空格。
 
+- [ ] Test
+    - [x] Test on windows 10, obsidian v0.11.13
+    - [ ] Test on ubuntu18.04, obsidian v0.11.13
 - [ ] 编辑过程中行内自动格式化
     - [x] 行内公式和行内代码块不自动格式化
 	- [x] 中英文之间自动补全空格，包括中文前的英文标点',.?;:'

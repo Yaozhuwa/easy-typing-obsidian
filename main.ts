@@ -67,14 +67,9 @@ export default class MyPlugin extends Plugin {
 
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		this.registerCodeMirror((cm: CodeMirror.Editor) => {
-			console.log('codemirror', cm);
-		});
-
-
 		// 'keyup' is better than 'keydown'
 		this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
-			codeMirrorEditor.on('keyup', this.handleKeyUp2);
+			codeMirrorEditor.on('keyup', this.handleKeyUp);
 		});
 
 		this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
@@ -95,7 +90,7 @@ export default class MyPlugin extends Plugin {
 	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
 		console.log('=========================')
-		console.log('keydown', event.key);
+		console.log('keydown:', event.key);
 
 		if(event.key === 'Process')
 		{
@@ -107,33 +102,18 @@ export default class MyPlugin extends Plugin {
 		}
 	}
 
-	private handleKeyUp2=(editor: CodeMirror.Editor, event: KeyboardEvent):void =>
+	private handleKeyUp=(editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
+
+		console.log('=========================')
+		console.log('keyup:', event.key);
+
 		// for test and debug
 		if(event.key === 'F4')
 		{
-			let tempString = 'ada. i';
-
-			var reg = /[.;]([\s]*)[a-z]/;
-			let find = tempString.search(reg);
-			console.log('find:',find);
-			let len = tempString.length;
-			while(find!=-1)
-			{
-				let matchstring = tempString.match(reg)[0];
-				console.log("match:", matchstring);
-				find += matchstring.length-1;
-				if(find+1<len)
-				{
-					tempString = tempString.substring(0, find)+tempString.charAt(find).toUpperCase()+tempString.substring(find+1);
-				}
-				else{
-					tempString = tempString.substring(0, find)+tempString.charAt(find).toUpperCase();
-				}
-
-				find = tempString.search(reg);
-			}
-
+			console.log("Test Begin========================");
+			
+			console.log("Test End========================");
 			return;
 		}
 
@@ -144,7 +124,7 @@ export default class MyPlugin extends Plugin {
 		}
 		if(this.keyCtrlFlag && event.key === 'z')
 		{
-			console.log('Find undo, continue!');
+			// console.log('Find undo, continue!');
 			return;
 		}
 		if(this.keySetNotUpdate.has(event.key))
@@ -162,7 +142,7 @@ export default class MyPlugin extends Plugin {
 			// 匹配,.;'<>是中文输入法的全角字符，。；‘’《》
 			if(event.key.match(/[0-9 ,.;<>:'\\\/]/gi)!=null || event.key==='Shift')
 			{
-				console.log("chinese input done!");
+				// console.log("chinese input done!");
 				this.inputChineseFlag = false;
 			}
 			else
@@ -186,89 +166,6 @@ export default class MyPlugin extends Plugin {
 			});
 			editor.focus();
 		}
-	}
-
-	private readonly handleKeyUp = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
-	{
-		console.log('keyup: ',event.key, ',coursor: ',editor.getCursor().ch)
-		console.log('=========================')
-		// editor.
-		if(event.key === 'Control')
-		{
-			this.keyCtrlFlag = false;
-			return;
-		}
-		if(this.inputChineseFlag)
-		{
-			// 判断中文输入的结束点，检测到数字或者空格就是输入中文结束，Shift是中文输入法输入英文。
-			// 匹配,.;'<>是中文输入法的全角字符，。；‘’《》
-			if(event.key.match(/[0-9 ,.;<>'\\\/]/gi)!=null || event.key==='Shift')
-			{
-				console.log("chinese input done!");
-				this.inputChineseFlag = false;
-			}
-			else
-			{
-				return;
-			}
-		}
-		
-		if(this.keyCtrlFlag && event.key === 'z')
-		{
-			console.log('Find undo, continue!');
-			return;
-		}
-		
-		if(event.key==='F4')
-		{
-			console.log("Test begin======================")
-			// let s = editor.getValue()
-			// console.log(s);
-			// let cursor = editor.getCursor();
-			// console.log(cursor)
-			// editor.replaceRange('0', cursor)
-			// console.log(editor.getCursor())
-
-			let s = '\`\$inlinecode\`\$inlineformula\$ddd';
-			let ret = this.getSubStrings(s);
-			for(let i=0;i<ret.length;i++)
-			{
-				console.log(ret[i][0]+ret[i][1])
-			}
-			console.log('Notinline: ',InlineFlag.notinline)
-			console.log("Test end======================")
-			return;
-		}
-
-		// console.log("Has: ", this.keySetNotUpdate.has(' '));
-		if(this.keySetNotUpdate.has(event.key))
-		{
-			return;
-		}
-		if (editor.somethingSelected())
-		{
-			return;
-		}
-		var cursor = editor.getCursor();
-		let line_number = cursor.line
-		// let line_string = editor.getLine(line_number)
-		let selectSatrt:CodeMirror.Position = {ch:0, line:line_number};
-		let selectEnd:CodeMirror.Position = {ch:cursor.ch, line:line_number};
-		// console.log("cursor.ch: ",cursor.ch);
-		// editor.setSelection(selectSatrt, selectEnd);
-		let selectedText = editor.getRange(selectSatrt, selectEnd);
-		// console.log("selectedText: ",selectedText);
-		let newStr = this.insert_spacing(selectedText);
-		newStr = this.handleInlineElement(newStr, '\$')
-		newStr = this.handleInlineElement(newStr, '\`')
-		// console.log("new string: ",newStr);
-		editor.replaceRange(newStr, selectSatrt, selectEnd);
-		var cursorOffset = newStr.length - selectedText.length;
-		editor.setCursor({
-			line: line_number,
-			ch: cursor.ch + cursorOffset
-		});
-		editor.focus();
 	}
 
 	private getInlineIndexes=(line:string):[number, string][]=>
@@ -346,11 +243,7 @@ export default class MyPlugin extends Plugin {
 		}
 		let inlineIndexes=plugin.getInlineIndexes(subline);
 		subline = plugin.processInlineElements(subline, inlineIndexes);
-		console.log("subline after:",subline)
 		let subStrings = plugin.getSubStrings(subline);
-		subStrings.forEach(element => {
-			console.log(element[0], element[1])
-		});
 		let output = '';
 		subStrings.forEach(function(item){
 			let tempString = item[0];
@@ -420,45 +313,6 @@ export default class MyPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	handleInlineCode(input:string):[boolean, string]{
-		let indexes:number[] = [];
-		for(let i=0;i<input.length;i++)
-		{
-			if(input.charAt(i)==='\`'){
-				indexes.push(i);
-			}
-		}
-		
-		let output = input
-		let offset = 0
-		let update = false
-		while(indexes.length>0)
-		{
-			let indexStart = indexes[0];
-			if(indexStart!=0 && input.charAt(indexStart-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.]/i)!=null)
-			{
-				update = true;
-				output = this.insert_str(output, indexStart+offset, ' ');
-				offset++;
-			}
-			indexes.shift();
-
-			if(indexes.length==0)
-			{
-				break;
-			}
-			let indexEnd = indexes[0];
-			if(indexEnd!=input.length-1 && input.charAt(indexEnd+1).match(/[A-Za-z0-9\u4e00-\u9fa5]/))
-			{
-				update = true;
-				output = this.insert_str(output, indexEnd+1+offset, ' ');
-				offset++;
-			}
-			indexes.shift();
-		}
-		return [update, output];
-	}
-
 	private processInlineElements(input:string, indexes: [number, string][]):string{
 		let codeFlags = ['codeStart', 'codeEnd'];
 		let formulaFlags= ['formulaStart', 'formulaEnd'];
@@ -519,44 +373,6 @@ export default class MyPlugin extends Plugin {
 		return output;
 	}
 
-	handleInlineElement(input:string, separator:string):string{
-		let len = input.length;
-		let indexes:number[] = [];
-		for(let i=0;i<len;i++)
-		{
-			if(input.charAt(i)===separator){
-				indexes.push(i);
-			}
-		}
-		
-		let result = input
-		let offset = 0
-		while(indexes.length>0)
-		{
-			let indexStart = indexes[0];
-			
-			if(indexStart!=0 && input.charAt(indexStart-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.]/i)!=null)
-			{
-				result = this.insert_str(result, indexStart+offset, ' ');
-				offset++;
-			}
-			indexes.shift();
-
-			if(indexes.length==0)
-			{
-				break;
-			}
-			let indexEnd = indexes[0];
-			if(indexEnd!=input.length-1 && input.charAt(indexEnd+1).match(/[A-Za-z0-9\u4e00-\u9fa5]/))
-			{
-				result = this.insert_str(result, indexEnd+1+offset, ' ');
-				offset++;
-			}
-			indexes.shift();
-		}
-		return result;
-	}
-
 	private insert_str = (str: string, index: number, value: string):string|null=>
 	{
 		if(index<0 || index>=str.length)
@@ -565,16 +381,6 @@ export default class MyPlugin extends Plugin {
 		let s1 = str.substring(0, index);
 		let s2 = str.substring(index, str.length);
 		return s1+value+s2;
-	}
-
-	insert_spacing(str:string):string {
-		var p1=/([A-Za-z0-9,.])([\u4e00-\u9fa5]+)/gi;
-		var p2=/([\u4e00-\u9fa5,]+)([A-Za-z0-9])/gi;
-		// var p4=/([,.])([A-Za-z0-9])/gi;
-		var p3=/([\u4e00-\u9fa5，。、；‘’《》]+)(\s+)([\u4e00-\u9fa5，。、；‘’《》]+)/g;
-		// var formula1 = /([A-Za-z0-9\u4e00-\u9fa5]+)(\$[^\s]+.*[^\s]+\$)/gi;
-		// var formula2 = /(\$[^\s]+.*[^\s]+\$)([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
-		return str.replace(p1, "$1 $2").replace(p2, "$1 $2").replace(p3, "$1$3");	
 	}
 }
 
