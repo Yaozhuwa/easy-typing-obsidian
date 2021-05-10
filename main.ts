@@ -3,12 +3,28 @@ import { off } from 'process';
 
 interface MyPluginSettings {
 	mySetting: string;
+	autoFormatting: boolean;
+	ChineseEnglishSpace: boolean;
+	ChineseNoSpace: boolean;
+	inlineCodeSpace: boolean;
+	inlineFormulaSpace: boolean;
+	EnglishSpace: boolean;
+	Capitalization: boolean;
+	braceSpace: boolean;
 }
 
 enum InlineFlag {inline, notinline};
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	mySetting: 'default',
+	autoFormatting: true,
+	ChineseEnglishSpace: true,
+	ChineseNoSpace: true,
+	inlineCodeSpace: true,
+	inlineFormulaSpace: true,
+	EnglishSpace: true,
+	Capitalization: true,
+	braceSpace: true
 }
 
 export default class MyPlugin extends Plugin {
@@ -18,56 +34,15 @@ export default class MyPlugin extends Plugin {
 	keySetNotUpdate: Set<string>;
 	inputChineseFlag: boolean;
 
-	ChineseEnglishSpace: boolean;
-	ChineseNoSpace: boolean;
-	inlineCodeSpace: boolean;
-	inlineFormulaSpace: boolean;
-	EnglishSpace: boolean;
-	Capitalization: boolean;
-	braceSpace: boolean;
-	autoFormatting: boolean;
-
 	async onload() {
 		console.log('loading plugin：Easy Typing');
 
 		await this.loadSettings();
-		this.ChineseEnglishSpace = true;
-		this.ChineseNoSpace = true;
-		this.inlineCodeSpace = true;
-		this.inlineFormulaSpace = true;
-		this.EnglishSpace = true;
-		this.Capitalization = true;
-		this.braceSpace = true;
-		this.autoFormatting = true;
-
 
 		this.firstCallFileChange = true;
 		this.keyCtrlFlag = false;
 		this.inputChineseFlag = false;
 		this.keySetNotUpdate = new Set(['Control', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Alt', 'Backspace', 'Escape', 'Delete', 'NumLock']);
-		// this.addRibbonIcon('dice', 'Sample Plugin', () => {
-		// 	new Notice('This is a notice!');
-		// });
-
-		this.addStatusBarItem().setText('Status Bar Text');
-
-		this.addCommand({
-			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
-			// callback: () => {
-			// 	console.log('Simple Callback');
-			// },
-			checkCallback: (checking: boolean) => {
-				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-					return true;
-				}
-				return false;
-			}
-		});
 
 		this.addCommand({
 			id: "easy-typing-format-line",
@@ -91,7 +66,6 @@ export default class MyPlugin extends Plugin {
 
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		// 'keyup' is better than 'keydown'
 		this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
 			codeMirrorEditor.on('keyup', this.handleKeyUp);
 		});
@@ -159,8 +133,13 @@ export default class MyPlugin extends Plugin {
 		if(event.key === 'F4')
 		{
 			console.log("Test Begin========================");
-			
+			console.log(this.settings.autoFormatting)
 			console.log("Test End========================");
+			return;
+		}
+
+		if(this.settings.autoFormatting===false)
+		{
 			return;
 		}
 
@@ -280,7 +259,7 @@ export default class MyPlugin extends Plugin {
 			return '';
 		}
 
-		if(plugin.Capitalization)
+		if(plugin.settings.Capitalization)
 		{
 			if(linecopy.charAt(0).match(/[a-z]/)!=null)
 			{
@@ -295,13 +274,13 @@ export default class MyPlugin extends Plugin {
 			let tempString = item[0];
 			if(item[1]===InlineFlag.notinline)
 			{
-				if(plugin.ChineseEnglishSpace){
+				if(plugin.settings.ChineseEnglishSpace){
 					var reg1=/([A-Za-z0-9,.;?:])([\u4e00-\u9fa5]+)/gi;
 					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
 					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
 
-				if(plugin.ChineseNoSpace)
+				if(plugin.settings.ChineseNoSpace)
 				{
 					var reg=/([\u4e00-\u9fa5，。、；‘’《》]+)(\s+)([\u4e00-\u9fa5，。、；‘’《》]+)/g;
 					while(tempString.match(reg)!=null)
@@ -310,14 +289,14 @@ export default class MyPlugin extends Plugin {
 					}
 				}
 
-				if(plugin.EnglishSpace)
+				if(plugin.settings.EnglishSpace)
 				{
 					var reg1 = /([,.;?:])([A-Za-z0-9])/gi;
 					// var reg2 = /([A-Za-z0-9])(\()/gi;
 					tempString = tempString.replace(reg1, "$1 $2");
 				}
 
-				if(plugin.Capitalization)
+				if(plugin.settings.Capitalization)
 				{
 					var reg = /[.;?。；？]([\s]*)[a-z]/;
 					let find = tempString.search(reg);
@@ -338,7 +317,7 @@ export default class MyPlugin extends Plugin {
 					}
 				}
 
-				if(plugin.braceSpace)
+				if(plugin.settings.braceSpace)
 				{
 					var reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
 					var reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,.?']+)(\()/gi;
@@ -371,7 +350,7 @@ export default class MyPlugin extends Plugin {
 		{
 			let index = indexes[i][0];
 			let flag = indexes[i][1];
-			if(this.inlineCodeSpace)
+			if(this.settings.inlineCodeSpace)
 			{
 				if(flag===codeFlags[0] && index!=0)
 				{
@@ -394,11 +373,11 @@ export default class MyPlugin extends Plugin {
 				}
 			}
 
-			if(this.inlineFormulaSpace)
+			if(this.settings.inlineFormulaSpace)
 			{
-				if(flag===formulaFlags[0] && index!=0)
+				if(flag===formulaFlags[0])
 				{
-					if(input.charAt(index-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.:]/i)!=null)
+					if(index!=0 && input.charAt(index-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.:]/i)!=null)
 					{
 						output = this.insert_str(output, index+offset, ' ');
 						offset++;
@@ -406,9 +385,9 @@ export default class MyPlugin extends Plugin {
 					continue;
 				}
 				
-				if(flag===formulaFlags[1] && index!=input.length-1)
+				if(flag===formulaFlags[1])
 				{
-					if(input.charAt(index+1).match(/[A-Za-z0-9\u4e00-\u9fa5]/)!=null)
+					if(index!=input.length-1 && input.charAt(index+1).match(/[A-Za-z0-9\u4e00-\u9fa5]/)!=null)
 					{
 						output = this.insert_str(output, index+1+offset, ' ');
 						offset++;
@@ -431,22 +410,6 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		let {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
 class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 
@@ -460,18 +423,100 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		// containerEl.createEl('h2', {text: 'Settings for Easy Typing.'});
+
+		// new Setting(containerEl)
+		// 	.setName('Setting #1')
+		// 	.setDesc('It\'s a secret')
+		// 	.addText(text => text
+		// 		.setPlaceholder('Enter your secret')
+		// 		.setValue(this.plugin.settings.mySetting)
+		// 		.onChange(async (value) => {
+		// 			console.log('Secret: ' + value);
+		// 			this.plugin.settings.mySetting = value;
+		// 			await this.plugin.saveSettings();
+		// 		}));
+		
+		new Setting(containerEl)
+		.setName("Auto formatting")
+		.setDesc("是否在编辑文档时自动格式化文本")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.autoFormatting)
+			.onChange(async (value)=>{
+				this.plugin.settings.autoFormatting = value;
+				console.log("AutoFormatting:",value);
+				await this.plugin.saveSettings();
+			});
+		});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue('')
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+		.setName("Space between Chinese and English")
+		.setDesc("在中英文间空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.ChineseEnglishSpace).onChange(async (value)=>{
+				this.plugin.settings.ChineseEnglishSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Delete the Space between Chinese characters")
+		.setDesc("在中文字符间去除空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.ChineseNoSpace).onChange(async (value)=>{
+				this.plugin.settings.ChineseNoSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Space between English with punctuate")
+		.setDesc("在英文文本和标点间空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.EnglishSpace).onChange(async (value)=>{
+				this.plugin.settings.EnglishSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Capitalize the first letter of every sentence")
+		.setDesc("英文每个句首字母大写")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.Capitalization).onChange(async (value)=>{
+				this.plugin.settings.Capitalization = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Space between English braces and text")
+		.setDesc("在英文小括号和文本间空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.braceSpace).onChange(async (value)=>{
+				this.plugin.settings.braceSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Space between inline code and text")
+		.setDesc("在行内代码和文本间空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.inlineCodeSpace).onChange(async (value)=>{
+				this.plugin.settings.inlineCodeSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Space between inline formula and text")
+		.setDesc("在行内公式和文本间空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.inlineFormulaSpace).onChange(async (value)=>{
+				this.plugin.settings.inlineFormulaSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
 	}
 }

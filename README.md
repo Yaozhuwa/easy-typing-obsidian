@@ -1,49 +1,53 @@
+# Easy Typing
+这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。
 ## Easy Typing Plugin
-本插件可以在中英文之间自动补全空格，还有行内公式和文字之间自动补全空格。
-
-- [x] Test
-    - [x] Test on windows 10, obsidian v0.11.13
-    - [x] Test on ubuntu18.04, obsidian v0.11.13
-- [x] 编辑过程中行内自动格式化
-    - [x] 行内公式和行内代码块不自动格式化
-	- [x] 中英文之间自动补全空格，包括中文前的英文标点',.?;:'
-	- [x] 行内公式和中英文之间自动补全空格
+本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，让中文用户的 Obsidian 书写体验起飞~
+### 插件功能
+在 Windows10 和ubuntu18.04，obsidian v0.11.13 上测试可用。
+- 编辑过程中行内自动格式化
+	- [x] 中英文之间自动补全空格，包括中文前的英文标点(`',.;?'`)
+	- [x] 行内 latex 公式(比如：$x=y$)和中英文之间自动补全空格
 	- [x] 行内代码片段和中英文间及相关标点的自动补全空格
-	- [x] 英文句首字母和前面的',.;?'中间自动添加空格。
+	- [x] 英文句首字母和前面的标点 (`',.;?'`) 中间自动添加空格。
     - [x] 英文行首字母大写
 	- [x] 行内小括号与文本的自动空格
-- [ ] 快捷键/命令
+- 插件设置面板
+    - [x] 自动格式化总开关
+    - [x] 单个行内自动格式化功能都可以分别关闭、打开
+- 快捷键/命令
 	- [x]  格式化当前行
     - [ ]  一键全文格式化
-- [ ] 插件设置面板
-    - [ ] 自动格式化开关
-    - [ ] 行内自动格式化功能可以关闭、打开
-	- [ ] 自定义正则表达式及其替换规则？
-- [ ] 将本插件添加到 Obsidian 社区插件列表中
-    - [ ] 编辑 README.md
+
+### 展望功能/改进空间
+- [ ] list， todo-list中支持英文首字母大写 
 - [ ] 选中文本的功能？目前没有好的想法来实现该功能。
 	- [ ] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
 	- [ ] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
+- [ ] 用户自定义正则表达式及其替换规则？
 
-
+---
+## Easy Typing Plugin
 This plugin designed for better typing experience, especially for Chinese users.
-- [x] inline auto formatting
+
+It have been tested on windows10 and ubuntu18.04, obsidian v0.11.13
+
+### Feature
+- auto formatting when editting
   - [x] auto spacing between Chinese and English
   - [x] auto spacing between inline latex and text
   - [x] auto spacing between inline code and text
-- [ ] Auto formatting for whole article 
-### First time developing plugins?
+  - [x] space between English with punctuate
+  - [x] capitalize the first letter of every sentence
+  - [x] Space between English braces and text
+- SettingTab
+    - [x] switch auto formatting 
+    - [x] switch every single rule of auto formatting
+- short cut / command pane
+    - [x] format current line
+    - [ ] format current note 
 
-Quick starting guide for new plugin devs:
+### ToDo
 
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
 
 ### Releasing new releases
 
