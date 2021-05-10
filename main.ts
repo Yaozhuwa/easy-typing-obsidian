@@ -230,26 +230,27 @@ export default class MyPlugin extends Plugin {
 			}
 		}
 
-		var regMdLink = /\[[^]*?\]\([^]*?\)/;
-		var regWikiLink = /\[\[[^]*?\]\]/;
+		// var regMdLink = /\[[^\]\[]*?\]\([^]*?\)/;
+		var regWikiLink = /\[\[[^\[\]]*?\]\]/;
 		
 		let linecopy = line;
 		let offset = 0;
-		while(linecopy.search(regMdLink)!=-1)
-		{
-			let begin = linecopy.search(regMdLink);
-			let end = begin + linecopy.match(regMdLink)[0].length-1;
-			if(begin!=0 && linecopy.charAt(begin-1)==='!'){
-				begin -= 1;
-			}
-			inlineIndex.push([begin+offset, InlineMarks.mdlinkstart]);
-			inlineIndex.push([end+offset, InlineMarks.mdlinkend]);
-			linecopy = linecopy.substring(end+1);
-			offset += end+1;
-		}
+		// while(linecopy.search(regMdLink)!=-1)
+		// {
+		// 	let begin = linecopy.search(regMdLink);
+		// 	let end = begin + linecopy.match(regMdLink)[0].length-1;
+		// 	console.log(linecopy.match(regMdLink)[0]);
+		// 	if(begin!=0 && linecopy.charAt(begin-1)==='!'){
+		// 		begin -= 1;
+		// 	}
+		// 	inlineIndex.push([begin+offset, InlineMarks.mdlinkstart]);
+		// 	inlineIndex.push([end+offset, InlineMarks.mdlinkend]);
+		// 	linecopy = linecopy.substring(end+1);
+		// 	offset += end+1;
+		// }
 
-		offset = 0;
-		linecopy = line;
+		// offset = 0;
+		// linecopy = line;
 		while(linecopy.search(regWikiLink)!=-1)
 		{
 			let begin = linecopy.search(regWikiLink);
@@ -263,7 +264,8 @@ export default class MyPlugin extends Plugin {
 			offset += end+1;
 		}
 
-		var regHttpLink = /(?<!\()http(s?):\/\/[0-9a-zA-Z-#\.\/]+/;
+		// var regHttpLink = /(?<!\()http(s?):\/\/[0-9a-zA-Z-#\.\/]+/;
+		var regHttpLink = /http(s?):\/\/[0-9a-zA-Z-#\.\/]+/;
 		offset = 0;
 		linecopy = line;
 		while(linecopy.search(regHttpLink)!=-1)

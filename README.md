@@ -2,6 +2,11 @@
 这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。
 ## Easy Typing Plugin
 本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，让中文用户的 Obsidian 书写体验起飞~
+![show](show.gif)
+- 运行测试
+  - [x] windows10 obsidian v0.11.13
+  - [x] ubuntu18.04, obsidian v0.11.13
+  - [ ] Mac（没有设备，无法测试...）
 ### 插件功能
 在 Windows10 和ubuntu18.04，obsidian v0.11.13 上测试可用。
 - 编辑过程中行内自动格式化
@@ -26,9 +31,12 @@
 
 ---
 ## Easy Typing Plugin
-This plugin designed for better typing experience, especially for Chinese users.
+This plugin designed for better typing experience.
 
-It have been tested on windows10 and ubuntu18.04, obsidian v0.11.13
+- Have been testted on
+  - [x] windows10 obsidian v0.11.13
+  - [x] ubuntu18.04, obsidian v0.11.13
+  - [ ] Mac (have no device)
 
 ### Feature
 - auto formatting when editting
@@ -48,7 +56,9 @@ It have been tested on windows10 and ubuntu18.04, obsidian v0.11.13
 ### ToDo
 
 ### Changelog
-
+- v2.1.0
+  - bugs fix    
+    - 修复上个版本中链接在某些情况下还是会被格式化的bug
 - v2.0.0
   - Improvement
     - 独立设置数字和英文文本，标点的空格，数字和`.`不空格

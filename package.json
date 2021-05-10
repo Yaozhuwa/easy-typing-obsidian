@@ -1,6 +1,6 @@
 {
   "name": "easy-typing-obsidian",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "This plugin designed for better typing experience.",
   "main": "main.js",
   "scripts": {
