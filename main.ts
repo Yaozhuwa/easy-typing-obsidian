@@ -317,6 +317,34 @@ export default class MyPlugin extends Plugin {
 
 						find = tempString.search(reg);
 					}
+
+					let pos = -1;
+					// 支持ul列表
+					if(tempString.search(/\s*- [a-z]/)===0)
+					{
+						pos = tempString.match(/\s*\- [a-z]/)[0].length-1;
+						// console.log("string:", tempString.match(/\s*- [a-z]/)[0],",len:",pos+1);
+					}
+					// 支持有序列表
+					else if(tempString.search(/\s*[0-9]+. [a-z]/)===0)
+					{
+						pos = tempString.match(/\s*[0-9]+. [a-z]/)[0].length-1;
+					}
+					// 支持checkbox
+					else if(tempString.search(/\s*\- \[[ x]\] [a-z]/)===0)
+					{
+						pos = tempString.match(/\s*\- \[[ x]\] [a-z]/)[0].length-1;
+					}
+					if(pos!=-1)
+					{
+						if(pos+1<len)
+						{
+							tempString = tempString.substring(0, pos)+tempString.charAt(pos).toUpperCase()+tempString.substring(pos+1);
+						}
+						else{
+							tempString = tempString.substring(0, pos)+tempString.charAt(pos).toUpperCase();
+						}
+					}
 				}
 
 				if(plugin.settings.braceSpace)
