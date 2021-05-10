@@ -56,6 +56,10 @@ This plugin designed for better typing experience.
 ### ToDo
 
 ### Changelog
+- v2.2.0
+  - improvement
+    - 去除部分冗余代码
+    - 对main.ts中类重新命名
 - v2.1.0
   - bugs fix    
     - 修复上个版本中链接在某些情况下还是会被格式化的bug

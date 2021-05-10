@@ -2,7 +2,7 @@ import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian'
 import { off } from 'process';
 import { stringify } from 'querystring';
 
-interface MyPluginSettings {
+interface EasyTypingPluginSettings {
 	mySetting: string;
 	autoFormatting: boolean;
 	ChineseEnglishSpace: boolean;
@@ -23,7 +23,7 @@ enum InlineMarks {codestart = 'CodeStart', codeend='CodeEnd',
 			wikilinkstart='WikiLinkBegin', wikilinkend='WikiLinkEnd', 
 			httpinkstart ='HttpLinkStart', httplinkend='HttpLinkEnd', none='None'};
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: EasyTypingPluginSettings = {
 	mySetting: 'default',
 	autoFormatting: true,
 	ChineseEnglishSpace: true,
@@ -37,9 +37,8 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	linkspace: true
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
-	firstCallFileChange: boolean;
+export default class EasyTypingPlugin extends Plugin {
+	settings: EasyTypingPluginSettings;
 	keyCtrlFlag: boolean;
 	keySetNotUpdate: Set<string>;
 	inputChineseFlag: boolean;
@@ -49,7 +48,6 @@ export default class MyPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		this.firstCallFileChange = true;
 		this.keyCtrlFlag = false;
 		this.inputChineseFlag = false;
 		this.keySetNotUpdate = new Set(['Control', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Alt', 'Backspace', 'Escape', 'Delete', 'NumLock']);
@@ -314,7 +312,7 @@ export default class MyPlugin extends Plugin {
 		return subStrings;
 	}
 
-	private formatLine = (line: string, plugin: MyPlugin):string=>
+	private formatLine = (line: string, plugin: EasyTypingPlugin):string=>
 	{		
 		let linecopy = line;
 		if(linecopy==='')
@@ -501,9 +499,9 @@ export default class MyPlugin extends Plugin {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: EasyTypingPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: EasyTypingPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
