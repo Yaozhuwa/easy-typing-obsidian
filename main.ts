@@ -1,5 +1,6 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { off } from 'process';
+import { stringify } from 'querystring';
 
 interface MyPluginSettings {
 	mySetting: string;
@@ -12,9 +13,15 @@ interface MyPluginSettings {
 	Capitalization: boolean;
 	braceSpace: boolean;
 	numberSpace: boolean;
+	linkspace: boolean;
 }
 
-enum InlineFlag {inline, notinline};
+enum IsInlineElement {yes, no};
+enum InlineMarks {codestart = 'CodeStart', codeend='CodeEnd', 
+			formulastart='FormulaStart', formulaend="FormulaEnd",
+			mdlinkstart='MdLinkStart', mdlinkend='MdLinkEnd', 
+			wikilinkstart='WikiLinkBegin', wikilinkend='WikiLinkEnd', 
+			httpinkstart ='HttpLinkStart', httplinkend='HttpLinkEnd', none='None'};
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
@@ -26,7 +33,8 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	EnglishSpace: true,
 	Capitalization: true,
 	braceSpace: true,
-	numberSpace: true
+	numberSpace: true,
+	linkspace: true
 }
 
 export default class MyPlugin extends Plugin {
@@ -56,15 +64,15 @@ export default class MyPlugin extends Plugin {
 			}],
 		});
 
-		this.addCommand({
-			id: "easy-typing-format-note",
-			name: "format current note",
-			callback: () => this.commandFormatNote(),
-			hotkeys: [{
-				modifiers: ['Alt'],
-				key: "f"
-			}],
-		});		
+		// this.addCommand({
+		// 	id: "easy-typing-format-note",
+		// 	name: "format current note",
+		// 	callback: () => this.commandFormatNote(),
+		// 	hotkeys: [{
+		// 		modifiers: ['Alt'],
+		// 		key: "f"
+		// 	}],
+		// });		
 
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
@@ -112,8 +120,8 @@ export default class MyPlugin extends Plugin {
 
 	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
-		console.log('=========================')
-		console.log('keydown:', event.key);
+		// console.log('=========================')
+		// console.log('keydown:', event.key);
 
 		if(event.key === 'Process')
 		{
@@ -128,17 +136,17 @@ export default class MyPlugin extends Plugin {
 	private handleKeyUp=(editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
 
-		console.log('=========================')
-		console.log('keyup:', event.key);
+		// console.log('=========================')
+		// console.log('keyup:', event.key);
 
 		// for test and debug
-		if(event.key === 'F4')
-		{
-			console.log("Test Begin========================");
-			console.log(this.settings.autoFormatting)
-			console.log("Test End========================");
-			return;
-		}
+		// if(event.key === 'F4')
+		// {
+		// 	console.log("Test Begin========================");
+		// 	console.log(this.settings.autoFormatting)
+		// 	console.log("Test End========================");
+		// 	return;
+		// }
 
 		if(this.settings.autoFormatting===false)
 		{
@@ -196,40 +204,91 @@ export default class MyPlugin extends Plugin {
 		}
 	}
 
-	private getInlineIndexes=(line:string):[number, string][]=>
+	private getInlineIndex=(line:string):[number, InlineMarks][]=>
 	{
-		let inlineIndexes:[number, string][] = [];
-		let codeFlags = ['codeStart', 'codeEnd'];
-		let formulaFlags= ['formulaStart', 'formulaEnd'];
-		let codeIndex = 0;
-		let formulaIndex = 0;
+		let inlineIndex:[number, InlineMarks][] = [];
+		let codeflag = InlineMarks.codestart;
+		let formulaflag = InlineMarks.formulastart;
+		let prev = InlineMarks.none;
 		for(let i=0;i<line.length;i++)
 		{
 			if(line.charAt(i)==='\`'){
-				inlineIndexes.push([i, codeFlags[codeIndex]]);
-				codeIndex = 1 - codeIndex;
+				inlineIndex.push([i, codeflag]);
+				prev = codeflag;
+				codeflag = codeflag===InlineMarks.codestart?InlineMarks.codeend:InlineMarks.codestart;
 			}
 			if(line.charAt(i)==='\$')
 			{
-				if(inlineIndexes[inlineIndexes.length-1][1] === codeFlags[0]){
+				if(prev === InlineMarks.codestart){
 					continue;
 				}
 				else{
-					inlineIndexes.push([i, formulaFlags[formulaIndex]]);
-					formulaIndex = 1 - formulaIndex;
+					inlineIndex.push([i, formulaflag]);
+					prev = formulaflag;
+					formulaflag = formulaflag===InlineMarks.formulastart?InlineMarks.formulaend:InlineMarks.formulastart;
 				}
 			}
 		}
-		return inlineIndexes;
+
+		var regMdLink = /\[[^]*?\]\([^]*?\)/;
+		var regWikiLink = /\[\[[^]*?\]\]/;
+		
+		let linecopy = line;
+		let offset = 0;
+		while(linecopy.search(regMdLink)!=-1)
+		{
+			let begin = linecopy.search(regMdLink);
+			let end = begin + linecopy.match(regMdLink)[0].length-1;
+			if(begin!=0 && linecopy.charAt(begin-1)==='!'){
+				begin -= 1;
+			}
+			inlineIndex.push([begin+offset, InlineMarks.mdlinkstart]);
+			inlineIndex.push([end+offset, InlineMarks.mdlinkend]);
+			linecopy = linecopy.substring(end+1);
+			offset += end+1;
+		}
+
+		offset = 0;
+		linecopy = line;
+		while(linecopy.search(regWikiLink)!=-1)
+		{
+			let begin = linecopy.search(regWikiLink);
+			let end = begin + linecopy.match(regWikiLink)[0].length-1;
+			if(begin!=0 && linecopy.charAt(begin-1)==='!'){
+				begin -= 1;
+			}
+			inlineIndex.push([begin+offset, InlineMarks.wikilinkstart]);
+			inlineIndex.push([end+offset, InlineMarks.wikilinkend]);
+			linecopy = linecopy.substring(end+1);
+			offset += end+1;
+		}
+
+		var regHttpLink = /(?<!\()http(s?):\/\/[0-9a-zA-Z-#\.\/]+/;
+		offset = 0;
+		linecopy = line;
+		while(linecopy.search(regHttpLink)!=-1)
+		{
+			let begin = linecopy.search(regHttpLink);
+			let end = begin + linecopy.match(regHttpLink)[0].length-1;
+			if(begin!=0 && linecopy.charAt(begin-1)==='!'){
+				begin -= 1;
+			}
+			inlineIndex.push([begin+offset, InlineMarks.httpinkstart]);
+			inlineIndex.push([end+offset, InlineMarks.httplinkend]);
+			linecopy = linecopy.substring(end+1);
+			offset += end+1;
+		}
+
+		return inlineIndex.sort((a, b)=>a[0]-b[0]);
 	}
 
-	private getSubStrings=(line :string):[string, InlineFlag][]=>
+	private getSubStrings=(line :string):[string, IsInlineElement][]=>
 	{
-		let subStrings:[string, InlineFlag][] = [];
-		let indexVec = this.getInlineIndexes(line);
+		let subStrings:[string, IsInlineElement][] = [];
+		let indexVec = this.getInlineIndex(line);
 		if(indexVec.length===0)
 		{
-			return [[line, InlineFlag.notinline]];
+			return [[line, IsInlineElement.no]];
 		}
 		let start = 0;
 		let end = 0;
@@ -244,7 +303,7 @@ export default class MyPlugin extends Plugin {
 				end = indexVec[i][0]+i%2;
 			}
 			let s = line.substring(start, end);
-			let flag = i%2===0?InlineFlag.notinline:InlineFlag.inline;
+			let flag = i%2===0?IsInlineElement.no:IsInlineElement.yes;
 			if(s!='')
 			{
 				subStrings.push([s, flag]);
@@ -263,18 +322,24 @@ export default class MyPlugin extends Plugin {
 
 		if(plugin.settings.Capitalization)
 		{
-			if(linecopy.charAt(0).match(/[a-z]/)!=null)
+			var regHttpLink = /\s*http(s?):\/\/[0-9a-zA-Z-#\.\/]+/;
+			if(linecopy.search(regHttpLink)===0)
 			{
-				linecopy = linecopy.substring(0,1).toUpperCase() + linecopy.substring(1);
+
+			}
+			else if(linecopy.search(/\s*[a-z]/)===0)
+			{
+				let match = linecopy.match(/\s*[a-z]/)[0];
+				linecopy = match.toUpperCase() + linecopy.substring(match.length);
 			}
 		}
-		let inlineIndexes=plugin.getInlineIndexes(linecopy);
-		linecopy = plugin.processInlineElements(linecopy, inlineIndexes);
+
+		linecopy = plugin.processInlineElements(linecopy);
 		let subStrings = plugin.getSubStrings(linecopy);
 		let output = '';
 		subStrings.forEach(function(item){
 			let tempString = item[0];
-			if(item[1]===InlineFlag.notinline)
+			if(item[1]===IsInlineElement.no)
 			{
 				if(plugin.settings.ChineseEnglishSpace){
 					var reg1=/([A-Za-z0-9,.;?:!])([\u4e00-\u9fa5]+)/gi;
@@ -307,14 +372,7 @@ export default class MyPlugin extends Plugin {
 					{
 						let matchstring = tempString.match(reg)[0];
 						find += matchstring.length-1;
-						if(find+1<len)
-						{
-							tempString = tempString.substring(0, find)+tempString.charAt(find).toUpperCase()+tempString.substring(find+1);
-						}
-						else{
-							tempString = tempString.substring(0, find)+tempString.charAt(find).toUpperCase();
-						}
-
+						tempString = tempString.substring(0, find)+tempString.charAt(find).toUpperCase()+tempString.substring(find+1);
 						find = tempString.search(reg);
 					}
 
@@ -337,13 +395,7 @@ export default class MyPlugin extends Plugin {
 					}
 					if(pos!=-1)
 					{
-						if(pos+1<len)
-						{
-							tempString = tempString.substring(0, pos)+tempString.charAt(pos).toUpperCase()+tempString.substring(pos+1);
-						}
-						else{
-							tempString = tempString.substring(0, pos)+tempString.charAt(pos).toUpperCase();
-						}
+						tempString = tempString.substring(0, pos)+tempString.charAt(pos).toUpperCase()+tempString.substring(pos+1);
 					}
 				}
 
@@ -376,10 +428,9 @@ export default class MyPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	private processInlineElements(input:string, indexes: [number, string][]):string{
-		let codeFlags = ['codeStart', 'codeEnd'];
-		let formulaFlags= ['formulaStart', 'formulaEnd'];
-	
+	private processInlineElements(input:string):string{
+
+		let indexes = this.getInlineIndex(input)
 		let output = input
 		let offset = 0
 		
@@ -389,9 +440,9 @@ export default class MyPlugin extends Plugin {
 			let flag = indexes[i][1];
 			if(this.settings.inlineCodeSpace)
 			{
-				if(flag===codeFlags[0] && index!=0)
+				if(flag===InlineMarks.codestart)
 				{
-					if(input.charAt(index-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.:?'\)\}\]\>\\\|\/]/i)!=null)
+					if(index!=0 && input.charAt(index-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.:?'\)\}\]\>\\\|\/]/i)!=null)
 					{
 						output = this.insert_str(output, index+offset, ' ');
 						offset++;
@@ -399,9 +450,9 @@ export default class MyPlugin extends Plugin {
 					continue;
 				}
 				
-				if(flag===codeFlags[1] && index!=input.length-1)
+				if(flag===InlineMarks.codeend)
 				{
-					if(input.charAt(index+1).match(/[A-Za-z0-9\u4e00-\u9fa5\(\{\[\<\\\|\/]/)!=null)
+					if(index!=input.length-1 && input.charAt(index+1).match(/[A-Za-z0-9\u4e00-\u9fa5\(\{\[\<\\\|\/]/)!=null)
 					{
 						output = this.insert_str(output, index+1+offset, ' ');
 						offset++;
@@ -412,7 +463,7 @@ export default class MyPlugin extends Plugin {
 
 			if(this.settings.inlineFormulaSpace)
 			{
-				if(flag===formulaFlags[0])
+				if(flag===InlineMarks.formulastart)
 				{
 					if(index!=0 && input.charAt(index-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.:]/i)!=null)
 					{
@@ -422,7 +473,7 @@ export default class MyPlugin extends Plugin {
 					continue;
 				}
 				
-				if(flag===formulaFlags[1])
+				if(flag===InlineMarks.formulaend)
 				{
 					if(index!=input.length-1 && input.charAt(index+1).match(/[A-Za-z0-9\u4e00-\u9fa5]/)!=null)
 					{
