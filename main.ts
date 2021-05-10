@@ -24,6 +24,8 @@ export default class MyPlugin extends Plugin {
 	inlineFormulaSpace: boolean;
 	EnglishSpace: boolean;
 	Capitalization: boolean;
+	braceSpace: boolean;
+	autoFormatting: boolean;
 
 	async onload() {
 		console.log('loading plugin：Easy Typing');
@@ -35,6 +37,8 @@ export default class MyPlugin extends Plugin {
 		this.inlineFormulaSpace = true;
 		this.EnglishSpace = true;
 		this.Capitalization = true;
+		this.braceSpace = true;
+		this.autoFormatting = true;
 
 
 		this.firstCallFileChange = true;
@@ -65,6 +69,26 @@ export default class MyPlugin extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: "easy-typing-format-line",
+			name: "format current line",
+			callback: () => this.commandFormatLine(),
+			hotkeys: [{
+				modifiers: ['Ctrl'],
+				key: "tab"
+			}],
+		});
+
+		this.addCommand({
+			id: "easy-typing-format-note",
+			name: "format current note",
+			callback: () => this.commandFormatNote(),
+			hotkeys: [{
+				modifiers: ['Alt'],
+				key: "f"
+			}],
+		});		
+
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
 		// 'keyup' is better than 'keydown'
@@ -85,6 +109,29 @@ export default class MyPlugin extends Plugin {
 
 	onunload() {
 		console.log('unloading plugin');
+	}
+
+
+	commandFormatNote()
+	{
+		let activeLeaf: any = this.app.workspace.activeLeaf;
+		let editor = activeLeaf.view.sourceMode.cmEditor as CodeMirror.Editor;
+		let lineCount = editor.lineCount();
+
+	}
+	commandFormatLine()
+	{
+		let activeLeaf: any = this.app.workspace.activeLeaf;
+		let editor = activeLeaf.view.sourceMode.cmEditor as CodeMirror.Editor;
+		let cursor = editor.getCursor();
+		let line = editor.getLine(cursor.line);
+		let newline = this.formatLine(line, this);
+		if(newline!=editor.getLine(cursor.line))
+		{
+			let lineStart:CodeMirror.Position = {ch:0, line:cursor.line};
+			let lineEnd: CodeMirror.Position = {ch:line.length, line:cursor.line};
+			editor.replaceRange(newline, lineStart, lineEnd);
+		}
 	}
 
 	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
@@ -153,14 +200,16 @@ export default class MyPlugin extends Plugin {
 
 		let cursor = editor.getCursor();
 		let line = editor.getLine(cursor.line);
-		let ret = this.formatLine(line, cursor.ch, this);
-		if(ret[0])
+		let subLine = line.substring(0, cursor.ch);
+		let newSubLine = this.formatLine(subLine, this);
+
+		if(line.substring(0, cursor.ch)!=newSubLine)
 		{
 			let lineStart:CodeMirror.Position = {ch:0, line:cursor.line};
-			editor.replaceRange(ret[1].substring(0, ret[2]), lineStart, cursor);
+			editor.replaceRange(newSubLine, lineStart, cursor);
 			editor.setCursor({
 				line: cursor.line,
-				ch: ret[2]
+				ch: newSubLine.length
 			});
 			editor.focus();
 		}
@@ -223,33 +272,32 @@ export default class MyPlugin extends Plugin {
 		return subStrings;
 	}
 
-	private formatLine = (line: string, ch: number, plugin: MyPlugin):[boolean, string, number]=>
-	{
-		let update = false;
-		if(line==='' || ch===0)
+	private formatLine = (line: string, plugin: MyPlugin):string=>
+	{		
+		let linecopy = line;
+		if(linecopy==='')
 		{
-			return [false, '', 0];
+			return '';
 		}
 
-		let subline = line.substring(0, ch);
 		if(plugin.Capitalization)
 		{
-			if(subline.charAt(0).match(/[a-z]/)!=null)
+			if(linecopy.charAt(0).match(/[a-z]/)!=null)
 			{
-				subline = subline.substring(0,1).toUpperCase() + subline.substring(1);
+				linecopy = linecopy.substring(0,1).toUpperCase() + linecopy.substring(1);
 			}
 		}
-		let inlineIndexes=plugin.getInlineIndexes(subline);
-		subline = plugin.processInlineElements(subline, inlineIndexes);
-		let subStrings = plugin.getSubStrings(subline);
+		let inlineIndexes=plugin.getInlineIndexes(linecopy);
+		linecopy = plugin.processInlineElements(linecopy, inlineIndexes);
+		let subStrings = plugin.getSubStrings(linecopy);
 		let output = '';
 		subStrings.forEach(function(item){
 			let tempString = item[0];
 			if(item[1]===InlineFlag.notinline)
 			{
 				if(plugin.ChineseEnglishSpace){
-					var reg1=/([A-Za-z0-9,.;?:\)])([\u4e00-\u9fa5]+)/gi;
-					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9\(])/gi;
+					var reg1=/([A-Za-z0-9,.;?:])([\u4e00-\u9fa5]+)/gi;
+					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
 					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
 
@@ -264,9 +312,9 @@ export default class MyPlugin extends Plugin {
 
 				if(plugin.EnglishSpace)
 				{
-					var reg1 = /([,.;?:\)])([A-Za-z0-9])/gi;
-					var reg2 = /([A-Za-z0-9])(\()/gi;
-					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
+					var reg1 = /([,.;?:])([A-Za-z0-9])/gi;
+					// var reg2 = /([A-Za-z0-9])(\()/gi;
+					tempString = tempString.replace(reg1, "$1 $2");
 				}
 
 				if(plugin.Capitalization)
@@ -288,22 +336,22 @@ export default class MyPlugin extends Plugin {
 
 						find = tempString.search(reg);
 					}
-					
+				}
+
+				if(plugin.braceSpace)
+				{
+					var reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
+					var reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,.?']+)(\()/gi;
+					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
 			}
 			
 			output += tempString;
 		});
 		
-		let len = output.length;
-		output += line.substring(ch, line.length);
-		if(output!=line)
-		{
-			update = true;
-		}
-
-		return [update, output, len];
+		return output;
 	}
+
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -327,7 +375,7 @@ export default class MyPlugin extends Plugin {
 			{
 				if(flag===codeFlags[0] && index!=0)
 				{
-					if(input.charAt(index-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.:]/i)!=null)
+					if(input.charAt(index-1).match(/[A-Za-z0-9\u4e00-\u9fa5,.:?'\)\}\]\>\\\|\/]/i)!=null)
 					{
 						output = this.insert_str(output, index+offset, ' ');
 						offset++;
@@ -337,7 +385,7 @@ export default class MyPlugin extends Plugin {
 				
 				if(flag===codeFlags[1] && index!=input.length-1)
 				{
-					if(input.charAt(index+1).match(/[A-Za-z0-9\u4e00-\u9fa5]/)!=null)
+					if(input.charAt(index+1).match(/[A-Za-z0-9\u4e00-\u9fa5\(\{\[\<\\\|\/]/)!=null)
 					{
 						output = this.insert_str(output, index+1+offset, ' ');
 						offset++;
