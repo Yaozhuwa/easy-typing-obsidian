@@ -11,6 +11,7 @@ interface MyPluginSettings {
 	EnglishSpace: boolean;
 	Capitalization: boolean;
 	braceSpace: boolean;
+	numberSpace: boolean;
 }
 
 enum InlineFlag {inline, notinline};
@@ -24,7 +25,8 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	inlineFormulaSpace: true,
 	EnglishSpace: true,
 	Capitalization: true,
-	braceSpace: true
+	braceSpace: true,
+	numberSpace: true
 }
 
 export default class MyPlugin extends Plugin {
@@ -275,7 +277,7 @@ export default class MyPlugin extends Plugin {
 			if(item[1]===InlineFlag.notinline)
 			{
 				if(plugin.settings.ChineseEnglishSpace){
-					var reg1=/([A-Za-z0-9,.;?:])([\u4e00-\u9fa5]+)/gi;
+					var reg1=/([A-Za-z0-9,.;?:!])([\u4e00-\u9fa5]+)/gi;
 					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
 					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
@@ -291,14 +293,14 @@ export default class MyPlugin extends Plugin {
 
 				if(plugin.settings.EnglishSpace)
 				{
-					var reg1 = /([,.;?:])([A-Za-z0-9])/gi;
+					var reg1 = /([,.;?:!])([A-Za-z])/gi;
 					// var reg2 = /([A-Za-z0-9])(\()/gi;
 					tempString = tempString.replace(reg1, "$1 $2");
 				}
 
 				if(plugin.settings.Capitalization)
 				{
-					var reg = /[.;?。；？]([\s]*)[a-z]/;
+					var reg = /[.;?!。！；？]([\s]*)[a-z]/;
 					let find = tempString.search(reg);
 					let len = tempString.length;
 					while(find!=-1)
@@ -321,6 +323,13 @@ export default class MyPlugin extends Plugin {
 				{
 					var reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
 					var reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,.?']+)(\()/gi;
+					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
+				}
+
+				if(plugin.settings.numberSpace)
+				{
+					var reg1 = /([A-Za-z,;?:!\]\}])([0-9])/gi;
+					var reg2 = /([0-9])([A-Za-z,;?:!\[\{])/gi;
 					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
 			}
@@ -425,18 +434,8 @@ class SampleSettingTab extends PluginSettingTab {
 
 		// containerEl.createEl('h2', {text: 'Settings for Easy Typing.'});
 
-		// new Setting(containerEl)
-		// 	.setName('Setting #1')
-		// 	.setDesc('It\'s a secret')
-		// 	.addText(text => text
-		// 		.setPlaceholder('Enter your secret')
-		// 		.setValue(this.plugin.settings.mySetting)
-		// 		.onChange(async (value) => {
-		// 			console.log('Secret: ' + value);
-		// 			this.plugin.settings.mySetting = value;
-		// 			await this.plugin.saveSettings();
-		// 		}));
-		
+		containerEl.createEl('h2', {text: '总开关 (Master Switch)'});
+
 		new Setting(containerEl)
 		.setName("Auto formatting")
 		.setDesc("是否在编辑文档时自动格式化文本")
@@ -449,9 +448,11 @@ class SampleSettingTab extends PluginSettingTab {
 			});
 		});
 
+		containerEl.createEl('h2', {text: '详细规则开关 (Sub Switch)'});
+
 		new Setting(containerEl)
-		.setName("Space between Chinese and English")
-		.setDesc("在中英文间空格")
+		.setName("Space between Chinese and English/number")
+		.setDesc("在中文和英文/数字间空格")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.ChineseEnglishSpace).onChange(async (value)=>{
 				this.plugin.settings.ChineseEnglishSpace = value;
@@ -485,6 +486,16 @@ class SampleSettingTab extends PluginSettingTab {
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.Capitalization).onChange(async (value)=>{
 				this.plugin.settings.Capitalization = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Space between number and English text")
+		.setDesc("数字和英文文本及标点间空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.numberSpace).onChange(async (value)=>{
+				this.plugin.settings.numberSpace = value;
 				await this.plugin.saveSettings();
 			});
 		});

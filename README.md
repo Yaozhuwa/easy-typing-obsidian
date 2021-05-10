@@ -19,6 +19,9 @@
     - [ ]  一键全文格式化
 
 ### 展望功能/改进空间
+- [x] 英文的 `!` 和下一个英文字符空格
+- [ ] 识别链接，链接内部文本不格式化：正则表达式
+- [x] 数字和英文自动空格, 数字功能独立出来，数字和`.`不空格
 - [ ] list， todo-list中支持英文首字母大写 
 - [ ] 选中文本的功能？目前没有好的想法来实现该功能。
 	- [ ] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
@@ -48,21 +51,11 @@ It have been tested on windows10 and ubuntu18.04, obsidian v0.11.13
 
 ### ToDo
 
+### Changelog
 
-### Releasing new releases
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments.
-- Publish the release.
-
-### Adding your plugin to the community plugin list
-
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
+- v 1.0.0
+  - 基本功能完成
 ### How to use
 
 - Clone this repo.
