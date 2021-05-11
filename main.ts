@@ -411,7 +411,7 @@ export default class EasyTypingPlugin extends Plugin {
 				if(plugin.settings.numberSpace)
 				{
 					var reg1 = /([A-Za-z,;?:!\]\}])([0-9])/gi;
-					var reg2 = /([0-9])([A-Za-z,;?:!\[\{])/gi;
+					var reg2 = /([0-9])([A-Za-z,;?!\[\{])/gi;
 					tempString = tempString.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
 				}
 			}

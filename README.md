@@ -56,6 +56,9 @@ And you can set the formatting rules freely in the plugin Settings panel
 - Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v2.3.1
+  - bug fix
+    - [x] 修复数字和后面的冒号自动空格的 bug
 - v2.3.0
   - improvement
     - 增加了对obsidian 和 zotero 链接的识别（`obsidian://`, `zotero://`），链接内部不自动 format
