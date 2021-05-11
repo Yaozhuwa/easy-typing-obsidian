@@ -1,9 +1,9 @@
 {
 	"id": "easy-typing-obsidian",
 	"name": "Easy Typing",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"minAppVersion": "0.9.12",
-	"description": "This is a simple plugin for Obsidian. This plugin designed for better typing experience.",
+	"description": "This plugin designed for better typing experience.",
 	"author": "yaozhuwa",
 	"authorUrl": "https://github.com/Yaozhuwa",
 	"isDesktopOnly": false

@@ -21,7 +21,7 @@ enum InlineMarks {codestart = 'CodeStart', codeend='CodeEnd',
 			formulastart='FormulaStart', formulaend="FormulaEnd",
 			mdlinkstart='MdLinkStart', mdlinkend='MdLinkEnd', 
 			wikilinkstart='WikiLinkBegin', wikilinkend='WikiLinkEnd', 
-			httpinkstart ='HttpLinkStart', httplinkend='HttpLinkEnd', none='None'};
+			otherlinkstart ='OtherLinkStart', otherlinkend='HttpLinkEnd', none='None'};
 
 const DEFAULT_SETTINGS: EasyTypingPluginSettings = {
 	mySetting: 'default',
@@ -263,18 +263,19 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 
 		// var regHttpLink = /(?<!\()http(s?):\/\/[0-9a-zA-Z-#\.\/]+/;
-		var regHttpLink = /http(s?):\/\/[0-9a-zA-Z-#\.\/]+/;
+		// var regOtherLink = /(https?|obsidian|zotero):\/\/[_0-9a-zA-Z-#\.\/]+/;
+		var regOtherLink = /(https?|obsidian|zotero):\/\/[^\s\)\(\[\]\{\}']+/;
 		offset = 0;
 		linecopy = line;
-		while(linecopy.search(regHttpLink)!=-1)
+		while(linecopy.search(regOtherLink)!=-1)
 		{
-			let begin = linecopy.search(regHttpLink);
-			let end = begin + linecopy.match(regHttpLink)[0].length-1;
-			if(begin!=0 && linecopy.charAt(begin-1)==='!'){
-				begin -= 1;
-			}
-			inlineIndex.push([begin+offset, InlineMarks.httpinkstart]);
-			inlineIndex.push([end+offset, InlineMarks.httplinkend]);
+			let begin = linecopy.search(regOtherLink);
+			let end = begin + linecopy.match(regOtherLink)[0].length-1;
+			// if(begin!=0 && linecopy.charAt(begin-1)==='!'){
+			// 	begin -= 1;
+			// }
+			inlineIndex.push([begin+offset, InlineMarks.otherlinkstart]);
+			inlineIndex.push([end+offset, InlineMarks.otherlinkend]);
 			linecopy = linecopy.substring(end+1);
 			offset += end+1;
 		}
@@ -336,6 +337,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		linecopy = plugin.processInlineElements(linecopy);
 		let subStrings = plugin.getSubStrings(linecopy);
+		// console.log(subStrings);
 		let output = '';
 		subStrings.forEach(function(item){
 			let tempString = item[0];
