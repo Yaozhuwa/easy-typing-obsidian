@@ -22,8 +22,8 @@ And you can set the formatting rules freely in the plugin Settings panel.
 	- [x] 行内 latex 公式(比如：$x=y$)和中英文之间自动补全空格
 	- [x] 行内代码片段和中英文间及相关标点的自动补全空格
 	- [x] 英文句首字母和前面的标点 (`',.;?'`) 中间自动添加空格。
-  - [x] 英文行首字母大写
-	- [x] 行内小括号与文本的自动空格
+	- [x] 英文行首字母大写
+  - [x] 行内小括号与文本的自动空格
 	- [x] `[[WikiLink]]`, `[markdown link](https://)` 和 纯链接 `https://obsidian.md` 与文本的自动空格。
 - 插件设置面板
   - [x] 自动格式化总开关
