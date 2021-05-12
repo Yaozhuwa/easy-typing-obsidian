@@ -24,7 +24,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
 	- [x] 英文句首字母和前面的标点 (`',.;?'`) 中间自动添加空格。
 	- [x] 英文行首字母大写
   - [x] 行内小括号与文本的自动空格
-	- [x] `[[WikiLink]]`, `[markdown link](https://)` 和 纯链接 `https://obsidian.md` 与文本的自动空格。
+  - [x] `[[WikiLink]]`, `[markdown link](https://)` 和 纯链接 `https://obsidian.md` 与文本的自动空格。
 - 插件设置面板
   - [x] 自动格式化总开关
   - [x] 单个行内自动格式化功能都可以分别关闭、打开
