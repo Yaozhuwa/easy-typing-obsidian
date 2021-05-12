@@ -30,7 +30,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
   - [x] 单个行内自动格式化功能都可以分别关闭、打开
 - 快捷键/命令
 	- [x]  格式化当前行
-    - [ ]  一键全文格式化
+  - [ ]  一键全文格式化
 
 ---
 - auto formatting when editting
