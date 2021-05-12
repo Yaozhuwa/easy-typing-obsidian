@@ -1,9 +1,9 @@
 {
 	"id": "easy-typing-obsidian",
 	"name": "Easy Typing",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"minAppVersion": "0.9.12",
-	"description": "This plugin designed for better typing experience.",
+	"description": "Autoformat your note as typing.(Auto captalize and autospace)",
 	"author": "yaozhuwa",
 	"authorUrl": "https://github.com/Yaozhuwa",
 	"isDesktopOnly": false

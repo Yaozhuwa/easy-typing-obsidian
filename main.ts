@@ -407,8 +407,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     content = inlineList[i].content;
 				}
 
-                let regStartWithSpace = /^\s/;
-                let regEndWithSpace = /\s$/;
+                let regStartWithSpace = /^[\s,\.;\?\!，。；？！]/;
+                let regEndWithSpace = /[\s，。：？！]$/;
                 let startWithSpace = regStartWithSpace.test(content);
                 let endWithSpace = regEndWithSpace.test(content);
                 switch(prevType)

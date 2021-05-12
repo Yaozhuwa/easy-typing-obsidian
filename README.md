@@ -2,15 +2,15 @@
 
 这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写，让中文用户的 Obsidian 书写体验起飞~
 
-This plugin designed for better typing experience. Autoformat your writing as you type.
+This plugin designed for better typing experience. Autoformat your note as typing (Auto captalize and autospace).
 
-![show](show.gif)
+![show](showfeature.gif)
 
 而且你可以在插件的设置面板自由地设置你想要的格式化功能
 
 And you can set the formatting rules freely in the plugin Settings panel.
 
-![settings](settings.png)
+![settings](showsettings.gif)
 - 运行测试 Test on
   - [x] windows10 obsidian v0.11.13
   - [x] ubuntu18.04, obsidian v0.11.13
@@ -58,6 +58,9 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.0.1
+  - bug fix
+    - 修复了inline code 等元素和前后的标点符号空格的bug。
 - v3.0.0
   - Improvement
     - 重构代码逻辑，提升可维护性

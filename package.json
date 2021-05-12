@@ -1,7 +1,7 @@
 {
   "name": "easy-typing-obsidian",
-  "version": "3.0.0",
-  "description": "This plugin designed for better typing experience.",
+  "version": "3.0.1",
+  "description": "Autoformat your note as typing.(Auto captalize and autospace)",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
