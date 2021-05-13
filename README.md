@@ -30,7 +30,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
   - [x] 单个行内自动格式化功能都可以分别关闭、打开
 - 快捷键/命令
 	- [x]  格式化当前行
-  - [ ]  一键全文格式化
+  - [x]  一键全文格式化
 
 ---
 - auto formatting when editting
@@ -42,11 +42,11 @@ And you can set the formatting rules freely in the plugin Settings panel.
   - [x] Space between English braces and text
   - [x] Auto space for `[[WikiLink]]`, `[markdown link](https://)` and bare link `https://obsidian.md` with other text。
 - SettingTab
-    - [x] switch auto formatting 
-    - [x] switch every single rule of auto formatting
+  - [x] switch auto formatting 
+  - [x] switch every single rule of auto formatting
 - short cut / command pane
-    - [x] format current line
-    - [ ] format current note 
+  - [x] format current line
+  - [x] format current note 
 ### 展望功能/改进空间 Future
 - [ ] 选中文本的功能？目前没有好的想法来实现该功能。
 	- [ ] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
@@ -58,16 +58,22 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.0 2021.5.14
+  - Improve
+    - **增加了全文的内容识别，在全文语境下的代码块和公式中不自动格式化**
+    - 增加了快捷键：全文格式化
+    - 增加了快捷键：AutoFormat 开关切换
+    - Md 链接将不论小括号内容
 - v3.0.1
   - bug fix
     - 修复了inline code 等元素和前后的标点符号空格的bug。
 - v3.0.0
   - Improvement
-    - 重构代码逻辑，提升可维护性
+    - **重构代码逻辑**，提升可维护性
     - 增强了行内公式和行内代码块的识别逻辑
     - 增加了多种链接的识别：wiki link, markdown link and bare link.
     - 增加了多种链接的自动空格功能开关
-    - 开发了光标位置计算算法，大大提升了行内编辑的体验
+    - 开发了**光标位置计算算法**，大大提升了行内编辑的体验
 - v2.3.1
   - bug fix
     - [x] 修复数字和后面的冒号自动空格的 bug
@@ -94,8 +100,3 @@ And you can set the formatting rules freely in the plugin Settings panel.
     - inline 元素的范围识别逻辑
 - v1.0.0
   - 基本功能完成
-
-
-### API Documentation
-
-See https://github.com/obsidianmd/obsidian-api

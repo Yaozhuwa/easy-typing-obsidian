@@ -4,6 +4,20 @@ import { stringify } from 'querystring';
 
 enum InlineType {text='text', code='code', formula='formula', wikilink='wikilink', mdlink='mdlink', barelink='barelink', none='none'}
 enum InlineMark {code='`', formula='\$'}
+enum LineType {text='text', code='code', formula='formula', frontmatter='frontmatter', none='none'};
+
+interface Position{
+    type: LineType,
+    line: number,
+    ch: number
+}
+
+interface ArticlePart
+{
+    type: LineType;
+    begin: number;
+    end: number
+}
 
 interface InlinePart
 {
@@ -44,6 +58,138 @@ const DEFAULT_SETTINGS: FormatSettings = {
 	BareLinkSpace: true,
     WikiLiskSpace: true,
     MdLinkSpace: true
+}
+
+function getLineType(article:string, line: number):LineType
+{
+    let typeArray = splitArticle(article);
+    for(let i=0;i<typeArray.length;i++)
+    {
+        if(line >= typeArray[i].begin && line<typeArray[i].end)
+        {
+            return typeArray[i].type;
+        }
+    }
+}
+
+function splitArticle(article:string): ArticlePart[]
+{
+    let retArray: ArticlePart[] = [];
+    let lines = article.split('\n');
+    let regNullLine = /^\s*$/;
+    let regFormulaBegin = /^\$\$/;
+    let regFormulaEnd = /\$\$$/;
+    let regCodeBegin = /^\s*```/;
+    let regCodeEnd = /^\s*```$/;
+    let index = 0;
+
+    // 1. 判断 frontmatter
+    let frontMatterPart: ArticlePart;
+    for(let i=0;i<lines.length;i++)
+    {
+        if(regNullLine.test(lines[i]))
+        {
+            continue;
+        }
+        else if(lines[i]==='---')
+        {
+            for(let j=i+1; j<lines.length;j++)
+            {
+                if(lines[j]==='---')
+                {
+                    if(i!=0)
+                    {
+                        retArray.push({
+                            type: LineType.text,
+                            begin:0,
+                            end:i
+                        });
+                    }
+                    frontMatterPart = {
+                        type: LineType.frontmatter,
+                        begin: i,
+                        end: j+1
+                    };
+                    retArray.push(frontMatterPart);
+                    index = j+1;
+                    break;
+                }
+            }
+            break;
+        }
+        else{
+            break;
+        }
+    }
+    // console.log('index', index);
+
+    // 2. 遍历行得到 LineType 分区
+    while(index<lines.length)
+    {
+        if(regCodeBegin.test(lines[index]))
+        {
+            let j = index+1;
+            while(j<lines.length)
+            {
+                if(regCodeEnd.test(lines[j]))
+                    break;
+                j++;
+            }
+            retArray.push({
+                type: LineType.code,
+                begin:index,
+                end:j+1
+            });
+            index = j+1;
+        }
+        else if(regFormulaBegin.test(lines[index]))
+        {
+            let regFormulaOneLine = /^\$\$[^]+\$\$$/;
+            if(regFormulaOneLine.test(lines[index]))
+            {
+                retArray.push({
+                    type: LineType.formula,
+                    begin: index,
+                    end: index+1
+                });
+                index += 1;
+            }
+            else{
+                let j = index+1;
+                while(j<lines.length)
+                {
+                    if(regFormulaEnd.test(lines[j]))
+                        break;
+                    j++;
+                }
+                retArray.push({
+                    type: LineType.formula,
+                    begin:index,
+                    end:j+1
+                });
+                index = j+1;
+            }
+        }
+        else
+        {
+            let j = index+1;
+            for(;j<lines.length;j++)
+            {
+                if(regCodeBegin.test(lines[j]) || regFormulaBegin.test(lines[j]))
+                {
+                    break;
+                }
+            }
+            retArray.push({
+                type: LineType.text,
+                begin: index,
+                end:j
+            });
+            index = j;
+        }
+    }
+
+    return retArray;
 }
 
 function stringDeleteAt(str: string, index: number):string
@@ -214,7 +360,8 @@ function splitTextWithLink(text: string):InlinePart[]
 {
     let retArray: InlinePart[] = [];
     let regWikiLink = /\!?\[\[[^\[\]]*?\]\]/g;
-    let regMdLink = /\!?\[[^\[\]]*?\]\((https?|obsidian|zotero):\/\/[^\s\)\(\[\]\{\}']+\)/g;
+    let regMdLink = /\!?\[[^\[\]]*?\]\([^\s\)\(\[\]\{\}']*\)/g;
+    // let regMdLink = /\!?\[[^\[\]]*?\]\((https?|obsidian|zotero):\/\/[^\s\)\(\[\]\{\}']+\)/g;
     let regBareLink = /(https?|obsidian|zotero):\/\/[^\s\)\(\[\]\{\}']+/g;
 
     while(true)
@@ -311,6 +458,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
 {
     if(line==='') return ['', 0];
     let inlineList = splitLine(line);
+    // console.log('split line', inlineList);
     let cInlineIndex = -1;
     let cRelativeIndex = -1;
     let resultCh = 0;
@@ -765,12 +913,14 @@ export default class EasyTypingPlugin extends Plugin {
 	keyCtrlFlag: boolean;
 	keySetNotUpdate: Set<string>;
 	inputChineseFlag: boolean;
+    prevPos: Position;
 
 	async onload() {
 		console.log('loading plugin：Easy Typing');
 
 		await this.loadSettings();
 
+        this.prevPos = {type:LineType.none, line:0, ch:0};
 		this.keyCtrlFlag = false;
 		this.inputChineseFlag = false;
 		this.keySetNotUpdate = new Set(['Control', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Alt', 'Backspace', 'Escape', 'Delete', 'NumLock']);
@@ -780,20 +930,30 @@ export default class EasyTypingPlugin extends Plugin {
 			name: "format current line",
 			callback: () => this.commandFormatLine(),
 			hotkeys: [{
+				modifiers: ['Shift'],
+				key: "tab"
+			}],
+		});
+
+        this.addCommand({
+			id: "easy-typing-format-line",
+			name: "switch autoformat",
+			callback: () => this.commandSwitch(),
+			hotkeys: [{
 				modifiers: ['Ctrl'],
 				key: "tab"
 			}],
 		});
 
-		// this.addCommand({
-		// 	id: "easy-typing-format-note",
-		// 	name: "format current note",
-		// 	callback: () => this.commandFormatNote(),
-		// 	hotkeys: [{
-		// 		modifiers: ['Alt'],
-		// 		key: "f"
-		// 	}],
-		// });		
+		this.addCommand({
+			id: "easy-typing-format-note",
+			name: "format current note",
+			callback: () => this.commandFormatNote(),
+			hotkeys: [{
+				modifiers: ['Alt'],
+				key: "f"
+			}],
+		});		
 
 		this.addSettingTab(new EasyTypingSettingTab(this.app, this));
 
@@ -817,12 +977,36 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 
+    commandSwitch()
+    {
+        this.settings.AutoFormatting = this.settings.AutoFormatting? false:true;
+        let status = this.settings.AutoFormatting?'on':'off';
+        new Notice('Autoformat is '+ status +'!');
+    }
+
 	commandFormatNote()
 	{
 		let activeLeaf: any = this.app.workspace.activeLeaf;
 		let editor = activeLeaf.view.sourceMode.cmEditor as CodeMirror.Editor;
-		let lineCount = editor.lineCount();
-
+		let typeArray = splitArticle(editor.getValue());
+        for(let i=0; i<typeArray.length;i++)
+        {
+            if(typeArray[i].type===LineType.text)
+            {
+                for(let j=typeArray[i].begin; j<typeArray[i].end;j++)
+                {
+                    let line = editor.getLine(j);
+                    let newLine = formatLine(line, line.length, this.settings)[0];
+                    if(newLine!=line)
+                    {
+                        let start: CodeMirror.Position = {line:j, ch:0};
+                        let end: CodeMirror.Position = {line:j, ch:line.length};
+                        editor.replaceRange(newLine, start, end);
+                    }
+                }
+            }
+        }
+        new Notice('Format Note Done!');
 	}
 	commandFormatLine()
 	{
@@ -868,7 +1052,15 @@ export default class EasyTypingPlugin extends Plugin {
 		// if(event.key === 'F4')
 		// {
 		// 	console.log("Test Begin========================");
-		// 	console.log(this.settings.autoFormatting)
+		// 	// let firstLineIndex = editor.firstLine();
+        //     // let lastLineIndex = editor.lastLine();
+        //     // console.log('firstLineIndex', firstLineIndex)
+        //     // console.log('lastLineIndex', lastLineIndex)
+        //     // console.log(editor.getLine(firstLineIndex));
+        //     // console.log('---------')
+        //     // console.log(editor.getValue().split('\n'));
+        //     // console.log('splitArticle', splitArticle(editor.getValue()));
+
 		// 	console.log("Test End========================");
 		// 	return;
 		// }
@@ -914,6 +1106,26 @@ export default class EasyTypingPlugin extends Plugin {
 
 		let cursor = editor.getCursor();
 		let line = editor.getLine(cursor.line);
+
+        let checkType = true;
+        // if(this.prevPos.type === LineType.text && cursor.line === this.prevPos.line && cursor.ch>=this.prevPos.ch)
+        // {
+        //     checkType = false;
+        //     this.prevPos.line = cursor.line;
+        //     this.prevPos.ch = cursor.ch;
+        // }
+
+        if(checkType)
+        {
+            let t = getLineType(editor.getValue(), cursor.line);
+            if(t!=LineType.text)
+            {
+                // this.prevPos.type = t;
+                // this.prevPos.line = cursor.line;
+                // this.prevPos.ch = cursor.ch;
+                return;
+            }
+        }
 		let ret = formatLine(line, cursor.ch, this.settings);
 
 		if(line!=ret[0])
@@ -967,7 +1179,7 @@ class EasyTypingSettingTab extends PluginSettingTab {
 			});
 		});
 
-		containerEl.createEl('h2', {text: '详细规则开关 (Sub Switch)'});
+		containerEl.createEl('h2', {text: '详细规则开关 (Sub Switches)'});
 
 		new Setting(containerEl)
 		.setName("Space between Chinese and English/number")
@@ -1078,6 +1290,5 @@ class EasyTypingSettingTab extends PluginSettingTab {
 				await this.plugin.saveSettings();
 			});
 		});
-
 	}
 }
