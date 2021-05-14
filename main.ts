@@ -42,6 +42,8 @@ interface FormatSettings
 	BareLinkSpace: boolean;
     WikiLiskSpace: boolean;
     MdLinkSpace: boolean;
+
+    SelectedFormat:boolean;
 }
 
 const DEFAULT_SETTINGS: FormatSettings = {
@@ -57,7 +59,9 @@ const DEFAULT_SETTINGS: FormatSettings = {
 	InlineFormulaSpace: true,
 	BareLinkSpace: true,
     WikiLiskSpace: true,
-    MdLinkSpace: true
+    MdLinkSpace: true,
+
+    SelectedFormat:true
 }
 
 function getLineType(article:string, line: number):LineType
@@ -965,12 +969,43 @@ export default class EasyTypingPlugin extends Plugin {
 			codeMirrorEditor.on('keydown', this.handleKeyDown);
 		});
 
+        this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
+			codeMirrorEditor.on('beforeChange', this.beforeChange);
+		});
+
+
 		// this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
 		// 	console.log('click', evt);
 		// });
 
 		// this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
+
+    beforeChange = (editor:CodeMirror.Editor, obj: CodeMirror.EditorChange)=>
+    {
+        if(!this.settings.AutoFormatting) return;
+        let symbol = obj.text[0];
+        // console.log(symbol);
+        if(editor.somethingSelected() && this.settings.SelectedFormat)
+        {
+            if(symbol === '￥')
+            {
+                symbol = '$';
+            }
+            else if(symbol === '·')
+            {
+                symbol = '`';
+            }
+            else{
+                return;
+            }
+
+            const selected = editor.getSelection();
+            const replaceText = symbol+selected+symbol;
+            // @ts-ignore
+            obj.update(null, null, [replaceText]);
+        }
+    }
 
 	onunload() {
 		console.log('unloading plugin');
@@ -1287,6 +1322,16 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.BareLinkSpace).onChange(async (value)=>{
 				this.plugin.settings.BareLinkSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+        new Setting(containerEl)
+		.setName("When something selected, `￥` will format the selected text to inline formula\n`·` will format the selected text to inline code")
+		.setDesc("选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式\n按中文的·，将自动替换成`，变成行内代码块")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.SelectedFormat).onChange(async (value)=>{
+				this.plugin.settings.SelectedFormat = value;
 				await this.plugin.saveSettings();
 			});
 		});

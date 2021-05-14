@@ -31,6 +31,9 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - 快捷键/命令
 	- [x]  格式化当前行
   - [x]  一键全文格式化
+- [x] 选中文本的功能 (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
+	- [x] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
+	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
 
 ---
 - auto formatting when editting
@@ -47,10 +50,11 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - short cut / command pane
   - [x] format current line
   - [x] format current note 
+- [x] when something selected (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
+  - [x] pressing the `￥` will format the selected text to inline formula
+  - [x] pressing the `·` will format the selected text to inline code
+
 ### 展望功能/改进空间 Future
-- [ ] 选中文本的功能？目前没有好的想法来实现该功能。
-	- [ ] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
-	- [ ] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
 - [ ] 用户自定义正则表达式及其替换规则？
 ### 手动安装插件 Manually installing the plugin
 
@@ -58,6 +62,10 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.1 2021.5.15
+  - Improve
+  	- [x] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
+  	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
 - v3.1.0 2021.5.14
   - Improve
     - **增加了全文的内容识别，在全文语境下的代码块和公式中不自动格式化**
