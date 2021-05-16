@@ -62,6 +62,13 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.3 2021.5.16
+  - bug fix
+    - [x] 修复了标题首字母大写不生效的bug
+    - [x] 修复了`[https://xxx]()` mdlink中方括号内部两边会自动生成空格的问题。 
+- v3.1.2 2021.5.16
+  - bug fix
+    - [x] 文本和inline元素之间打空格回多添加一个空格, that won't happen again.
 - v3.1.1 2021.5.15
   - Improve
   	- [x] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式

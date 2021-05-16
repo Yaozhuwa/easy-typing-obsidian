@@ -370,7 +370,7 @@ function splitTextWithLink(text: string):InlinePart[]
 
     while(true)
     {
-        let match = regWikiLink.exec(text);
+        let match = regWikiLink.exec(text); 
         if(!match) break;
         retArray.push(
             {
@@ -496,11 +496,19 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
         if(i===0 && settings.Capitalization && inlineList[i].type===InlineType.text)
         {
             let reg = /^\s*(\- (\[[x ]\] )?)?[a-z]/g;
+            let regHead = /^#+ [a-z]/g;
             let textcopy = inlineList[0].content;
             let match = reg.exec(textcopy);
+            let matchHead = regHead.exec(textcopy);
+            let charindex = -1;
             if(match)
             {
-                let charindex = reg.lastIndex-1;
+                charindex = reg.lastIndex-1;
+                inlineList[0].content = textcopy.substring(0, charindex)+textcopy.charAt(charindex).toUpperCase()+textcopy.substring(charindex+1);
+            }
+            else if(matchHead)
+            {
+                charindex = regHead.lastIndex-1;
                 inlineList[0].content = textcopy.substring(0, charindex)+textcopy.charAt(charindex).toUpperCase()+textcopy.substring(charindex+1);
             }
         }
@@ -560,8 +568,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     content = inlineList[i].content;
 				}
 
-                let regStartWithSpace = /^[\s,\.;\?\!，。；？！]/;
-                let regEndWithSpace = /[\s，。：？！]\0?$/;
+                let regStartWithSpace = /^[\s,\.;\?\!，。；？！\]\)\}]/;
+                let regEndWithSpace = /[\s，。：？！\[\(\{]\0?$/;
                 let startWithSpace = regStartWithSpace.test(content);
                 let endWithSpace = regEndWithSpace.test(content);
                 switch(prevType)
