@@ -467,6 +467,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
     let cRelativeIndex = -1;
     let resultCh = 0;
     // get cursor index in inlineList
+
     for(let i=0;i<inlineList.length;i++)
     {
         if(ch>inlineList[i].begin && ch<=inlineList[i].end)
@@ -560,7 +561,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
 				}
 
                 let regStartWithSpace = /^[\s,\.;\?\!，。；？！]/;
-                let regEndWithSpace = /[\s，。：？！]$/;
+                let regEndWithSpace = /[\s，。：？！]\0?$/;
                 let startWithSpace = regStartWithSpace.test(content);
                 let endWithSpace = regEndWithSpace.test(content);
                 switch(prevType)
