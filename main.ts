@@ -1,6 +1,4 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import { off } from 'process';
-import { stringify } from 'querystring';
 
 enum InlineType {text='text', code='code', formula='formula', wikilink='wikilink', mdlink='mdlink', barelink='barelink', none='none'}
 enum InlineMark {code='`', formula='\$'}
@@ -562,8 +560,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
 
                 if(settings.NumberSpace)
 				{
-					var reg1 = /([A-Za-z,;\?:\!\]\}])([0-9])/gi;
-					var reg2 = /([0-9])([A-Za-z\[\{])/gi;
+					var reg1 = /([,;\?:\!\]\}])([0-9])/gi;
+					var reg2 = /([0-9])([\[\{])/gi;
                     inlineList[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = inlineList[i].content;
 				}
@@ -972,14 +970,8 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
 			codeMirrorEditor.on('keyup', this.handleKeyUp);
-		});
-
-		this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
-			codeMirrorEditor.on('keydown', this.handleKeyDown);
-		});
-
-        this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
-			codeMirrorEditor.on('beforeChange', this.beforeChange);
+            codeMirrorEditor.on('keydown', this.handleKeyDown);
+            codeMirrorEditor.on('beforeChange', this.beforeChange);
 		});
 
 
@@ -987,16 +979,15 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	console.log('click', evt);
 		// });
 
-		// this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
     beforeChange = (editor:CodeMirror.Editor, obj: CodeMirror.EditorChange)=>
     {
         if(!this.settings.AutoFormatting) return;
         let symbol = obj.text[0];
-        // console.log(symbol);
         if(editor.somethingSelected() && this.settings.SelectedFormat)
         {
+            // console.log('symbol:', symbol);
             if(symbol === '￥')
             {
                 symbol = '$';
@@ -1018,6 +1009,11 @@ export default class EasyTypingPlugin extends Plugin {
 
 	onunload() {
 		console.log('unloading plugin');
+        this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
+			codeMirrorEditor.off('keyup', this.handleKeyUp);
+            codeMirrorEditor.off('keydown', this.handleKeyDown);
+            codeMirrorEditor.off('beforeChange', this.beforeChange);
+		});
 	}
 
 
@@ -1267,7 +1263,7 @@ class EasyTypingSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 		.setName("Space between number and English text")
-		.setDesc("数字和英文文本及标点间空格")
+		.setDesc("数字和标点间空格")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.NumberSpace).onChange(async (value)=>{
 				this.plugin.settings.NumberSpace = value;
