@@ -62,6 +62,14 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.4 2021.5.26
+  - Improvement
+    - Reduce computatio: 不再在每次按键输入时解析全文，分析段的类型，而是在文本行数变化，或者在本文增减 `$- 这几个符号的时候重新解析全文的行类型。 
+    - Effect change: 修改了数字空格选项的逻辑，不再在数字与字母之间空格。
+  - Bugs fix
+    - set `manifest.json`: `"isDesktopOnly": true`, Since I'm using the CodeMirror 5 API
+    - remove unused imports
+    - unhook events in `onunload()`
 - v3.1.3 2021.5.16
   - bug fix
     - [x] 修复了标题首字母大写不生效的bug

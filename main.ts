@@ -4,7 +4,7 @@ enum InlineType {text='text', code='code', formula='formula', wikilink='wikilink
 enum InlineMark {code='`', formula='\$'}
 enum LineType {text='text', code='code', formula='formula', frontmatter='frontmatter', none='none'};
 
-interface Position{
+interface PositionType{
     type: LineType,
     line: number,
     ch: number
@@ -65,6 +65,17 @@ const DEFAULT_SETTINGS: FormatSettings = {
 function getLineType(article:string, line: number):LineType
 {
     let typeArray = splitArticle(article);
+    for(let i=0;i<typeArray.length;i++)
+    {
+        if(line >= typeArray[i].begin && line<typeArray[i].end)
+        {
+            return typeArray[i].type;
+        }
+    }
+}
+
+function getLineTypeFromArticleParts(line: number, typeArray: ArticlePart[]):LineType
+{
     for(let i=0;i<typeArray.length;i++)
     {
         if(line >= typeArray[i].begin && line<typeArray[i].end)
@@ -924,17 +935,26 @@ export default class EasyTypingPlugin extends Plugin {
 	keyCtrlFlag: boolean;
 	keySetNotUpdate: Set<string>;
 	inputChineseFlag: boolean;
-    prevPos: Position;
+    // prevPosition: PositionType;
+    lineTypeArray: ArticlePart[];
+    checkLineType: boolean;
+    prevLineCount: number;
+    prevLineType: LineType;
 
 	async onload() {
 		console.log('loading plugin：Easy Typing');
 
 		await this.loadSettings();
 
-        this.prevPos = {type:LineType.none, line:0, ch:0};
 		this.keyCtrlFlag = false;
 		this.inputChineseFlag = false;
 		this.keySetNotUpdate = new Set(['Control', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Alt', 'Backspace', 'Escape', 'Delete', 'NumLock']);
+        
+        // this.prevPosition = {type:LineType.none, line:0, ch:0};
+        this.prevLineType = LineType.none;
+        this.prevLineCount = null;
+        this.lineTypeArray = null;
+        this.checkLineType = true;
 
 		this.addCommand({
 			id: "easy-typing-format-line",
@@ -985,6 +1005,13 @@ export default class EasyTypingPlugin extends Plugin {
     {
         if(!this.settings.AutoFormatting) return;
         let symbol = obj.text[0];
+
+        let reg = /[-\`\$]/;
+        if(reg.test(symbol))
+        {
+            this.checkLineType = true;
+        }
+
         if(editor.somethingSelected() && this.settings.SelectedFormat)
         {
             // console.log('symbol:', symbol);
@@ -1069,6 +1096,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
+        if(!this.settings.AutoFormatting) return;
 		// console.log('=========================')
 		// console.log('keydown:', event.key);
 
@@ -1147,25 +1175,22 @@ export default class EasyTypingPlugin extends Plugin {
 		let cursor = editor.getCursor();
 		let line = editor.getLine(cursor.line);
 
-        let checkType = true;
-        // if(this.prevPos.type === LineType.text && cursor.line === this.prevPos.line && cursor.ch>=this.prevPos.ch)
-        // {
-        //     checkType = false;
-        //     this.prevPos.line = cursor.line;
-        //     this.prevPos.ch = cursor.ch;
-        // }
-
-        if(checkType)
+        // 在文档行数变化时，或者checkLineType为真时，重新 parse article
+        if(this.checkLineType || this.prevLineCount!=editor.lineCount())
         {
-            let t = getLineType(editor.getValue(), cursor.line);
-            if(t!=LineType.text)
-            {
-                // this.prevPos.type = t;
-                // this.prevPos.line = cursor.line;
-                // this.prevPos.ch = cursor.ch;
-                return;
-            }
+            // new Notice('reparse article')
+            // this.lineTypeArray = splitArticle(editor.getValue());
+            this.prevLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
+            this.prevLineCount = editor.lineCount();
+            this.checkLineType = false;
+            // this.prevPosition = {type:this.prevLineType, line: cursor.line, ch:cursor.ch}
         }
+
+        if(this.prevLineType!=LineType.text)
+        {
+            return;
+        }
+
 		let ret = formatLine(line, cursor.ch, this.settings);
 
 		if(line!=ret[0])
