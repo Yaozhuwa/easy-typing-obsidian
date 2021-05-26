@@ -1179,7 +1179,7 @@ export default class EasyTypingPlugin extends Plugin {
         if(this.checkLineType || this.prevLineCount!=editor.lineCount())
         {
             // new Notice('reparse article')
-            // this.lineTypeArray = splitArticle(editor.getValue());
+            this.lineTypeArray = splitArticle(editor.getValue());
             this.prevLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
             this.prevLineCount = editor.lineCount();
             this.checkLineType = false;
