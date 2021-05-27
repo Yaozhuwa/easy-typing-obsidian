@@ -935,7 +935,7 @@ export default class EasyTypingPlugin extends Plugin {
 	keyCtrlFlag: boolean;
 	keySetNotUpdate: Set<string>;
 	inputChineseFlag: boolean;
-    // prevPosition: PositionType;
+    prevCursor: CodeMirror.Position;
     lineTypeArray: ArticlePart[];
     checkLineType: boolean;
     prevLineCount: number;
@@ -951,6 +951,7 @@ export default class EasyTypingPlugin extends Plugin {
 		this.keySetNotUpdate = new Set(['Control', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Alt', 'Backspace', 'Escape', 'Delete', 'NumLock']);
         
         // this.prevPosition = {type:LineType.none, line:0, ch:0};
+        this.prevCursor = {line:0, ch:0};
         this.prevLineType = LineType.none;
         this.prevLineCount = null;
         this.lineTypeArray = null;
@@ -1174,19 +1175,27 @@ export default class EasyTypingPlugin extends Plugin {
 
 		let cursor = editor.getCursor();
 		let line = editor.getLine(cursor.line);
+        let thisLineType:LineType;
 
         // 在文档行数变化时，或者checkLineType为真时，重新 parse article
         if(this.checkLineType || this.prevLineCount!=editor.lineCount())
         {
             // new Notice('reparse article')
             this.lineTypeArray = splitArticle(editor.getValue());
-            this.prevLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
+            thisLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
+            this.prevLineType = thisLineType;
             this.prevLineCount = editor.lineCount();
             this.checkLineType = false;
-            // this.prevPosition = {type:this.prevLineType, line: cursor.line, ch:cursor.ch}
+            this.prevCursor = cursor;
+        }
+        // 在其他行编辑的时候，需要先获取下行的类型
+        else if(cursor.line != this.prevCursor.line)
+        {
+            thisLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
+            this.prevLineType = thisLineType;
         }
 
-        if(this.prevLineType!=LineType.text)
+        if(thisLineType!=LineType.text)
         {
             return;
         }
