@@ -1,6 +1,6 @@
 {
   "name": "easy-typing-obsidian",
-  "version": "3.1.5",
+  "version": "3.1.6",
   "description": "Autoformat your note as typing.(Auto captalize and autospace)",
   "main": "main.js",
   "scripts": {

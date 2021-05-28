@@ -62,6 +62,11 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.6 2021.5.28
+  - Improvement
+    - 在设置项增加了Debug，可以在控制台输出调试信息，方便调试。
+  - Bug fix
+    - 修复光标定位新行时，prevCursor没更新导致的bug。
 - v3.1.5 2021.5.28
   - Bug fix
     - 修复了在text类型的行编辑后，光标定位到codeblock内编辑情况下，format会对codeblock起作用的bug。

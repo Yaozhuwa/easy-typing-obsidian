@@ -42,6 +42,8 @@ interface FormatSettings
     MdLinkSpace: boolean;
 
     SelectedFormat:boolean;
+
+    Debug: boolean;
 }
 
 const DEFAULT_SETTINGS: FormatSettings = {
@@ -59,7 +61,8 @@ const DEFAULT_SETTINGS: FormatSettings = {
     WikiLiskSpace: true,
     MdLinkSpace: true,
 
-    SelectedFormat:true
+    SelectedFormat:true,
+    Debug:false
 }
 
 function getLineType(article:string, line: number):LineType
@@ -1097,10 +1100,14 @@ export default class EasyTypingPlugin extends Plugin {
 
 	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
-        if(!this.settings.AutoFormatting) return;
-		// console.log('=========================')
-		// console.log('keydown:', event.key);
+        if(this.settings.Debug)
+        {
+            console.log('=========================')
+            console.log('keydown:', event.key);
+        }
 
+        if(!this.settings.AutoFormatting) return;
+		
 		if(event.key === 'Process')
 		{
 			this.inputChineseFlag = true;
@@ -1114,25 +1121,22 @@ export default class EasyTypingPlugin extends Plugin {
 	private handleKeyUp=(editor: CodeMirror.Editor, event: KeyboardEvent):void =>
 	{
 
-		// console.log('=========================')
-		// console.log('keyup:', event.key);
+        if(this.settings.Debug)
+        {
+            console.log('=========================')
+            console.log('keyup:', event.key);
 
+            if(event.key === 'F4')
+            {
+                console.log("Test Begin========================");
+                
+                console.log("Test End========================");
+                return;
+            }
+        }
+		
+        // console.log('Prev line  type:',this.prevLineType)
 		// for test and debug
-		// if(event.key === 'F4')
-		// {
-		// 	console.log("Test Begin========================");
-		// 	// let firstLineIndex = editor.firstLine();
-        //     // let lastLineIndex = editor.lastLine();
-        //     // console.log('firstLineIndex', firstLineIndex)
-        //     // console.log('lastLineIndex', lastLineIndex)
-        //     // console.log(editor.getLine(firstLineIndex));
-        //     // console.log('---------')
-        //     // console.log(editor.getValue().split('\n'));
-        //     // console.log('splitArticle', splitArticle(editor.getValue()));
-
-		// 	console.log("Test End========================");
-		// 	return;
-		// }
 
 		if(this.settings.AutoFormatting===false)
 		{
@@ -1180,7 +1184,7 @@ export default class EasyTypingPlugin extends Plugin {
         // 在文档行数变化时，或者checkLineType为真时，重新 parse article
         if(this.checkLineType || this.prevLineCount!=editor.lineCount())
         {
-            // new Notice('reparse article')
+            if(this.settings.Debug) new Notice('reparse article');
             this.lineTypeArray = splitArticle(editor.getValue());
             thisLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
             this.prevLineType = thisLineType;
@@ -1193,6 +1197,10 @@ export default class EasyTypingPlugin extends Plugin {
         {
             thisLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
             this.prevLineType = thisLineType;
+            this.prevCursor = cursor;
+        }
+        else{
+            thisLineType = this.prevLineType;
         }
 
         if(thisLineType!=LineType.text)
@@ -1211,6 +1219,10 @@ export default class EasyTypingPlugin extends Plugin {
 				line: cursor.line,
 				ch: ret[1]
 			});
+            this.prevCursor = {
+				line: cursor.line,
+				ch: ret[1]
+			};
 			editor.focus();
 		}
 	}
@@ -1374,5 +1386,17 @@ class EasyTypingSettingTab extends PluginSettingTab {
 				await this.plugin.saveSettings();
 			});
 		});
+
+        containerEl.createEl('h2', {text: 'Debug'});
+        new Setting(containerEl)
+		.setName("Print debug info in console")
+		.setDesc("在控制台输出调试信息")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.Debug).onChange(async (value)=>{
+				this.plugin.settings.Debug = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
 	}
 }
