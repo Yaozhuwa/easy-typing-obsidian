@@ -1018,23 +1018,21 @@ export default class EasyTypingPlugin extends Plugin {
 
         if(editor.somethingSelected() && this.settings.SelectedFormat)
         {
-            // console.log('symbol:', symbol);
-            if(symbol === '￥')
-            {
-                symbol = '$';
-            }
-            else if(symbol === '·')
-            {
-                symbol = '`';
-            }
-            else{
-                return;
-            }
+						// console.log('symbol:', symbol);
+						if (symbol === "￥") {
+								symbol = "$$";
+						} else if (symbol === "·") {
+								symbol = "``";
+						} else if (symbol === "【") {
+								symbol = "[]";
+						} else {
+								return;
+						}
 
-            const selected = editor.getSelection();
-            const replaceText = symbol+selected+symbol;
-            // @ts-ignore
-            obj.update(null, null, [replaceText]);
+						const selected = editor.getSelection();
+						const replaceText = symbol.charAt(0) + selected + symbol.charAt(1);
+						// @ts-ignore
+						obj.update(null, null, [replaceText]);
         }
     }
 
@@ -1378,8 +1376,8 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		});
 
         new Setting(containerEl)
-		.setName("When something selected, `￥` will format the selected text to inline formula\n`·` will format the selected text to inline code")
-		.setDesc("选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式\n按中文的·，将自动替换成`，变成行内代码块")
+		.setName("When something selected, `￥` will format the selected text to inline formula; `·` will format the selected text to inline code; `【` will format the selected text to link")
+                .setDesc("选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式；按中文的·，将自动替换成`，变成行内代码块；按中文的【，将自动替换成[，变成链接块。")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.SelectedFormat).onChange(async (value)=>{
 				this.plugin.settings.SelectedFormat = value;
