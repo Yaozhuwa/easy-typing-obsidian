@@ -943,6 +943,8 @@ export default class EasyTypingPlugin extends Plugin {
     checkLineType: boolean;
     prevLineCount: number;
     prevLineType: LineType;
+    
+    selectedFormatRange:CodeMirror.Range;
 
 	async onload() {
 		console.log('loading plugin：Easy Typing');
@@ -959,6 +961,7 @@ export default class EasyTypingPlugin extends Plugin {
         this.prevLineCount = null;
         this.lineTypeArray = null;
         this.checkLineType = true;
+        this.selectedFormatRange = null;
 
 		this.addCommand({
 			id: "easy-typing-format-line",
@@ -1009,6 +1012,7 @@ export default class EasyTypingPlugin extends Plugin {
     {
         if(!this.settings.AutoFormatting) return;
         let symbol = obj.text[0];
+        let replaceSymbol:string;
 
         let reg = /[-\`\$]/;
         if(reg.test(symbol))
@@ -1018,21 +1022,28 @@ export default class EasyTypingPlugin extends Plugin {
 
         if(editor.somethingSelected() && this.settings.SelectedFormat)
         {
-            // console.log('symbol:', symbol);
+            console.log('before change: symbol:', symbol);
             if(symbol === '￥')
             {
-                symbol = '$';
+                replaceSymbol = '$$';
+                this.selectedFormatRange = editor.listSelections()[0];
             }
             else if(symbol === '·')
             {
-                symbol = '`';
+                replaceSymbol = '``';
+            }
+            else if(symbol==='【')
+            {
+                replaceSymbol = '[]'
+                this.selectedFormatRange = editor.listSelections()[0];
             }
             else{
                 return;
             }
 
             const selected = editor.getSelection();
-            const replaceText = symbol+selected+symbol;
+            const replaceText = replaceSymbol.charAt(0) +selected+ replaceSymbol.charAt(1);
+
             // @ts-ignore
             obj.update(null, null, [replaceText]);
         }
@@ -1134,6 +1145,17 @@ export default class EasyTypingPlugin extends Plugin {
                 return;
             }
         }
+
+        // selectFormat
+        if(this.selectedFormatRange!=null && (event.key==='['||event.key==='$'))
+        {
+            let selectedStart = this.selectedFormatRange.from();
+            let selectedEnd = this.selectedFormatRange.to();
+            selectedStart.ch += 1;
+            selectedEnd.ch += 1;
+            editor.setSelection(selectedStart, selectedEnd);
+            this.selectedFormatRange = null;
+        }
 		
         // console.log('Prev line  type:',this.prevLineType)
 		// for test and debug
@@ -1166,7 +1188,7 @@ export default class EasyTypingPlugin extends Plugin {
 		{
 			// 判断中文输入的结束点，检测到数字或者空格就是输入中文结束，Shift是中文输入法输入英文。
 			// 匹配,.;'<>是中文输入法的全角字符，。；‘’《》
-			if(event.key.match(/[0-9 ,.;<>:'\\\/]/gi)!=null || event.key==='Shift')
+			if(event.key.match(/[0-9 ,.;<>:'`\\\/]/gi)!=null || event.key==='Shift')
 			{
 				// console.log("chinese input done!");
 				this.inputChineseFlag = false;
@@ -1379,7 +1401,7 @@ class EasyTypingSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
 		.setName("When something selected, `￥` will format the selected text to inline formula\n`·` will format the selected text to inline code")
-		.setDesc("选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式\n按中文的·，将自动替换成`，变成行内代码块")
+		.setDesc("选中文本情况下\n按中文的￥键，将自动替换成$，变成行内公式\n按中文的·，将自动替换成`，变成行内代码块")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.SelectedFormat).onChange(async (value)=>{
 				this.plugin.settings.SelectedFormat = value;
