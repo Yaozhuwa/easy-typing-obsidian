@@ -93,7 +93,7 @@ function splitArticle(article:string): ArticlePart[]
     let retArray: ArticlePart[] = [];
     let lines = article.split('\n');
     let regNullLine = /^\s*$/;
-    let regFormulaBegin = /^\$\$/;
+    let regFormulaBegin = /^\s*(\- (\[[x ]\] )?)?\$\$/;
     let regFormulaEnd = /\$\$$/;
     let regCodeBegin = /^\s*```/;
     let regCodeEnd = /^\s*```$/;
@@ -1400,8 +1400,12 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		});
 
         new Setting(containerEl)
-		.setName("When something selected, `￥` will format the selected text to inline formula\n`·` will format the selected text to inline code")
-		.setDesc("选中文本情况下\n按中文的￥键，将自动替换成$，变成行内公式\n按中文的·，将自动替换成`，变成行内代码块")
+		.setName("When something selected, `￥` will format the selected text to inline formula\n"+
+            "`·` will format the selected text to inline code"+
+            "\n`【` will add square brackets to the selected text")
+		.setDesc("选中文本情况下\n按中文的￥键，将自动替换成$，变成行内公式"+
+            "\n按中文的·，将自动替换成`，变成行内代码块"+
+            "\n按键【会给选中文本两边加上中括号")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.SelectedFormat).onChange(async (value)=>{
 				this.plugin.settings.SelectedFormat = value;
