@@ -1008,7 +1008,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 	}
 
-    beforeChange = (editor:CodeMirror.Editor, obj: CodeMirror.EditorChange)=>
+    beforeChange = (editor:CodeMirror.Editor, obj: CodeMirror.EditorChangeCancellable)=>
     {
         if(!this.settings.AutoFormatting) return;
         let symbol = obj.text[0];
@@ -1044,14 +1044,13 @@ export default class EasyTypingPlugin extends Plugin {
             const selected = editor.getSelection();
             const replaceText = replaceSymbol.charAt(0) +selected+ replaceSymbol.charAt(1);
 
-            // @ts-ignore
             obj.update(null, null, [replaceText]);
         }
     }
 
 	onunload() {
 		console.log('unloading plugin');
-        this.registerCodeMirror((codeMirrorEditor: CodeMirror.Editor) => {
+        this.app.workspace.iterateCodeMirrors((codeMirrorEditor: CodeMirror.Editor) => {
 			codeMirrorEditor.off('keyup', this.handleKeyUp);
             codeMirrorEditor.off('keydown', this.handleKeyDown);
             codeMirrorEditor.off('beforeChange', this.beforeChange);
