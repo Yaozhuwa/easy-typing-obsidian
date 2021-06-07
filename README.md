@@ -62,6 +62,11 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.7 2021.6.7
+  - Improvement
+    - selectFormat 增加了选中文本时按【则在文本两边增加`[]`的效果.
+    - 现在选中文本再【或者￥后，文本还保持选中
+    - list或者task内部开头的整行公式(如`$$x+y=z$$`)现在也能被识别，不会导致错误的格式化。
 - v3.1.6 2021.5.28
   - Improvement
     - 在设置项增加了Debug，可以在控制台输出调试信息，方便调试。
