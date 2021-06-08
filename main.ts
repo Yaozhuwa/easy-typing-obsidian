@@ -41,7 +41,7 @@ interface FormatSettings
     WikiLiskSpace: boolean;
     MdLinkSpace: boolean;
 
-    SelectedFormat:boolean;
+    FullWidthCharacterEnhence:boolean;
 
     Debug: boolean;
 }
@@ -61,7 +61,7 @@ const DEFAULT_SETTINGS: FormatSettings = {
     WikiLiskSpace: true,
     MdLinkSpace: true,
 
-    SelectedFormat:true,
+    FullWidthCharacterEnhence:true,
     Debug:false
 }
 
@@ -1020,7 +1020,7 @@ export default class EasyTypingPlugin extends Plugin {
             this.checkLineType = true;
         }
 
-        if(editor.somethingSelected() && this.settings.SelectedFormat)
+        if(editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
         {
             console.log('before change: symbol:', symbol);
             if(symbol === '￥')
@@ -1145,6 +1145,12 @@ export default class EasyTypingPlugin extends Plugin {
             }
         }
 
+
+        if(this.settings.AutoFormatting===false)
+		{
+			return;
+		}
+
         // selectFormat
         if(this.selectedFormatRange!=null && (event.key==='['||event.key==='$'))
         {
@@ -1155,14 +1161,61 @@ export default class EasyTypingPlugin extends Plugin {
             editor.setSelection(selectedStart, selectedEnd);
             this.selectedFormatRange = null;
         }
-		
-        // console.log('Prev line  type:',this.prevLineType)
-		// for test and debug
 
-		if(this.settings.AutoFormatting===false)
+        if (editor.somethingSelected())
 		{
 			return;
 		}
+
+        if(this.settings.FullWidthCharacterEnhence)
+        {
+            let cursor = editor.getCursor();
+            let twoCharactersBeforeCursor = editor.getRange(
+                {line: cursor.line, ch:cursor.ch-2},
+                {line: cursor.line, ch:cursor.ch}
+            );
+            let twoCharactersNearCursor = editor.getRange(
+                {line: cursor.line, ch:cursor.ch-1},
+                {line: cursor.line, ch:cursor.ch+1}
+            );
+            let character2cursor1 = editor.getRange(
+                {line: cursor.line, ch:cursor.ch-2},
+                {line: cursor.line, ch:cursor.ch+1}
+            );
+            if(event.key==='$')
+            {
+                if(twoCharactersBeforeCursor === '￥￥')
+                {
+                    editor.replaceRange(
+                        '$$',
+                        {line: cursor.line, ch:cursor.ch-2},
+                        {line: cursor.line, ch:cursor.ch}
+                    );
+                    editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                }
+                else if(character2cursor1='$￥$')
+                {
+                    editor.replaceRange(
+                        '$$',
+                        {line: cursor.line, ch:cursor.ch-1},
+                        {line: cursor.line, ch:cursor.ch}
+                    );
+                    editor.setCursor(cursor);
+                }
+            }
+            else if(event.key==='[')
+            {
+                if(twoCharactersBeforeCursor === '[[')
+                {
+                    editor.replaceRange(
+                        '[[]]',
+                        {line: cursor.line, ch:cursor.ch-2},
+                        {line: cursor.line, ch:cursor.ch}
+                    );
+                    editor.setCursor(cursor);
+                }
+            }
+        }
 
 		if(event.key === 'Control')
 		{
@@ -1178,10 +1231,7 @@ export default class EasyTypingPlugin extends Plugin {
 		{
 			return;
 		}
-		if (editor.somethingSelected())
-		{
-			return;
-		}
+		
 
 		if(this.inputChineseFlag)
 		{
@@ -1406,8 +1456,8 @@ class EasyTypingSettingTab extends PluginSettingTab {
             "\n按中文的·，将自动替换成`，变成行内代码块"+
             "\n按键【会给选中文本两边加上中括号")
 		.addToggle((toggle)=>{
-			toggle.setValue(this.plugin.settings.SelectedFormat).onChange(async (value)=>{
-				this.plugin.settings.SelectedFormat = value;
+			toggle.setValue(this.plugin.settings.FullWidthCharacterEnhence).onChange(async (value)=>{
+				this.plugin.settings.FullWidthCharacterEnhence = value;
 				await this.plugin.saveSettings();
 			});
 		});
