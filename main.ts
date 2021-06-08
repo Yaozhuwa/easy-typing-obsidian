@@ -1,14 +1,7 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-enum InlineType {text='text', code='code', formula='formula', wikilink='wikilink', mdlink='mdlink', barelink='barelink', none='none'}
-enum InlineMark {code='`', formula='\$'}
+enum InlineType {text='text', code='code', formula='formula', wikilink='wikilink', mdlink='mdlink', barelink='barelink', user='user-defined', none='none'}
 enum LineType {text='text', code='code', formula='formula', frontmatter='frontmatter', none='none'};
-
-interface PositionType{
-    type: LineType,
-    line: number,
-    ch: number
-}
 
 interface ArticlePart
 {
@@ -160,7 +153,7 @@ function splitArticle(article:string): ArticlePart[]
         }
         else if(regFormulaBegin.test(lines[index]))
         {
-            let regFormulaOneLine = /^\$\$[^]+\$\$$/;
+            let regFormulaOneLine = /(?<!\\)\$\$(?! )[^]*?(?<! )(?<!\\)\$\$/g;
             if(regFormulaOneLine.test(lines[index]))
             {
                 retArray.push({
@@ -221,10 +214,12 @@ function stringInsertAt(str:string, index: number, s: string):string
 function splitLine(line: string): InlinePart[]
 {
     let regInlineMark = /(?<!\\)\$|(?<!\\)\`/g;
-    let regFormula = /(?<!\\)\$(?! )[^]+?(?<! )(?<!\\)\$/g;
+    let regFormulaInline = /(?<!\\)\$(?! )[^]+?(?<! )(?<!\\)\$/g;
+    let regFormulaBlock = /(?<!\\)\$\$(?! )[^]*?(?<! )(?<!\\)\$\$/g;
     let regCode = /(?<!\\)`[^]*?(?<!\\)`/g;
-    let markQueue: RegExpExecArray[] = [];
-    let retArray0: InlinePart[] = [];
+    let markQueue:RegExpExecArray[] = [];
+    let arrayOfInlineTextCodeFormula: InlinePart[] = [];
+
     while(true)
     {
         let match = regInlineMark.exec(line);
@@ -232,138 +227,127 @@ function splitLine(line: string): InlinePart[]
         markQueue.push(match);
     }
 
-    let textBegin = 0;
-    let textEnd = 0;
+    let textBeginIndex = 0;
     while(markQueue.length!=0)
     {
         let mark = markQueue.shift();
-        let valid = true;
-        for(let i=0;i<retArray0.length;i++)
+        if(mark.index<textBeginIndex) continue;
+
+        if(mark[0]==='$')
         {
-            if(mark.index>=retArray0[i].begin && mark.index<retArray0[i].end)
+            let matchFormulaBeginIndex:number;
+            let matchFormulaLastIndex:number;
+            regFormulaBlock.lastIndex = mark.index;
+            let matchBlockFormula = regFormulaBlock.exec(line);
+            if(matchBlockFormula && matchBlockFormula.index===mark.index)
             {
-                valid = false;
-                break;
+                matchFormulaBeginIndex = matchBlockFormula.index;
+                matchFormulaLastIndex = regFormulaBlock.lastIndex;
             }
-        }
-        if(!valid) continue;
-        switch(mark[0])
-        {
-            case InlineMark.formula:
-                regFormula.lastIndex = mark.index;
-                let formula = regFormula.exec(line);
-                if(formula)
+            else
+            {
+                regFormulaInline.lastIndex = mark.index;
+                let matchInlineFormula = regFormulaInline.exec(line);
+                if(matchInlineFormula && matchInlineFormula.index===mark.index)
                 {
-                    // 该 mark 作为普通字符
-                    if(formula.index!=mark.index)
-                    {
-                        regFormula.lastIndex = mark.index;
-                    }
-                    // 匹配成功
-                    else
-                    {
-                        if(textBegin<formula.index)
-                        {
-                            textEnd = formula.index;
-                            retArray0.push(
-                                {
-                                    content: line.substring(textBegin, textEnd),
-                                    type: InlineType.text,
-                                    begin: textBegin,
-                                    end: textEnd
-                                }
-                            );
-                        }
-                        retArray0.push(
-                            {
-                                content: formula[0], 
-                                type:InlineType.formula, 
-                                begin:formula.index, 
-                                end:regFormula.lastIndex
-                            }
-                        );
-                        textBegin = regFormula.lastIndex;
-                    }
+                    matchFormulaBeginIndex = matchInlineFormula.index;
+                    matchFormulaLastIndex = regFormulaInline.lastIndex;
                 }
-                break;
-            case InlineMark.code:
-                regCode.lastIndex = mark.index;
-                let code = regCode.exec(line);
-                if(code)
-                {
-                    if(textBegin<code.index)
-                    {
-                        textEnd = code.index;
-                        retArray0.push(
-                            {
-                                content: line.substring(textBegin, textEnd),
-                                type: InlineType.text,
-                                begin: textBegin,
-                                end: textEnd
-                            }
-                        );
-                    }
-                    retArray0.push(
-                        {
-                            content: code[0],
-                            type: InlineType.code,
-                            begin: code.index,
-                            end: regCode.lastIndex
-                        }
-                    );
-                    textBegin = regCode.lastIndex;
-                }
+                // 如果没匹配到，则 continue
                 else
                 {
-                    if(textBegin<mark.index)
+                    continue;
+                }
+            }
+            
+            if(mark.index>textBeginIndex)
+            {
+                arrayOfInlineTextCodeFormula.push(
                     {
-                        textEnd = mark.index;
-                        retArray0.push(
-                            {
-                                content: line.substring(textBegin, textEnd),
-                                type: InlineType.text,
-                                begin: textBegin,
-                                end: textEnd
-                            }
-                        );
+                        content: line.substring(textBeginIndex, mark.index),
+                        type: InlineType.text,
+                        begin: textBeginIndex,
+                        end: mark.index
                     }
-                    retArray0.push(
+                );
+            }
+
+            arrayOfInlineTextCodeFormula.push(
+                {
+                    content: line.substring(matchFormulaBeginIndex, matchFormulaLastIndex),
+                    type:InlineType.formula,
+                    begin:matchFormulaBeginIndex,
+                    end:matchFormulaLastIndex
+                }
+            );
+            textBeginIndex = matchFormulaLastIndex;
+            continue;
+        }
+        else if(mark[0]==='`')
+        {
+            let matchCodeBeginIndex:number;
+            let matchCodeLastIndex:number;
+            regCode.lastIndex = mark.index;
+            let matchInlineCode = regCode.exec(line);
+            if(matchInlineCode && matchInlineCode.index===mark.index)
+            {
+                matchCodeBeginIndex = matchInlineCode.index;
+                matchCodeLastIndex = regCode.lastIndex;
+
+                if(mark.index>textBeginIndex)
+                {
+                    arrayOfInlineTextCodeFormula.push(
                         {
-                            content: line.substring(mark.index),
-                            type: InlineType.code,
-                            begin: mark.index,
-                            end: line.length
+                            content: line.substring(textBeginIndex, mark.index),
+                            type:InlineType.text,
+                            begin: textBeginIndex,
+                            end: mark.index
                         }
                     );
-                    textBegin = line.length;
                 }
-                break;
+    
+                arrayOfInlineTextCodeFormula.push(
+                    {
+                        content: line.substring(matchCodeBeginIndex, matchCodeLastIndex),
+                        type:InlineType.code,
+                        begin:matchCodeBeginIndex,
+                        end:matchCodeLastIndex
+                    }
+                );
+                textBeginIndex = matchCodeLastIndex;
+                continue;
+            }
+            else
+            {
+                continue;
+            }
         }
     }
-    if(textBegin!=line.length)
+    if(textBeginIndex!=line.length)
     {
-        retArray0.push(
+        arrayOfInlineTextCodeFormula.push(
             {
-                content: line.substring(textBegin),
-                type: InlineType.text,
-                begin: textBegin,
-                end: line.length
+                content: line.substring(textBeginIndex),
+                type:InlineType.text,
+                begin:textBeginIndex,
+                end:line.length
             }
-        );
+        )
     }
+    // =======================================
     let retArray: InlinePart[] = [];
-    for(let i=0;i<retArray0.length;i++)
+    for(let i=0;i<arrayOfInlineTextCodeFormula.length;i++)
     {
-        if(retArray0[i].type!=InlineType.text)
+        if(arrayOfInlineTextCodeFormula[i].type!=InlineType.text)
         {
-            retArray.push(retArray0[i]);
+            retArray.push(arrayOfInlineTextCodeFormula[i]);
         }
         else
         {
-            let tempArray = splitTextWithLink(retArray0[i].content);
+            let tempArray = splitTextWithLink(arrayOfInlineTextCodeFormula[i].content);
             tempArray.forEach(item=>{
-                item.begin += retArray0[i].begin;
-                item.end += retArray0[i].begin;
+                item.begin += arrayOfInlineTextCodeFormula[i].begin;
+                item.end += arrayOfInlineTextCodeFormula[i].begin;
                 retArray.push(item);
             });
         }
@@ -1182,10 +1166,16 @@ export default class EasyTypingPlugin extends Plugin {
                 {line: cursor.line, ch:cursor.ch-2},
                 {line: cursor.line, ch:cursor.ch+1}
             );
+            let twoCharactersAfterCursor = editor.getRange(
+                {line: cursor.line, ch:cursor.ch},
+                {line: cursor.line, ch:cursor.ch+2}
+            );
             if(event.key==='$')
             {
+                console.log('twoCharactersBeforeCursor', twoCharactersBeforeCursor)
                 if(twoCharactersBeforeCursor === '￥￥')
                 {
+                    console.log('￥￥', twoCharactersBeforeCursor)
                     editor.replaceRange(
                         '$$',
                         {line: cursor.line, ch:cursor.ch-2},
@@ -1193,7 +1183,7 @@ export default class EasyTypingPlugin extends Plugin {
                     );
                     editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                 }
-                else if(character2cursor1='$￥$')
+                else if(character2cursor1==='$￥$')
                 {
                     editor.replaceRange(
                         '$$',
@@ -1205,7 +1195,7 @@ export default class EasyTypingPlugin extends Plugin {
             }
             else if(event.key==='[')
             {
-                if(twoCharactersBeforeCursor === '[[')
+                if(twoCharactersBeforeCursor === '[[' && twoCharactersAfterCursor!=']]')
                 {
                     editor.replaceRange(
                         '[[]]',
@@ -1213,6 +1203,18 @@ export default class EasyTypingPlugin extends Plugin {
                         {line: cursor.line, ch:cursor.ch}
                     );
                     editor.setCursor(cursor);
+                }
+            }
+            else if(event.key==='`')
+            {
+                if(twoCharactersBeforeCursor === '··')
+                {
+                    editor.replaceRange(
+                        '``',
+                        {line: cursor.line, ch:cursor.ch-2},
+                        {line: cursor.line, ch:cursor.ch}
+                    );
+                    editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                 }
             }
         }

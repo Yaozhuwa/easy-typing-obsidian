@@ -56,12 +56,16 @@ And you can set the formatting rules freely in the plugin Settings panel.
 
 ### 展望功能/改进空间 Future
 - [ ] 用户自定义正则表达式及其替换规则？
+
+### 详细功能设置说明
+
 ### 手动安装插件 Manually installing the plugin
 
 - 下载最新的 release 包（不是源代码）, 将 `main.js`, `styles.css`, `manifest.json` 复制到您的保管库 `VaultFolder/.obsidian/plugins/your-plugin-id/` 中。
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.8 2021.6.9
 - v3.1.7 2021.6.7
   - Improvement
     - selectFormat 增加了选中文本时按【则在文本两边增加`[]`的效果.
