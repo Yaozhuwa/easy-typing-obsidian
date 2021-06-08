@@ -1451,18 +1451,15 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		});
 
         new Setting(containerEl)
-		.setName("When something selected, `￥` will format the selected text to inline formula\n"+
-            "`·` will format the selected text to inline code"+
-            "\n`【` will add square brackets to the selected text")
-		.setDesc("选中文本情况下\n按中文的￥键，将自动替换成$，变成行内公式"+
-            "\n按中文的·，将自动替换成`，变成行内代码块"+
-            "\n按键【会给选中文本两边加上中括号")
+		.setName("Full-Width symbol input enhancement")
+		.setDesc("全角符号输入增强")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.FullWidthCharacterEnhence).onChange(async (value)=>{
 				this.plugin.settings.FullWidthCharacterEnhence = value;
 				await this.plugin.saveSettings();
 			});
 		});
+        containerEl.createEl('a', {text: 'More detail in the github repo', href:'https://github.com/Yaozhuwa/easy-typing-obsidian'});
 
         containerEl.createEl('h2', {text: 'Debug'});
         new Setting(containerEl)

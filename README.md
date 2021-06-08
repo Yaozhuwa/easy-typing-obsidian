@@ -1,3 +1,9 @@
+- [Easy Typing](#easy-typing)
+  - [插件功能 Features](#插件功能-features)
+  - [展望功能/改进空间 Future todo](#展望功能改进空间-future-todo)
+  - [其他说明 Other explanation](#其他说明-other-explanation)
+  - [手动安装插件 Manually installing the plugin](#手动安装插件-manually-installing-the-plugin)
+  - [更新日志 Changelog](#更新日志-changelog)
 ## Easy Typing
 
 这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写，让中文用户的 Obsidian 书写体验起飞~
@@ -31,9 +37,12 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - 快捷键/命令
 	- [x]  格式化当前行
   - [x]  一键全文格式化
-- [x] 选中文本的功能 (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
-	- [x] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
-	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
+- [x]  全角符号输入增强
+  - [x] 连续输入两个￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`
+  - [x] 选中文本的功能 (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
+  	- [x] 选中文本情况下，按中文的￥键，将自动替换成\$，变成`$selected text$`
+  	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
+    - [x] 选中文情况下，按中文的【，将自动变成`[selected text]`
 
 ---
 - auto formatting when editting
@@ -50,14 +59,19 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - short cut / command pane
   - [x] format current line
   - [x] format current note 
-- [x] when something selected (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
-  - [x] pressing the `￥` will format the selected text to inline formula
-  - [x] pressing the `·` will format the selected text to inline code
+- [x] Full-width symbol enhancement
+  - [x] Entering two ￥ in a row will become $$, and the cursor will be positioned in the middle, two【 will become `[[cursor]]`, two `·` will become \`cursor\`
+  - [x] when something selected (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
+    - [x] pressing the `￥` will format the selected text to `$selected text$`
+    - [x] pressing the `·` will format the selected text to inline code
+    - [x]  pressing the `【` will format the selected text to `[selected text]`
 
-### 展望功能/改进空间 Future
-- [ ] 用户自定义正则表达式及其替换规则？
+### 展望功能/改进空间 Future todo
+- [ ] 支持 emoji `:emoj:`的识别
+- [ ] 支持一些英文常用缩写的识别
+- [ ] 用户自定义正则表达式及其替换规则
 
-### 详细功能设置说明
+### 其他说明 Other explanation
 
 ### 手动安装插件 Manually installing the plugin
 
@@ -66,6 +80,10 @@ And you can set the formatting rules freely in the plugin Settings panel.
 
 ### 更新日志 Changelog
 - v3.1.8 2021.6.9
+  - Improvement
+    - 增加了全角符号输入增强，现在连续两个￥￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`
+    - 重写了splitLine函数，改善逻辑，增加可维护性，并支持行内`$$block formula$$`的识别。  
+    - readme 增加了对插件设置面板的说明
 - v3.1.7 2021.6.7
   - Improvement
     - selectFormat 增加了选中文本时按【则在文本两边增加`[]`的效果.
