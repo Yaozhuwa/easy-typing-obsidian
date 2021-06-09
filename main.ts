@@ -1223,6 +1223,15 @@ export default class EasyTypingPlugin extends Plugin {
                     );
                     editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                 }
+                else if(character2cursor1==='`·`')
+                {
+                    editor.replaceRange(
+                        '`',
+                        {line: cursor.line, ch:cursor.ch-1},
+                        {line: cursor.line, ch:cursor.ch}
+                    );
+                    editor.setCursor({line: cursor.line, ch:cursor.ch+1});
+                }
             }
         }
 
