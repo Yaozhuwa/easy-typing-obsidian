@@ -87,6 +87,9 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.2.1 2021.6.10
+  - Improvement
+    - 增加了连续三次键入·，会变成\`\`\`
 - v3.2.0 2021.6.10
   - Shiny new things
     - 增加了用户自定义正则表达式的功能，对正则表达式选取的部分不进行格式化。如`:\w*:`将识别emoji，并不会格式化其内部。`{{.*?}}`将识别双花括号部分，并对其内部不格式化。
