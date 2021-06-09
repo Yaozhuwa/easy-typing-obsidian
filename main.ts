@@ -1015,7 +1015,7 @@ export default class EasyTypingPlugin extends Plugin {
 
         if(editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
         {
-            // console.log('before change: symbol:', symbol);
+            if(this.settings.Debug) console.log('before change: symbol:', symbol);
             if(symbol === '￥')
             {
                 replaceSymbol = '$$';

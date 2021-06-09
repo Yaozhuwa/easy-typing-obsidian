@@ -2,8 +2,10 @@
   - [插件功能 Features](#插件功能-features)
   - [展望功能/改进空间 Future todo](#展望功能改进空间-future-todo)
   - [其他说明 Other explanation](#其他说明-other-explanation)
+    - [自定义正则表达式](#自定义正则表达式)
   - [手动安装插件 Manually installing the plugin](#手动安装插件-manually-installing-the-plugin)
   - [更新日志 Changelog](#更新日志-changelog)
+
 ## Easy Typing
 
 这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写，让中文用户的 Obsidian 书写体验起飞~
@@ -18,7 +20,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
 
 ![settings](showsettings.gif)
 - 运行测试 Test on
-  - [x] windows10 obsidian v0.11.13
+  - [x] windows10 obsidian v0.12.5
   - [x] ubuntu18.04, obsidian v0.11.13
   - [ ] Mac（没有设备，无法测试...）
 
@@ -43,6 +45,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
   	- [x] 选中文本情况下，按中文的￥键，将自动替换成\$，变成`$selected text$`
   	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
     - [x] 选中文情况下，按中文的【，将自动变成`[selected text]`
+- [x] 用户自定义正则表达式对特定文本不格式化
 
 ---
 - auto formatting when editting
@@ -65,20 +68,33 @@ And you can set the formatting rules freely in the plugin Settings panel.
     - [x] pressing the `￥` will format the selected text to `$selected text$`
     - [x] pressing the `·` will format the selected text to inline code
     - [x]  pressing the `【` will format the selected text to `[selected text]`
+- [x] User-defined regular expressions do not format specific text
 
 ### 展望功能/改进空间 Future todo
-- [ ] 支持 emoji `:emoj:`的识别
 - [ ] 支持一些英文常用缩写的识别
-- [ ] 用户自定义正则表达式及其替换规则
+- [ ] 中英文标点智能切换
 
 ### 其他说明 Other explanation
+#### 自定义正则表达式
+用户自定义正则表达式用于用户不希望对符合特定规则的区块进行格式化的情形。不支持多行模式的正则表达式。
 
+下面是一些示例
+- `:\w*:`: 识别出markdown的emoji.
+- `{{.*?}}`: 将识别双花括号部分
 ### 手动安装插件 Manually installing the plugin
 
 - 下载最新的 release 包（不是源代码）, 将 `main.js`, `styles.css`, `manifest.json` 复制到您的保管库 `VaultFolder/.obsidian/plugins/your-plugin-id/` 中。
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.2.0 2021.6.10
+  - Shiny new things
+    - 增加了用户自定义正则表达式的功能，对正则表达式选取的部分不进行格式化。如`:\w*:`将识别emoji，并不会格式化其内部。`{{.*?}}`将识别双花括号部分，并对其内部不格式化。
+    - 还可以选择自定义区块和其他文本区块之间空格。
+  - Change
+    - 合并了之前的 wikilink, mdlink, barelink，统称为link，相关的自动空格开关也合并为1个。
+  - Others
+    - 部分代码重新命名/注释，更加清晰
 - v3.1.9 2021.6.9
   - Bug fix
     - 修复 v3.1.8 全角输入增强对 Mac 版本 obsidian无效的问题
