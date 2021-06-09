@@ -79,6 +79,9 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.1.9 2021.6.9
+  - Bug fix
+    - 修复 v3.1.8 全角输入增强对 Mac 版本 obsidian无效的问题
 - v3.1.8 2021.6.9
   - Improvement
     - 增加了全角符号输入增强，现在连续两个￥￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`

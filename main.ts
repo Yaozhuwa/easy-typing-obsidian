@@ -36,6 +36,8 @@ interface FormatSettings
 
     FullWidthCharacterEnhence:boolean;
 
+    UserDefinedRegExp:string;
+
     Debug: boolean;
 }
 
@@ -55,6 +57,7 @@ const DEFAULT_SETTINGS: FormatSettings = {
     MdLinkSpace: true,
 
     FullWidthCharacterEnhence:true,
+    UserDefinedRegExp:'',
     Debug:false
 }
 
@@ -1136,7 +1139,7 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 
         // selectFormat
-        if(this.selectedFormatRange!=null && (event.key==='['||event.key==='$'))
+        if(this.selectedFormatRange!=null)
         {
             let selectedStart = this.selectedFormatRange.from();
             let selectedEnd = this.selectedFormatRange.to();
@@ -1170,12 +1173,10 @@ export default class EasyTypingPlugin extends Plugin {
                 {line: cursor.line, ch:cursor.ch},
                 {line: cursor.line, ch:cursor.ch+2}
             );
-            if(event.key==='$')
+            if(event.key==='$' || event.key==='￥')
             {
-                console.log('twoCharactersBeforeCursor', twoCharactersBeforeCursor)
                 if(twoCharactersBeforeCursor === '￥￥')
                 {
-                    console.log('￥￥', twoCharactersBeforeCursor)
                     editor.replaceRange(
                         '$$',
                         {line: cursor.line, ch:cursor.ch-2},
@@ -1193,7 +1194,7 @@ export default class EasyTypingPlugin extends Plugin {
                     editor.setCursor(cursor);
                 }
             }
-            else if(event.key==='[')
+            else if(event.key==='[' || event.key==='【')
             {
                 if(twoCharactersBeforeCursor === '[[' && twoCharactersAfterCursor!=']]')
                 {
@@ -1205,7 +1206,7 @@ export default class EasyTypingPlugin extends Plugin {
                     editor.setCursor(cursor);
                 }
             }
-            else if(event.key==='`')
+            else if(event.key==='`' || event.key==='·')
             {
                 if(twoCharactersBeforeCursor === '··')
                 {
@@ -1460,6 +1461,20 @@ class EasyTypingSettingTab extends PluginSettingTab {
 			});
 		});
         containerEl.createEl('a', {text: 'More detail in the github repo', href:'https://github.com/Yaozhuwa/easy-typing-obsidian'});
+
+        // new Setting(containerEl)
+		// .setName("RegExp")
+		// .setDesc("用户自定义正则表达式，匹配到的内容不进行格式化")
+		// .addTextArea((text) =>
+		// 	text
+		// 	.setPlaceholder("")
+		// 	.setValue(this.plugin.settings.UserDefinedRegExp)
+		// 	.onChange(async (value) => {
+		// 		this.plugin.settings.UserDefinedRegExp = value;
+        //         if(this.plugin.settings.Debug) console.log("regExp:", value);
+		// 		await this.plugin.saveSettings();
+		// 	})
+		// );
 
         containerEl.createEl('h2', {text: 'Debug'});
         new Setting(containerEl)
