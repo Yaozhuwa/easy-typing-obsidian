@@ -473,6 +473,8 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?:string):InlinePa
         let regs = regExps.split('\n');
         for(let i=0;i<regs.length;i++)
         {
+            let regNull = /^\s*$/g;
+            if(regNull.test(regs[i])) continue;
             let isValidReg = true;
             try{
                 let regTemp = new RegExp(regs[i], 'g')
