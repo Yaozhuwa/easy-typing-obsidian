@@ -6,6 +6,7 @@
   - [手动安装插件 Manually installing the plugin](#手动安装插件-manually-installing-the-plugin)
   - [更新日志 Changelog](#更新日志-changelog)
 
+建议更新时查看一下 [更新日志 Changelog](#更新日志-changelog)
 ## Easy Typing
 
 这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写，让中文用户的 Obsidian 书写体验起飞~
@@ -87,6 +88,14 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.2.2 2021.6.16
+  - Improvement
+    - 增加了对错误的自定义正则的处理，正则表达式功能应该没问题了。
+    - 修改了formatLine的方式，只对一行中需要格式化的部分进行replaceRange，解决了一行中如果有%`-时每次格式化都需要重新解析全文的问题，提升了性能。
+    - 全角字符增强的功能增加了输入……（shift+6）转换为^的功能。issue #10.
+    - 修改了很多if-else，改成switch，略微提升性能
+  - Notice:
+    - 建议本次更新版本后，找到`.obsidian/plugin/easy-typing-obsidian/data.json`删除，然后重新启动obsidian。
 - v3.2.1 2021.6.10
   - Improvement
     - 增加了连续三次键入·，会变成\`\`\`

@@ -473,7 +473,21 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?:string):InlinePa
         let regs = regExps.split('\n');
         for(let i=0;i<regs.length;i++)
         {
-            regExpList.push(new RegExp(regs[i], 'g'));
+            let isValidReg = true;
+            try{
+                let regTemp = new RegExp(regs[i], 'g')
+            }
+            catch(error)
+            {
+                isValidReg = false;
+                console.log('Bad Reg:', regs[i]);
+            }
+
+            if(isValidReg) 
+            {
+                regExpList.push(new RegExp(regs[i], 'g'));
+                // console.log('Good Reg:', regs[i]);
+            }
         }
         let regLen = regExpList.length;
 
@@ -1184,28 +1198,37 @@ export default class EasyTypingPlugin extends Plugin {
         if(editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
         {
             if(this.settings.Debug) console.log('before change: symbol:', symbol);
-            if(symbol === '￥')
+            switch(symbol)
             {
-                replaceSymbol = '$$';
-                this.selectedFormatRange = editor.listSelections()[0];
+                case '￥':
+                    replaceSymbol = '$$';
+                    this.selectedFormatRange = editor.listSelections()[0];
+                    break;
+                case '·':
+                    replaceSymbol = '``';
+                    break;
+                case '【':
+                    replaceSymbol = '[]'
+                    this.selectedFormatRange = editor.listSelections()[0];
+                    break;
+                default:
+                    return;
             }
-            else if(symbol === '·')
-            {
-                replaceSymbol = '``';
-            }
-            else if(symbol==='【')
-            {
-                replaceSymbol = '[]'
-                this.selectedFormatRange = editor.listSelections()[0];
-            }
-            else{
-                return;
-            }
-
             const selected = editor.getSelection();
             const replaceText = replaceSymbol.charAt(0) +selected+ replaceSymbol.charAt(1);
 
             obj.update(null, null, [replaceText]);
+        }
+        else if(!editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
+        {
+            switch(symbol)
+            {
+                case '……':
+                    obj.update(null, null, ['^']);
+                    break;
+                default:
+                    return;
+            }
         }
     }
 
@@ -1347,59 +1370,66 @@ export default class EasyTypingPlugin extends Plugin {
                 {line: cursor.line, ch:cursor.ch},
                 {line: cursor.line, ch:cursor.ch+2}
             );
-            if(event.key==='$' || event.key==='￥')
+            switch(event.key)
             {
-                if(twoCharactersBeforeCursor === '￥￥')
-                {
-                    editor.replaceRange(
-                        '$$',
-                        {line: cursor.line, ch:cursor.ch-2},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor({line: cursor.line, ch:cursor.ch-1});
-                }
-                else if(character2cursor1==='$￥$')
-                {
-                    editor.replaceRange(
-                        '$$',
-                        {line: cursor.line, ch:cursor.ch-1},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor(cursor);
-                }
-            }
-            else if(event.key==='[' || event.key==='【')
-            {
-                if(twoCharactersBeforeCursor === '[[' && twoCharactersAfterCursor!=']]')
-                {
-                    editor.replaceRange(
-                        '[[]]',
-                        {line: cursor.line, ch:cursor.ch-2},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor(cursor);
-                }
-            }
-            else if(event.key==='`' || event.key==='·')
-            {
-                if(twoCharactersBeforeCursor === '··')
-                {
-                    editor.replaceRange(
-                        '``',
-                        {line: cursor.line, ch:cursor.ch-2},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor({line: cursor.line, ch:cursor.ch-1});
-                }
-                else if(character2cursor1==='`·`')
-                {
-                    editor.replaceRange(
-                        '`',
-                        {line: cursor.line, ch:cursor.ch-1},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor({line: cursor.line, ch:cursor.ch+1});
-                }
+                case '$':
+                case '￥':
+                    if(twoCharactersBeforeCursor === '￥￥')
+                    {
+                        editor.replaceRange(
+                            '$$',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    else if(character2cursor1==='$￥$')
+                    {
+                        editor.replaceRange(
+                            '$$',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor(cursor);
+                    }
+                    break;
+                
+                case '[':
+                case '【':
+                    if(twoCharactersBeforeCursor === '[[' && twoCharactersAfterCursor!=']]')
+                    {
+                        editor.replaceRange(
+                            '[[]]',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor(cursor);
+                    }
+                    break;
+                
+                case '`':
+                case '·':
+                    if(twoCharactersBeforeCursor === '··')
+                    {
+                        editor.replaceRange(
+                            '``',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    else if(character2cursor1==='`·`')
+                    {
+                        editor.replaceRange(
+                            '`',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch+1});
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -1667,7 +1697,7 @@ class EasyTypingSettingTab extends PluginSettingTab {
 			.setValue(this.plugin.settings.UserDefinedRegExp)
 			.onChange(async (value) => {
 				this.plugin.settings.UserDefinedRegExp = value;
-                if(this.plugin.settings.Debug) console.log("regExp:", value);
+                if(this.plugin.settings.Debug) console.log("regExp changed:", value);
 				await this.plugin.saveSettings();
 			})
 		);
