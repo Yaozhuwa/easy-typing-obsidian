@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 enum InlineType {text='text', code='code', formula='formula', link='link', user='user-defined', none='none'}
 enum LineType {text='text', code='code', formula='formula', frontmatter='frontmatter', none='none'};
@@ -16,6 +16,14 @@ interface InlinePart
     type: InlineType,
     begin: number,
     end: number
+}
+
+interface InlineChange
+{
+    text: string,
+    begin: number,
+    end: number,
+    origin:string
 }
 
 interface FormatSettings
@@ -465,7 +473,21 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?:string):InlinePa
         let regs = regExps.split('\n');
         for(let i=0;i<regs.length;i++)
         {
-            regExpList.push(new RegExp(regs[i], 'g'));
+            let isValidReg = true;
+            try{
+                let regTemp = new RegExp(regs[i], 'g')
+            }
+            catch(error)
+            {
+                isValidReg = false;
+                console.log('Bad Reg:', regs[i]);
+            }
+
+            if(isValidReg) 
+            {
+                regExpList.push(new RegExp(regs[i], 'g'));
+                // console.log('Good Reg:', regs[i]);
+            }
         }
         let regLen = regExpList.length;
 
@@ -519,9 +541,9 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?:string):InlinePa
     return retArray
 }
 
-function formatLine(line: string, ch: number, settings: FormatSettings):[string, number]|null
+function formatLine(line: string, ch: number, settings: FormatSettings):[string, number, InlineChange[]]|null
 {
-    if(line==='') return ['', 0];
+    if(line==='') return ['', 0, []];
 
     // 1. 划分一行文字的内部不同模块区域
     let lineParts:InlinePart[];
@@ -533,7 +555,10 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
     {
         lineParts = splitLine(line);
     }
-    // console.log('split line', lineParts);
+
+    // 备份原来的lineParts, 深拷贝
+    let linePartsOrigin = JSON.parse(JSON.stringify(lineParts));
+    let inlineChangeList:InlineChange[] = [];
     
     let cursorLinePartIndex = -1;
     let cursorRelativeIndex = -1;
@@ -591,6 +616,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
             // 3.2.1 处理文本区块
             case InlineType.text:
                 let content = lineParts[i].content;
+                // console.log('Before', i, lineParts[i].content)
                 // Text.1 处理中英文之间空格
                 if(settings.ChineseEnglishSpace){
 					var reg1=/([A-Za-z0-9,.;?:!])([\u4e00-\u9fa5]+)/gi;
@@ -654,6 +680,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 let textStartWithSpace = regStartWithSpace.test(content);
                 let textEndWithSpace = regEndWithSpace.test(content);
 
+                // console.log('Median', i, lineParts[i].content)
+
                 // Text.8 根据前一部分的区块类型处理空格添加的问题
                 switch(prevPartType)
                 {
@@ -662,28 +690,32 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.code:
                         if(settings.InlineCodeSpace && !textStartWithSpace)
                         {
-                            resultLine += ' ';
+                            lineParts[i].content = ' '+content;
+                            content = lineParts[i].content;
                             offset += 1;
                         }
                         break;
                     case InlineType.formula:
                         if(settings.InlineFormulaSpace && !textStartWithSpace)
                         {
-                            resultLine += ' ';
+                            lineParts[i].content = ' '+content;
+                            content = lineParts[i].content;
                             offset += 1;
                         }
                         break;
                     case InlineType.link:
                         if(settings.LinkSpace && !textStartWithSpace)
                         {
-                            resultLine += ' ';
+                            lineParts[i].content = ' '+content;
+                            content = lineParts[i].content;
                             offset += 1;
                         }
                         break;
                     case InlineType.user:
                         if(settings.UserPartSpace && !textStartWithSpace)
                         {
-                            resultLine += ' ';
+                            lineParts[i].content = ' '+content;
+                            content = lineParts[i].content;
                             offset += 1;
                         }
                         break;
@@ -695,12 +727,13 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     let reg = '\0';
                     let n = content.search(reg)
                     resultCursorCh = offset + n;
-                    content = stringDeleteAt(content, n);
+                    // 删除 \0
+                    lineParts[i].content = stringDeleteAt(content, n);
                 }
-
+                // console.log('After', i, lineParts[i].content)
                 // Text.10 变量更新
-                resultLine += content;
-                offset += content.length;
+                resultLine += lineParts[i].content;
+                offset += lineParts[i].content.length;
                 prevPartType = InlineType.text;
                 prevTextEndWithSpace = textEndWithSpace;
                 break;
@@ -715,6 +748,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.text:
                         if(settings.InlineCodeSpace && !prevTextEndWithSpace)
                         {
+                            lineParts[i-1].content += ' ';
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -722,6 +756,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.code:
                         if(settings.InlineCodeSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -729,6 +771,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.formula:
                         if(settings.InlineFormulaSpace || settings.InlineCodeSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -736,6 +786,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.link:
                         if(settings.LinkSpace || settings.InlineCodeSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -743,6 +801,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.user:
                         if(settings.UserPartSpace || settings.InlineCodeSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -771,6 +837,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.text:
                         if(settings.InlineFormulaSpace && !prevTextEndWithSpace)
                         {
+                            lineParts[i-1].content += ' ';
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -778,6 +845,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.code:
                         if(settings.InlineCodeSpace || settings.InlineFormulaSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -785,6 +860,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.formula:
                         if(settings.InlineFormulaSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -792,6 +875,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.link:
                         if(settings.LinkSpace || settings.InlineFormulaSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -799,6 +890,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.user:
                         if(settings.UserPartSpace || settings.InlineFormulaSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -826,6 +925,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.text:
                         if(settings.LinkSpace && !prevTextEndWithSpace)
                         {
+                            lineParts[i-1].content += ' ';
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -833,6 +933,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.code:
                         if(settings.InlineCodeSpace || settings.LinkSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -840,6 +948,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.formula:
                         if(settings.InlineFormulaSpace || settings.LinkSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -847,6 +963,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.link:
                         if(settings.LinkSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -854,6 +978,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.user:
                         if(settings.UserPartSpace || settings.LinkSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -882,6 +1014,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.text:
                         if(settings.UserPartSpace && !prevTextEndWithSpace)
                         {
+                            lineParts[i-1].content += ' ';
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -889,6 +1022,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.code:
                         if(settings.InlineCodeSpace || settings.UserPartSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -896,6 +1037,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.formula:
                         if(settings.InlineFormulaSpace || settings.UserPartSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -903,6 +1052,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.link:
                         if(settings.LinkSpace || settings.UserPartSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -910,6 +1067,14 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.user:
                         if(settings.UserPartSpace)
                         {
+                            inlineChangeList.push(
+                                {
+                                    text:' ',
+                                    begin: lineParts[i].begin,
+                                    end: lineParts[i].begin,
+                                    origin:''
+                                }
+                            );
                             resultLine += ' ';
                             offset += 1;
                         }
@@ -928,7 +1093,24 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 break;
         }
     }
-    return [resultLine, resultCursorCh];
+
+    for(let i=0;i<lineParts.length;i++)
+    {
+        if(lineParts[i].type === InlineType.text && lineParts[i].content!=linePartsOrigin[i].content)
+        {
+            inlineChangeList.push(
+                {
+                    text: lineParts[i].content,
+                    begin: linePartsOrigin[i].begin,
+                    end: linePartsOrigin[i].end,
+                    origin: linePartsOrigin[i].content
+                }
+            )
+        }
+    }
+
+    inlineChangeList = inlineChangeList.sort((a, b):number=>a.begin-b.begin);
+    return [resultLine, resultCursorCh, inlineChangeList];
 }
 
 export default class EasyTypingPlugin extends Plugin {
@@ -1016,28 +1198,37 @@ export default class EasyTypingPlugin extends Plugin {
         if(editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
         {
             if(this.settings.Debug) console.log('before change: symbol:', symbol);
-            if(symbol === '￥')
+            switch(symbol)
             {
-                replaceSymbol = '$$';
-                this.selectedFormatRange = editor.listSelections()[0];
+                case '￥':
+                    replaceSymbol = '$$';
+                    this.selectedFormatRange = editor.listSelections()[0];
+                    break;
+                case '·':
+                    replaceSymbol = '``';
+                    break;
+                case '【':
+                    replaceSymbol = '[]'
+                    this.selectedFormatRange = editor.listSelections()[0];
+                    break;
+                default:
+                    return;
             }
-            else if(symbol === '·')
-            {
-                replaceSymbol = '``';
-            }
-            else if(symbol==='【')
-            {
-                replaceSymbol = '[]'
-                this.selectedFormatRange = editor.listSelections()[0];
-            }
-            else{
-                return;
-            }
-
             const selected = editor.getSelection();
             const replaceText = replaceSymbol.charAt(0) +selected+ replaceSymbol.charAt(1);
 
             obj.update(null, null, [replaceText]);
+        }
+        else if(!editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
+        {
+            switch(symbol)
+            {
+                case '……':
+                    obj.update(null, null, ['^']);
+                    break;
+                default:
+                    return;
+            }
         }
     }
 
@@ -1179,59 +1370,66 @@ export default class EasyTypingPlugin extends Plugin {
                 {line: cursor.line, ch:cursor.ch},
                 {line: cursor.line, ch:cursor.ch+2}
             );
-            if(event.key==='$' || event.key==='￥')
+            switch(event.key)
             {
-                if(twoCharactersBeforeCursor === '￥￥')
-                {
-                    editor.replaceRange(
-                        '$$',
-                        {line: cursor.line, ch:cursor.ch-2},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor({line: cursor.line, ch:cursor.ch-1});
-                }
-                else if(character2cursor1==='$￥$')
-                {
-                    editor.replaceRange(
-                        '$$',
-                        {line: cursor.line, ch:cursor.ch-1},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor(cursor);
-                }
-            }
-            else if(event.key==='[' || event.key==='【')
-            {
-                if(twoCharactersBeforeCursor === '[[' && twoCharactersAfterCursor!=']]')
-                {
-                    editor.replaceRange(
-                        '[[]]',
-                        {line: cursor.line, ch:cursor.ch-2},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor(cursor);
-                }
-            }
-            else if(event.key==='`' || event.key==='·')
-            {
-                if(twoCharactersBeforeCursor === '··')
-                {
-                    editor.replaceRange(
-                        '``',
-                        {line: cursor.line, ch:cursor.ch-2},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor({line: cursor.line, ch:cursor.ch-1});
-                }
-                else if(character2cursor1==='`·`')
-                {
-                    editor.replaceRange(
-                        '`',
-                        {line: cursor.line, ch:cursor.ch-1},
-                        {line: cursor.line, ch:cursor.ch}
-                    );
-                    editor.setCursor({line: cursor.line, ch:cursor.ch+1});
-                }
+                case '$':
+                case '￥':
+                    if(twoCharactersBeforeCursor === '￥￥')
+                    {
+                        editor.replaceRange(
+                            '$$',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    else if(character2cursor1==='$￥$')
+                    {
+                        editor.replaceRange(
+                            '$$',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor(cursor);
+                    }
+                    break;
+                
+                case '[':
+                case '【':
+                    if(twoCharactersBeforeCursor === '[[' && twoCharactersAfterCursor!=']]')
+                    {
+                        editor.replaceRange(
+                            '[[]]',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor(cursor);
+                    }
+                    break;
+                
+                case '`':
+                case '·':
+                    if(twoCharactersBeforeCursor === '··')
+                    {
+                        editor.replaceRange(
+                            '``',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    else if(character2cursor1==='`·`')
+                    {
+                        editor.replaceRange(
+                            '`',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch+1});
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -1298,13 +1496,26 @@ export default class EasyTypingPlugin extends Plugin {
         }
 
 		let ret = formatLine(line, cursor.ch, this.settings);
-
-		if(line!=ret[0])
-		{
-			let lineStart:CodeMirror.Position = {ch:0, line:cursor.line};
-			let lineEnd: CodeMirror.Position = {ch:line.length, line:cursor.line};
-			editor.replaceRange(ret[0], lineStart, lineEnd);
-			editor.setCursor({
+        // console.log(line)
+        // console.log(ret)
+        let inlineChangeList = ret[2];
+        if(inlineChangeList.length != 0)
+        {
+            let offset = 0;
+            for(let i=0;i<inlineChangeList.length;i++)
+            {
+                let changeBegin:CodeMirror.Position = {
+                    line: cursor.line,
+                    ch: inlineChangeList[i].begin+offset
+                }
+                let changeEnd:CodeMirror.Position = {
+                    line: cursor.line,
+                    ch: inlineChangeList[i].end+offset
+                }
+                offset += inlineChangeList[i].text.length - inlineChangeList[i].origin.length;
+                editor.replaceRange(inlineChangeList[i].text, changeBegin, changeEnd);
+            }
+            editor.setCursor({
 				line: cursor.line,
 				ch: ret[1]
 			});
@@ -1313,7 +1524,7 @@ export default class EasyTypingPlugin extends Plugin {
 				ch: ret[1]
 			};
 			editor.focus();
-		}
+        }
 	}
 
 	async loadSettings() {
@@ -1486,7 +1697,7 @@ class EasyTypingSettingTab extends PluginSettingTab {
 			.setValue(this.plugin.settings.UserDefinedRegExp)
 			.onChange(async (value) => {
 				this.plugin.settings.UserDefinedRegExp = value;
-                if(this.plugin.settings.Debug) console.log("regExp:", value);
+                if(this.plugin.settings.Debug) console.log("regExp changed:", value);
 				await this.plugin.saveSettings();
 			})
 		);
