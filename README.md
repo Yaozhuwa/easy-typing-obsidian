@@ -2,11 +2,12 @@
   - [插件功能 Features](#插件功能-features)
   - [展望功能/改进空间 Future todo](#展望功能改进空间-future-todo)
   - [其他说明 Other explanation](#其他说明-other-explanation)
-    - [自定义正则表达式](#自定义正则表达式)
+    - [自定义正则表达式 User-defined regular expressions](#自定义正则表达式-user-defined-regular-expressions)
   - [手动安装插件 Manually installing the plugin](#手动安装插件-manually-installing-the-plugin)
   - [更新日志 Changelog](#更新日志-changelog)
 
 建议更新时查看一下 [更新日志 Changelog](#更新日志-changelog)
+It is recommended to check [更新日志 Changelog](#更新日志-changelog) when updating
 ## Easy Typing
 
 这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写，让中文用户的 Obsidian 书写体验起飞~
@@ -20,10 +21,6 @@ This plugin designed for better typing experience. Autoformat your note as typin
 And you can set the formatting rules freely in the plugin Settings panel.
 
 ![settings](showsettings.gif)
-- 运行测试 Test on
-  - [x] windows10 obsidian v0.12.5
-  - [x] ubuntu18.04, obsidian v0.11.13
-  - [ ] Mac（没有设备，无法测试...）
 
 ### 插件功能 Features
 - 编辑过程中行内自动格式化
@@ -31,7 +28,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
 	- [x] 行内 latex 公式(比如：$x=y$)和中英文之间自动补全空格
 	- [x] 行内代码片段和中英文间及相关标点的自动补全空格
 	- [x] 英文句首字母和前面的标点 (`',.;?'`) 中间自动添加空格。
-	- [x] 英文行首字母大写
+	- [x] 英文行首字母大写，可以撤销
   - [x] 行内小括号与文本的自动空格
   - [x] `[[WikiLink]]`, `[markdown link](https://)` 和 纯链接 `https://obsidian.md` 与文本的自动空格。
 - 插件设置面板
@@ -54,7 +51,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
   - [x] auto spacing between inline latex and text
   - [x] auto spacing between inline code and text
   - [x] space between English with punctuate
-  - [x] capitalize the first letter of every sentence
+  - [x] capitalize the first letter of every sentence, which is revocable.
   - [x] Space between English braces and text
   - [x] Auto space for `[[WikiLink]]`, `[markdown link](https://)` and bare link `https://obsidian.md` with other text。
 - SettingTab
@@ -76,18 +73,27 @@ And you can set the formatting rules freely in the plugin Settings panel.
 - [ ] 中英文标点智能切换
 
 ### 其他说明 Other explanation
-#### 自定义正则表达式
+#### 自定义正则表达式 User-defined regular expressions
 用户自定义正则表达式用于用户不希望对符合特定规则的区块进行格式化的情形。不支持多行模式的正则表达式。
+User-defined regular expressions are used when the user does not want to format blocks that conform to a particular rule. Do not support the multi-line pattern.
 
-下面是一些示例
-- `:\w*:`: 识别出markdown的emoji.
-- `{{.*?}}`: 将识别双花括号部分
+下面是一些示例 Some examples:
+- `:\w*:`: 识别出markdown的emoji. For `:emoji:`.
+- `{{.*?}}`: 将识别双花括号部分内容. Recognization for the double curly braces.
+- `[a-zA-Z0-9_\-.]+@[a-zA-Z0-9_\-.]+`. 识别邮箱地址 Recognization for EMail address.
+- `#[A-Za-z0-9\u4e00-\u9fa5\/]+` 识别中英文混合的tag。Recognize tags with mixed Chinese and English.
 ### 手动安装插件 Manually installing the plugin
 
 - 下载最新的 release 包（不是源代码）, 将 `main.js`, `styles.css`, `manifest.json` 复制到您的保管库 `VaultFolder/.obsidian/plugins/your-plugin-id/` 中。
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.3.0 2021.6.19
+  - Shinny new things
+    - 首字母大写可撤销 Feature of capitalizing the first letter of every sentence is revocable now.
+    - 增加了[[wikilink]]的智能空格选项，可以根据其上下文决定是否加空格。 Add setting for smart spacing for [[wikilink]], which decide whether to add spaces from the context.
+  - Bug fix
+    - 解决了之前格式化一行文本的命令不生效的bug。Fixed a bug where formatting a line of text doesn't work
 - v3.2.2 2021.6.16
   - Improvement
     - 增加了对错误的自定义正则的处理，修复了空字符串的正则导致软件卡死的bug, 正则表达式功能应该没问题了。
