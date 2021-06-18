@@ -1,4 +1,4 @@
-import { App, Editor, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, Modal, Notice, Plugin, PluginSettingTab, Pos, Setting } from 'obsidian';
 
 enum InlineType {text='text', code='code', formula='formula', link='link', user='user-defined', none='none'}
 enum LineType {text='text', code='code', formula='formula', frontmatter='frontmatter', none='none'};
@@ -39,6 +39,7 @@ interface FormatSettings
     InlineCodeSpace: boolean;
 	InlineFormulaSpace: boolean;
     LinkSpace: boolean;
+    LinkSmartSpace: boolean;
 
     FullWidthCharacterEnhence:boolean;
 
@@ -61,6 +62,7 @@ const DEFAULT_SETTINGS: FormatSettings = {
     InlineCodeSpace: true,
 	InlineFormulaSpace: true,
 	LinkSpace: true,
+    LinkSmartSpace: true,
 
     FullWidthCharacterEnhence:true,
     UserDefinedRegExp:':\\w*:\n{{.*?}}',
@@ -543,8 +545,9 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?:string):InlinePa
     return retArray
 }
 
-function formatLine(line: string, ch: number, settings: FormatSettings):[string, number, InlineChange[]]|null
+function formatLine(line: string, curCursor: CodeMirror.Position, settings: FormatSettings, prevCursor?: CodeMirror.Position):[string, number, InlineChange[]]|null
 {
+    let ch = curCursor.ch;
     if(line==='') return ['', 0, []];
 
     // 1. 划分一行文字的内部不同模块区域
@@ -593,23 +596,38 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
         // console.log(inlineList[i]);
 
         // 3.1 如果行内第一部分为文本，则处理句首字母大写的部分
-        if(i===0 && settings.Capitalization && lineParts[i].type===InlineType.text)
+        if(i===0 && lineParts[i].type===InlineType.text && settings.Capitalization)
         {
-            let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?[a-z]/g;
-            let regHeaderSentence = /^#+ [a-z]/g;
-            let textcopy = lineParts[0].content;
-            let match = regFirstSentence.exec(textcopy);
-            let matchHeader = regHeaderSentence.exec(textcopy);
-            let dstCharIndex = -1;
-            if(match)
+            // 3.1.1 如果 prevCursor 且光标不在此部分，则跳过
+            if(prevCursor && cursorLinePartIndex!=0){}
+            else
             {
-                dstCharIndex = regFirstSentence.lastIndex-1;
-                lineParts[0].content = textcopy.substring(0, dstCharIndex)+textcopy.charAt(dstCharIndex).toUpperCase()+textcopy.substring(dstCharIndex+1);
-            }
-            else if(matchHeader)
-            {
-                dstCharIndex = regHeaderSentence.lastIndex-1;
-                lineParts[0].content = textcopy.substring(0, dstCharIndex)+textcopy.charAt(dstCharIndex).toUpperCase()+textcopy.substring(dstCharIndex+1);
+                let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?[a-z]/g;
+                let regHeaderSentence = /^#+ [a-z]/g;
+                let textcopy = lineParts[0].content;
+                let match = regFirstSentence.exec(textcopy);
+                let matchHeader = regHeaderSentence.exec(textcopy);
+                let dstCharIndex = -1;
+
+                if(match)
+                {
+                    dstCharIndex = regFirstSentence.lastIndex-1;
+                }
+                else if(matchHeader)
+                {
+                    dstCharIndex = regHeaderSentence.lastIndex-1;
+                }
+
+                if(!prevCursor){}
+                else if(prevCursor.line===curCursor.line && dstCharIndex>=prevCursor.ch && dstCharIndex<curCursor.ch){}
+                else{
+                    dstCharIndex = -1;
+                }
+
+                if(dstCharIndex!=-1)
+                {
+                    lineParts[0].content = textcopy.substring(0, dstCharIndex)+textcopy.charAt(dstCharIndex).toUpperCase()+textcopy.substring(dstCharIndex+1);
+                }
             }
         }
         // 3.2 分别处理每种区块情况
@@ -621,8 +639,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 // console.log('Before', i, lineParts[i].content)
                 // Text.1 处理中英文之间空格
                 if(settings.ChineseEnglishSpace){
-					var reg1=/([A-Za-z0-9,.;?:!])([\u4e00-\u9fa5]+)/gi;
-					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
+					let reg1=/([A-Za-z0-9,\.;\?:!])([\u4e00-\u9fa5]+)/gi;
+					let reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
 					lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -640,7 +658,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 // Text.3 处理英文字母与标点间空格
                 if(settings.EnglishSpace)
 				{
-					var reg = /([,.;?:!])([A-Za-z])/gi;
+					var reg = /([,\.;\?:\!])([A-Za-z])/gi;
 					lineParts[i].content = content.replace(reg, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -654,16 +672,24 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                         let match = reg.exec(content);
                         if(!match) break;
                         let tempIndex = reg.lastIndex-1;
-                        lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
-                        content = lineParts[i].content;
+                        if(!prevCursor)
+                        {
+                            lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
+                            content = lineParts[i].content;
+                        }
+                        else if(prevCursor && prevCursor.line===curCursor.line && tempIndex>=prevCursor.ch && tempIndex<curCursor.ch)
+                        {
+                            lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
+                            content = lineParts[i].content;
+                        }
                     }
                 }
 
                 // Text.5 处理英文括号与外部文本空格
                 if(settings.BraceSpace)
 				{
-					var reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
-					var reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,\.\?']+)(\()/gi;
+					let reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
+					let reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,\.\?']+)(\()/gi;
 					lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -671,8 +697,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 // Text.6 处理数字与标点的空格
                 if(settings.NumberSpace)
 				{
-					var reg1 = /([,;\?:\!\]\}])([0-9])/gi;
-					var reg2 = /([0-9])([\[\{])/gi;
+					let reg1 = /([,;\?:\!\]\}])([0-9])/g;
+					let reg2 = /([0-9])([\[\{])/g;
                     lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -706,7 +732,27 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                         }
                         break;
                     case InlineType.link:
-                        if(settings.LinkSpace && !textStartWithSpace)
+                        if(settings.LinkSmartSpace && !textStartWithSpace)
+                        {
+                            let regTestWikiLink = /^\[\[.+\]\]$/;
+                            if(regTestWikiLink.test(lineParts[i-1].content))
+                            {
+                                let charAtLinkEnd = lineParts[i-1].content.charAt(lineParts[i-1].content.length-3);
+                                let charAtTextBegin = lineParts[i].content.charAt(0);
+                                let tempStr = charAtLinkEnd+charAtTextBegin;
+                                let reg1=/[A-Za-z0-9,.;\?:\!][\u4e00-\u9fa5]/g;
+                                let reg2=/[\u4e00-\u9fa5][@A-Za-z0-9]/g;
+                                let reg3 = /[A-Za-z0-9,.;?:!][A-Za-z0-9]/g;
+                                let reg4 = /[,;\?:\!\]\}][0-9]/g;
+                                if(reg1.test(tempStr) || reg2.test(tempStr) || reg3.test(tempStr) || reg4.test(tempStr))
+                                {
+                                    lineParts[i].content = ' '+content;
+                                    content = lineParts[i].content;
+                                    offset += 1;
+                                }
+                            }
+                        }
+                        else if(!settings.LinkSmartSpace && settings.LinkSpace && !textStartWithSpace)
                         {
                             lineParts[i].content = ' '+content;
                             content = lineParts[i].content;
@@ -925,7 +971,27 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.none:
                         break;
                     case InlineType.text:
-                        if(settings.LinkSpace && !prevTextEndWithSpace)
+                        if(settings.LinkSmartSpace && !prevTextEndWithSpace)
+                        {
+                            let regTestWikiLink = /^\[\[.+\]\]$/;
+                            if(regTestWikiLink.test(lineParts[i].content))
+                            {
+                                let charAtTextEnd = lineParts[i-1].content.charAt(lineParts[i-1].content.length-1);
+                                let charAtLinkBegin = lineParts[i].content.charAt(2);
+                                let tempStr = charAtTextEnd+charAtLinkBegin;
+                                let reg1=/[A-Za-z0-9,.;\?:\!][\u4e00-\u9fa5]/g;
+                                let reg2=/[\u4e00-\u9fa5][@A-Za-z0-9]/g;
+                                let reg3 = /[A-Za-z0-9,.;?:!][A-Za-z0-9]/g;
+                                let reg4 = /[,;\?:\!\]\}][0-9]/g;
+                                if(reg1.test(tempStr) || reg2.test(tempStr) || reg3.test(tempStr) || reg4.test(tempStr))
+                                {
+                                    lineParts[i-1].content += ' ';
+                                    resultLine += ' ';
+                                    offset += 1;
+                                }
+                            }
+                        }
+                        else if(settings.LinkSpace && !prevTextEndWithSpace)
                         {
                             lineParts[i-1].content += ' ';
                             resultLine += ' ';
@@ -1125,7 +1191,7 @@ export default class EasyTypingPlugin extends Plugin {
     checkLineType: boolean;
     prevLineCount: number;
     prevLineType: LineType;
-    
+
     selectedFormatRange:CodeMirror.Range;
 
 	async onload() {
@@ -1150,13 +1216,13 @@ export default class EasyTypingPlugin extends Plugin {
 			name: "format current line",
 			callback: () => this.commandFormatLine(),
 			hotkeys: [{
-				modifiers: ['Shift'],
-				key: "tab"
+				modifiers: ['Alt'],
+				key: "l"
 			}],
 		});
 
         this.addCommand({
-			id: "easy-typing-format-line",
+			id: "easy-typing-format-switch",
 			name: "switch autoformat",
 			callback: () => this.commandSwitch(),
 			hotkeys: [{
@@ -1263,7 +1329,7 @@ export default class EasyTypingPlugin extends Plugin {
                 for(let j=typeArray[i].begin; j<typeArray[i].end;j++)
                 {
                     let line = editor.getLine(j);
-                    let newLine = formatLine(line, line.length, this.settings)[0];
+                    let newLine = formatLine(line, {line:j, ch:line.length}, this.settings)[0];
                     if(newLine!=line)
                     {
                         let start: CodeMirror.Position = {line:j, ch:0};
@@ -1281,17 +1347,32 @@ export default class EasyTypingPlugin extends Plugin {
 		let editor = activeLeaf.view.sourceMode.cmEditor as CodeMirror.Editor;
 		let cursor = editor.getCursor();
 		let line = editor.getLine(cursor.line);
-		let ret = formatLine(line, cursor.ch, this.settings);
-		if(ret[0]!=editor.getLine(cursor.line))
-		{
-			let lineStart:CodeMirror.Position = {ch:0, line:cursor.line};
-			let lineEnd: CodeMirror.Position = {ch:line.length, line:cursor.line};
-			editor.replaceRange(ret[0], lineStart, lineEnd);
-			editor.setCursor({
+		let ret = formatLine(line, cursor, this.settings);
+		let inlineChangeList = ret[2];
+        if(inlineChangeList.length != 0)
+        {
+            let offset = 0;
+            for(let i=0;i<inlineChangeList.length;i++)
+            {
+                let changeBegin:CodeMirror.Position = {
+                    line: cursor.line,
+                    ch: inlineChangeList[i].begin+offset
+                }
+                let changeEnd:CodeMirror.Position = {
+                    line: cursor.line,
+                    ch: inlineChangeList[i].end+offset
+                }
+                offset += inlineChangeList[i].text.length - inlineChangeList[i].origin.length;
+                editor.replaceRange(inlineChangeList[i].text, changeBegin, changeEnd);
+            }
+            editor.setCursor({
 				line: cursor.line,
 				ch: ret[1]
 			});
-		}
+			editor.focus();
+        }
+        this.prevCursor = editor.getCursor();
+        
 	}
 
 	private readonly handleKeyDown = (editor: CodeMirror.Editor, event: KeyboardEvent):void =>
@@ -1327,6 +1408,7 @@ export default class EasyTypingPlugin extends Plugin {
                 console.log("Test Begin========================");
                 
                 console.log("Test End========================");
+                this.prevCursor = editor.getCursor();
                 return;
             }
         }
@@ -1334,6 +1416,7 @@ export default class EasyTypingPlugin extends Plugin {
 
         if(this.settings.AutoFormatting===false)
 		{
+            this.prevCursor = editor.getCursor();
 			return;
 		}
 
@@ -1438,15 +1521,18 @@ export default class EasyTypingPlugin extends Plugin {
 		if(event.key === 'Control')
 		{
 			this.keyCtrlFlag = false;
+            this.prevCursor = editor.getCursor();
 			return;
 		}
 		if(this.keyCtrlFlag && event.key === 'z')
 		{
+            this.prevCursor = editor.getCursor();
 			return;
 		}
 
 		if(this.keySetNotUpdate.has(event.key))
 		{
+            this.prevCursor = editor.getCursor();
 			return;
 		}
 		
@@ -1479,14 +1565,12 @@ export default class EasyTypingPlugin extends Plugin {
             this.prevLineType = thisLineType;
             this.prevLineCount = editor.lineCount();
             this.checkLineType = false;
-            this.prevCursor = cursor;
         }
         // 在其他行编辑的时候，需要先获取下行的类型
         else if(cursor.line != this.prevCursor.line)
         {
             thisLineType = getLineTypeFromArticleParts(cursor.line, this.lineTypeArray);
             this.prevLineType = thisLineType;
-            this.prevCursor = cursor;
         }
         else{
             thisLineType = this.prevLineType;
@@ -1494,10 +1578,11 @@ export default class EasyTypingPlugin extends Plugin {
 
         if(thisLineType!=LineType.text)
         {
+            this.prevCursor = editor.getCursor();
             return;
         }
 
-		let ret = formatLine(line, cursor.ch, this.settings);
+		let ret = formatLine(line, cursor, this.settings, this.prevCursor);
         // console.log(line)
         // console.log(ret)
         let inlineChangeList = ret[2];
@@ -1521,12 +1606,9 @@ export default class EasyTypingPlugin extends Plugin {
 				line: cursor.line,
 				ch: ret[1]
 			});
-            this.prevCursor = {
-				line: cursor.line,
-				ch: ret[1]
-			};
 			editor.focus();
         }
+        this.prevCursor = editor.getCursor();
 	}
 
 	async loadSettings() {
@@ -1557,7 +1639,7 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', {text: '总开关 (Master Switch)'});
 
 		new Setting(containerEl)
-		.setName("Auto formatting")
+		.setName("Auto formatting when typing")
 		.setDesc("是否在编辑文档时自动格式化文本")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.AutoFormatting)
@@ -1656,6 +1738,16 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.LinkSpace).onChange(async (value)=>{
 				this.plugin.settings.LinkSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+        new Setting(containerEl)
+		.setName("Smart Space between link and text")
+		.setDesc("在 [[wikilink]] mdlink 和文本间智能空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.LinkSmartSpace).onChange(async (value)=>{
+				this.plugin.settings.LinkSmartSpace = value;
 				await this.plugin.saveSettings();
 			});
 		});
