@@ -39,6 +39,7 @@ interface FormatSettings
     InlineCodeSpace: boolean;
 	InlineFormulaSpace: boolean;
     LinkSpace: boolean;
+    LinkSmartSpace: boolean;
 
     FullWidthCharacterEnhence:boolean;
 
@@ -61,6 +62,7 @@ const DEFAULT_SETTINGS: FormatSettings = {
     InlineCodeSpace: true,
 	InlineFormulaSpace: true,
 	LinkSpace: true,
+    LinkSmartSpace: true,
 
     FullWidthCharacterEnhence:true,
     UserDefinedRegExp:':\\w*:\n{{.*?}}',
@@ -621,8 +623,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 // console.log('Before', i, lineParts[i].content)
                 // Text.1 处理中英文之间空格
                 if(settings.ChineseEnglishSpace){
-					var reg1=/([A-Za-z0-9,.;?:!])([\u4e00-\u9fa5]+)/gi;
-					var reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
+					let reg1=/([A-Za-z0-9,\.;\?:!])([\u4e00-\u9fa5]+)/gi;
+					let reg2=/([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
 					lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -640,7 +642,7 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 // Text.3 处理英文字母与标点间空格
                 if(settings.EnglishSpace)
 				{
-					var reg = /([,.;?:!])([A-Za-z])/gi;
+					var reg = /([,\.;\?:\!])([A-Za-z])/gi;
 					lineParts[i].content = content.replace(reg, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -662,8 +664,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 // Text.5 处理英文括号与外部文本空格
                 if(settings.BraceSpace)
 				{
-					var reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
-					var reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,\.\?']+)(\()/gi;
+					let reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
+					let reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,\.\?']+)(\()/gi;
 					lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -671,8 +673,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 // Text.6 处理数字与标点的空格
                 if(settings.NumberSpace)
 				{
-					var reg1 = /([,;\?:\!\]\}])([0-9])/gi;
-					var reg2 = /([0-9])([\[\{])/gi;
+					let reg1 = /([,;\?:\!\]\}])([0-9])/g;
+					let reg2 = /([0-9])([\[\{])/g;
                     lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = lineParts[i].content;
 				}
@@ -681,6 +683,8 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                 let regEndWithSpace = /[\s，。：？！\[\(\{]\0?$/;
                 let textStartWithSpace = regStartWithSpace.test(content);
                 let textEndWithSpace = regEndWithSpace.test(content);
+                // let textEndCharacter = content.charAt(content.length-1);
+                // let textBeginCharacter = content.charAt(0);
 
                 // console.log('Median', i, lineParts[i].content)
 
@@ -706,7 +710,27 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                         }
                         break;
                     case InlineType.link:
-                        if(settings.LinkSpace && !textStartWithSpace)
+                        if(settings.LinkSmartSpace && !textStartWithSpace)
+                        {
+                            let regTestWikiLink = /^\[\[.+\]\]$/;
+                            if(regTestWikiLink.test(lineParts[i-1].content))
+                            {
+                                let charAtLinkEnd = lineParts[i-1].content.charAt(lineParts[i-1].content.length-3);
+                                let charAtTextBegin = lineParts[i].content.charAt(0);
+                                let tempStr = charAtLinkEnd+charAtTextBegin;
+                                let reg1=/[A-Za-z0-9,.;\?:\!][\u4e00-\u9fa5]/g;
+                                let reg2=/[\u4e00-\u9fa5][@A-Za-z0-9]/g;
+                                let reg3 = /[A-Za-z0-9,.;?:!][A-Za-z0-9]/g;
+                                let reg4 = /[,;\?:\!\]\}][0-9]/g;
+                                if(reg1.test(tempStr) || reg2.test(tempStr) || reg3.test(tempStr) || reg4.test(tempStr))
+                                {
+                                    lineParts[i].content = ' '+content;
+                                    content = lineParts[i].content;
+                                    offset += 1;
+                                }
+                            }
+                        }
+                        else if(!settings.LinkSmartSpace && settings.LinkSpace && !textStartWithSpace)
                         {
                             lineParts[i].content = ' '+content;
                             content = lineParts[i].content;
@@ -925,7 +949,27 @@ function formatLine(line: string, ch: number, settings: FormatSettings):[string,
                     case InlineType.none:
                         break;
                     case InlineType.text:
-                        if(settings.LinkSpace && !prevTextEndWithSpace)
+                        if(settings.LinkSmartSpace && !prevTextEndWithSpace)
+                        {
+                            let regTestWikiLink = /^\[\[.+\]\]$/;
+                            if(regTestWikiLink.test(lineParts[i].content))
+                            {
+                                let charAtTextEnd = lineParts[i-1].content.charAt(lineParts[i-1].content.length-1);
+                                let charAtLinkBegin = lineParts[i].content.charAt(2);
+                                let tempStr = charAtTextEnd+charAtLinkBegin;
+                                let reg1=/[A-Za-z0-9,.;\?:\!][\u4e00-\u9fa5]/g;
+                                let reg2=/[\u4e00-\u9fa5][@A-Za-z0-9]/g;
+                                let reg3 = /[A-Za-z0-9,.;?:!][A-Za-z0-9]/g;
+                                let reg4 = /[,;\?:\!\]\}][0-9]/g;
+                                if(reg1.test(tempStr) || reg2.test(tempStr) || reg3.test(tempStr) || reg4.test(tempStr))
+                                {
+                                    lineParts[i-1].content += ' ';
+                                    resultLine += ' ';
+                                    offset += 1;
+                                }
+                            }
+                        }
+                        else if(settings.LinkSpace && !prevTextEndWithSpace)
                         {
                             lineParts[i-1].content += ' ';
                             resultLine += ' ';
@@ -1557,7 +1601,7 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', {text: '总开关 (Master Switch)'});
 
 		new Setting(containerEl)
-		.setName("Auto formatting")
+		.setName("Auto formatting when typing")
 		.setDesc("是否在编辑文档时自动格式化文本")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.AutoFormatting)
@@ -1656,6 +1700,16 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.LinkSpace).onChange(async (value)=>{
 				this.plugin.settings.LinkSpace = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+        new Setting(containerEl)
+		.setName("Smart Space between link and text")
+		.setDesc("在 [[wikilink]] mdlink 和文本间智能空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.LinkSmartSpace).onChange(async (value)=>{
+				this.plugin.settings.LinkSmartSpace = value;
 				await this.plugin.saveSettings();
 			});
 		});
