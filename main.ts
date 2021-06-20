@@ -637,6 +637,29 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
             case InlineType.text:
                 let content = lineParts[i].content;
                 // console.log('Before', i, lineParts[i].content)
+
+                // Text.4 处理句首字母大写
+                if(settings.Capitalization)
+				{
+					var reg = /[\.;\?\!。！；？]([\s]*)[a-z]/g;
+					while(true)
+                    {
+                        let match = reg.exec(content);
+                        if(!match) break;
+                        let tempIndex = reg.lastIndex-1;
+                        if(!prevCursor)
+                        {
+                            lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
+                            content = lineParts[i].content;
+                        }
+                        else if(prevCursor && cursorLinePartIndex===i && prevCursor.line===curCursor.line && tempIndex>=prevCursor.ch && tempIndex<curCursor.ch)
+                        {
+                            lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
+                            content = lineParts[i].content;
+                        }
+                    }
+                }
+
                 // Text.1 处理中英文之间空格
                 if(settings.ChineseEnglishSpace){
 					let reg1=/([A-Za-z0-9,\.;\?:!])([\u4e00-\u9fa5]+)/gi;
@@ -662,28 +685,6 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
 					lineParts[i].content = content.replace(reg, "$1 $2");
                     content = lineParts[i].content;
 				}
-
-                // Text.4 处理句首字母大写
-                if(settings.Capitalization)
-				{
-					var reg = /[\.;\?\!。！；？]([\s]*)[a-z]/g;
-					while(true)
-                    {
-                        let match = reg.exec(content);
-                        if(!match) break;
-                        let tempIndex = reg.lastIndex-1;
-                        if(!prevCursor)
-                        {
-                            lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
-                            content = lineParts[i].content;
-                        }
-                        else if(prevCursor && prevCursor.line===curCursor.line && tempIndex>=prevCursor.ch && tempIndex<curCursor.ch)
-                        {
-                            lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
-                            content = lineParts[i].content;
-                        }
-                    }
-                }
 
                 // Text.5 处理英文括号与外部文本空格
                 if(settings.BraceSpace)
