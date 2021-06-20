@@ -88,7 +88,7 @@ User-defined regular expressions are used when the user does not want to format 
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
-- v3.3.1 2021.6.20
+- v3.3.2 2021.6.20
   - bug fix
     - 修复了首字母大写在某些情况失效的bug. Fixed a bug where initial capitalization failed in some cases.
 - v3.3.0 2021.6.19

@@ -560,6 +560,7 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
     {
         lineParts = splitLine(line);
     }
+    console.log(lineParts);
 
     // 备份原来的lineParts, 深拷贝
     let linePartsOrigin = JSON.parse(JSON.stringify(lineParts));
@@ -647,15 +648,21 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
                         let match = reg.exec(content);
                         if(!match) break;
                         let tempIndex = reg.lastIndex-1;
+                        console.log(cursorLinePartIndex)
+                        console.log(prevCursor, curCursor);
+                        console.log(tempIndex);
                         if(!prevCursor)
                         {
                             lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
                             content = lineParts[i].content;
                         }
-                        else if(prevCursor && cursorLinePartIndex===i && prevCursor.line===curCursor.line && tempIndex>=prevCursor.ch && tempIndex<curCursor.ch)
+                        else if(prevCursor && cursorLinePartIndex===i && prevCursor.line===curCursor.line)
                         {
-                            lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
-                            content = lineParts[i].content;
+                            if(tempIndex>=prevCursor.ch-offset && tempIndex<curCursor.ch-offset)
+                            {
+                                lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
+                                content = lineParts[i].content;
+                            }
                         }
                     }
                 }
