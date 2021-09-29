@@ -91,6 +91,11 @@ User-defined regular expressions are used when the user does not want to format 
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.3.4 2021.9.29
+  - Improvement
+    - 提升了对链接的识别，不带`https://` 的 www.开头的链接也能识别。Enhance the recognization for link, link not begin with `https://` but begin with `www.` can be recognized.
+  - Changes
+    - 全角字符增强的功能不再将中文省略号（中文输入法下`shift+6`）自动转化成`^`。The enhanced function of full-width characters no longer automatically converts Chinese ellipsis (`shift+6` under Chinese input method) into `^`.
 - v3.3.3 2021.6.22
   - Change
     - 移除了分号后面的首字母大写，英文用法中分号后面不用大写。Remove capitalization after ";", for I had midsunderstood the use of ";" in English.

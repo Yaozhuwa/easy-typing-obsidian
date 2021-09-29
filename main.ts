@@ -461,7 +461,8 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?:string):InlinePa
     let retArray: InlinePart[] = [];
     let regWikiLink = /\!?\[\[[^\[\]]*?\]\]/g;
     let regMdLink = /\!?\[[^\[\]]*?\]\([^\s\)\(\[\]\{\}']*\)/g;
-    let regBareLink = /(https?|obsidian|zotero):\/\/[^\s\)\(\[\]\{\}']+/g;
+    // let regBareLink = /(https?|obsidian|zotero):\/\/[^\s\)\(\[\]\{\}']+/g;
+    let regBareLink = /(https?:\/\/|obsidian:\/\/|zotero:\/\/|www.)[^\s\)\(\[\]\{\}']+/g;
 
     // 1. 匹配wikilink
     retArray = matchWithReg(text, regWikiLink, InlineType.link, retArray);
@@ -1295,17 +1296,17 @@ export default class EasyTypingPlugin extends Plugin {
 
             obj.update(null, null, [replaceText]);
         }
-        else if(!editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
-        {
-            switch(symbol)
-            {
-                case '……':
-                    obj.update(null, null, ['^']);
-                    break;
-                default:
-                    return;
-            }
-        }
+        // else if(!editor.somethingSelected() && this.settings.FullWidthCharacterEnhence)
+        // {
+        //     switch(symbol)
+        //     {
+        //         case '……':
+        //             obj.update(null, null, ['^']);
+        //             break;
+        //         default:
+        //             return;
+        //     }
+        // }
     }
 
 	onunload() {
