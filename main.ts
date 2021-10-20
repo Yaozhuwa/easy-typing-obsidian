@@ -1278,6 +1278,7 @@ export default class EasyTypingPlugin extends Plugin {
             switch(symbol)
             {
                 case '￥':
+                case '¥':
                     replaceSymbol = '$$';
                     this.selectedFormatRange = editor.listSelections()[0];
                     break;
@@ -1468,7 +1469,8 @@ export default class EasyTypingPlugin extends Plugin {
             {
                 case '$':
                 case '￥':
-                    if(twoCharactersBeforeCursor === '￥￥')
+                case '¥':
+                    if(twoCharactersBeforeCursor === '￥￥' || twoCharactersBeforeCursor === '¥¥')
                     {
                         editor.replaceRange(
                             '$$',
@@ -1477,7 +1479,7 @@ export default class EasyTypingPlugin extends Plugin {
                         );
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                     }
-                    else if(character2cursor1==='$￥$')
+                    else if(character2cursor1==='$￥$' || character2cursor1==='$¥$')
                     {
                         editor.replaceRange(
                             '$$',

@@ -91,6 +91,9 @@ User-defined regular expressions are used when the user does not want to format 
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.3.5 2021.10.20
+  - Bug fix
+    - Try to fix #17 which happened on MacOS: 2 `￥` can't convert to `$$`。
 - v3.3.4 2021.9.29
   - Improvement
     - 提升了对链接的识别，不带`https://` 的 www.开头的链接也能识别。Enhance the recognization for link, link not begin with `https://` but begin with `www.` can be recognized.
