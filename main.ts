@@ -605,7 +605,7 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
             else
             {
                 let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?[a-z]/g;
-                let regHeaderSentence = /^#+ [a-z]/g;
+                let regHeaderSentence = /^(#+ |>+ ?)[a-z]/g;
                 let textcopy = lineParts[0].content;
                 let match = regFirstSentence.exec(textcopy);
                 let matchHeader = regHeaderSentence.exec(textcopy);
@@ -626,10 +626,43 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
                     dstCharIndex = -1;
                 }
 
-                if(dstCharIndex!=-1)
+                if(dstCharIndex != -1)
                 {
                     lineParts[0].content = textcopy.substring(0, dstCharIndex)+textcopy.charAt(dstCharIndex).toUpperCase()+textcopy.substring(dstCharIndex+1);
                 }
+
+                // ------------全角输入增强（首个》变成>）---------------
+                if(settings.FullWidthCharacterEnhence)
+                {
+                    let regFirstQuoteCharacter = /^\s*>*》|^\s*、/g;
+                    textcopy = lineParts[0].content;
+                    match = regFirstQuoteCharacter.exec(textcopy);
+                    dstCharIndex = -1;
+                    if(match)
+                    {
+                        dstCharIndex = regFirstQuoteCharacter.lastIndex-1;
+                    }
+
+                    if(!prevCursor){}
+                    else if(prevCursor.line===curCursor.line && dstCharIndex>=prevCursor.ch && dstCharIndex<curCursor.ch){}
+                    else{
+                        dstCharIndex = -1;
+                    }
+                    if(dstCharIndex != -1)
+                    {
+                        if(textcopy.charAt(dstCharIndex)=='、')
+                        {
+                            lineParts[0].content = textcopy.substring(0, dstCharIndex)+'/'+textcopy.substring(dstCharIndex+1);
+                        }
+                        else
+                        {
+                            lineParts[0].content = textcopy.substring(0, dstCharIndex)+'>'+textcopy.substring(dstCharIndex+1);
+                        }
+                    }
+
+
+                }
+                
             }
         }
         // 3.2 分别处理每种区块情况
@@ -1256,9 +1289,20 @@ export default class EasyTypingPlugin extends Plugin {
 			codeMirrorEditor.on('keyup', this.handleKeyUp);
             codeMirrorEditor.on('keydown', this.handleKeyDown);
             codeMirrorEditor.on('beforeChange', this.beforeChange);
+            codeMirrorEditor.on('cursorActivity', this.handleCursorActivity);
 		});
 
 	}
+
+    handleCursorActivity = (editor:CodeMirror.Editor)=>
+    {
+        // console.log('cursor activitys:');
+        // console.log(editor.getCursor().line);
+        if(editor.getCursor().line != this.prevCursor.line)
+        {
+            this.prevCursor = editor.getCursor();
+        }
+    }
 
     beforeChange = (editor:CodeMirror.Editor, obj: CodeMirror.EditorChangeCancellable)=>
     {
@@ -1316,6 +1360,7 @@ export default class EasyTypingPlugin extends Plugin {
 			codeMirrorEditor.off('keyup', this.handleKeyUp);
             codeMirrorEditor.off('keydown', this.handleKeyDown);
             codeMirrorEditor.off('beforeChange', this.beforeChange);
+            codeMirrorEditor.off('cursorActivity', this.handleCursorActivity);
 		});
 	}
 

@@ -25,6 +25,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
 ### 插件功能 Features
 - [x]  全角符号输入增强
   - [x] 连续输入两个￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`
+  - [x] 行首的`》`自动转换成`>`，`>>》`转换成`>>>`，行首的`、`自动转换成`/`(为了配合核心插件slash commands)
   - [x] 选中文本的功能 (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
   	- [x] 选中文本情况下，按中文的￥键，将自动替换成\$，变成`$selected text$`
   	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
@@ -64,6 +65,7 @@ And you can set the formatting rules freely in the plugin Settings panel.
   - [x] Switch Autoformatting 
 - [x] Full-width symbol enhancement
   - [x] Entering two ￥ in a row will become $$, and the cursor will be positioned in the middle, two【 will become `[[cursor]]`, two `·` will become \`cursor\`
+  - [x] `》` at the beginning of the line is automatically converted to `>`, `>>》` will be converted to `>>>`, and `、` at the beginning of the line are automatically converted to `/` (in order to cooperate with the core plug-in slash commands)
   - [x] when something selected (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
     - [x] pressing the `￥` will format the selected text to `$selected text$`
     - [x] pressing the `·` will format the selected text to inline code
@@ -91,6 +93,11 @@ User-defined regular expressions are used when the user does not want to format 
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.4.0 2021.10.23
+  - New feature
+    - 全角字符增强功能增加了行首的`》`自动转换成`>`，行首的`、`自动转换成`/`（为了配合核心插件slash commands）。The full-width character enhancement has new feature: The `》` at the beginning of the line is automatically converted to `>`, and the `and` at the beginning of the line are automatically converted to `/` (in order to cooperate with the core plug-in slash commands) #17
+  - Bug fix
+    - 修复了鼠标点击到新的空白行首再输入时，句首字母大写失效的问题。Fixed an issue where capitalizing the first letter of a sentence would not work when clicking on the beginning of a blank line
 - v3.3.5 2021.10.20
   - Bug fix
     - Try to fix #17 which happened on MacOS: 2 `￥` can't convert to `$$`。
