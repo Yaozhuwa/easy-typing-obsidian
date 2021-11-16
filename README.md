@@ -1,26 +1,20 @@
-- [Easy Typing](#easy-typing)
-  - [插件功能 Features](#插件功能-features)
-  - [展望功能/改进空间 Future todo](#展望功能改进空间-future-todo)
-  - [其他说明 Other explanation](#其他说明-other-explanation)
-    - [自定义正则表达式 User-defined regular expressions](#自定义正则表达式-user-defined-regular-expressions)
-  - [手动安装插件 Manually installing the plugin](#手动安装插件-manually-installing-the-plugin)
-  - [更新日志 Changelog](#更新日志-changelog)
 
-建议更新时查看一下 [更新日志 Changelog](#更新日志-changelog)
-It is recommended to check [更新日志 Changelog](#更新日志-changelog) when updating
 ## Easy Typing
 
-这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写等等，让中文用户的 Obsidian 书写体验起飞~
+这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写等等。并且提供全角符号输入增强功能，比如连续输入两个￥会变成$$，并将光标定位到中间，输入两个【会变成`[[]]`。让中文用户在很多情况下无需切换输入法，在 Obsidian 得到流畅的书写体验。更多功能详见：[插件功能 Features](#插件功能-features)
 
-This plugin designed for better typing experience. Autoformat your note as typing (Auto captalize and autospace).
+This plugin designed for better typing experience. Autoformat your note when you are typing (Auto captalize and autospace). It also provides full-angle symbol input enhancement functions. For example, two consecutive input of `￥` will become `$$`, and the cursor will be positioned in the middle; two `【` will become `[[]]`. It can help Chinese users get smooth writing experience in Obsidian. More feature is shown in: [插件功能 Features](#插件功能-features)
 
 ![show](showfeature.gif)
 
-而且你可以在插件的设置面板自由地设置你想要的格式化功能
+而且你可以在插件的设置面板自定义你想要的格式化功能。
 
 And you can set the formatting rules freely in the plugin Settings panel.
 
 ![settings](showsettings.gif)
+
+建议更新时查看一下 [更新日志 Changelog](#更新日志-changelog)
+It is recommended to check [更新日志 Changelog](#更新日志-changelog) when updating
 
 ### 插件功能 Features
 - [x]  全角符号输入增强
@@ -93,6 +87,9 @@ User-defined regular expressions are used when the user does not want to format 
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.4.1 2021.11.17
+  - Improvement
+    - Be compatible with plugins: Obsidian Emoji Shortcodes. 与插件 Obsidian Emoji Shortcodes 兼容。
 - v3.4.0 2021.10.23
   - New feature
     - 全角字符增强功能增加了行首的`》`自动转换成`>`，行首的`、`自动转换成`/`（为了配合核心插件slash commands）。The full-width character enhancement has new feature: The `》` at the beginning of the line is automatically converted to `>`, and the `and` at the beginning of the line are automatically converted to `/` (in order to cooperate with the core plug-in slash commands) #17

@@ -722,8 +722,11 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
                 // Text.3 处理英文字母与标点间空格
                 if(settings.EnglishSpace)
 				{
-					var reg = /([,\.;\?:\!])([A-Za-z])/gi;
-					lineParts[i].content = content.replace(reg, "$1 $2");
+					var reg = /([,\.;\?\!])([A-Za-z])/gi;
+                    let tempContent = content.replace(reg, "$1 $2");
+                    var reg2 = /(:)([A-Za-z0-9_]+[ ,\.\?\\\/;'"，。？；‘“”’、\[\]\-\{\}])/gi;
+					lineParts[i].content = tempContent.replace(reg2, "$1 $2");
+                    // console.log(lineParts[i].content);
                     content = lineParts[i].content;
 				}
 
@@ -739,7 +742,7 @@ function formatLine(line: string, curCursor: CodeMirror.Position, settings: Form
                 // Text.6 处理数字与标点的空格
                 if(settings.NumberSpace)
 				{
-					let reg1 = /([,;\?:\!\]\}])([0-9])/g;
+					let reg1 = /([,;\?\!\]\}])([0-9])/g;
 					let reg2 = /([0-9])([\[\{])/g;
                     lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                     content = lineParts[i].content;
