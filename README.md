@@ -87,6 +87,9 @@ User-defined regular expressions are used when the user does not want to format 
 - Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
 ### 更新日志 Changelog
+- v3.4.2 2021.11.18
+  - New feature
+    - Add new feature to full-width symbol enhancement. Two successive `：` will be converted to `:`; two successive `》` will be converted to `>`; two successive `。` will be converted to `.`; two successive `、` will be converted to `/`; two successive `（` will be converted to `()`, and the cursor will be in the middle. It only works when you input, and it won't affect the existing context. 为全角符号增强添加新功能。 两个连续的`：`将被转换为`:`； 两个连续的`》`将被转换为`>`； 两个连续的`。`将被转换为`.`； 两个连续的`、`将被转换为`/`； 两个连续的`（`会被转换成`()`，光标会在中间。该功能只在你输入的时候触发，不会影响已经存在的文本。
 - v3.4.1 2021.11.17
   - Improvement
     - Be compatible with plugins: Obsidian Emoji Shortcodes. 与插件 Obsidian Emoji Shortcodes 兼容。

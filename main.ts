@@ -1572,6 +1572,67 @@ export default class EasyTypingPlugin extends Plugin {
                         editor.setCursor({line: cursor.line, ch:cursor.ch+1});
                     }
                     break;
+                case '：':
+                case ':':
+                    if(twoCharactersBeforeCursor === '：：')
+                    {
+                        editor.replaceRange(
+                            ':',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
+                case '、':
+                case '/':
+                    if(twoCharactersBeforeCursor === '、、')
+                    {
+                        editor.replaceRange(
+                            '/',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
+                case '。':
+                case '.':
+                    if(twoCharactersBeforeCursor === '。。')
+                    {
+                        editor.replaceRange(
+                            '.',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
+
+                case '(':
+                case '（':
+                    if(twoCharactersBeforeCursor === '（（')
+                    {
+                        editor.replaceRange(
+                            '()',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
+                case '》':
+                case '>':
+                    if(twoCharactersBeforeCursor === '》》')
+                    {
+                        editor.replaceRange(
+                            '>',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
                 default:
                     break;
             }
