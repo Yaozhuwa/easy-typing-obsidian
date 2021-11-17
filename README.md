@@ -17,56 +17,59 @@ And you can set the formatting rules freely in the plugin Settings panel.
 It is recommended to check [更新日志 Changelog](#更新日志-changelog) when updating
 
 ### 插件功能 Features
-- [x]  全角符号输入增强
-  - [x] 连续输入两个￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`
-  - [x] 行首的`》`自动转换成`>`，`>>》`转换成`>>>`，行首的`、`自动转换成`/`(为了配合核心插件slash commands)
-  - [x] 选中文本的功能 (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
-  	- [x] 选中文本情况下，按中文的￥键，将自动替换成\$，变成`$selected text$`
-  	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
-    - [x] 选中文情况下，按中文的【，将自动变成`[selected text]`
+- 全角符号输入增强
+  - 连续输入两个￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`
+  - 行首的`》`自动转换成`>`，`>>》`转换成`>>>`，行首的`、`自动转换成`/`(为了配合核心插件slash commands)
+  - 两个连续的`：`将被转换为`:`； 两个连续的`》`将被转换为`>`； 两个连续的`。`将被转换为`.`； 两个连续的`、`将被转换为`/`； 两个连续的`（`会被转换成`()`，光标会在中间。该功能只在你输入的时候触发，不会影响已经存在的文本。
+  - 选中文本的功能 (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
+  	- 选中文本情况下，按中文的￥键，将自动替换成\$，变成`$selected text$`
+  	- 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
+    - 选中文情况下，按中文的【，将自动变成`[selected text]`
 - 编辑过程中行内自动格式化
-	- [x] 中英文之间自动补全空格，包括中文前的英文标点(`',.;?'`)
-	- [x] 行内 latex 公式(比如：$x=y$)和中英文之间自动补全空格
-	- [x] 行内代码片段和中英文间及相关标点的自动补全空格
-	- [x] 英文句首字母和前面的标点 (`',.;?'`) 中间自动添加空格。
-	- [x] 英文行首字母大写，可以撤销
-  - [x] 行内小括号与文本的自动空格
-  - [x] `[[WikiLink]]`, `[markdown link](https://)` 和 纯链接 `https://obsidian.md` 与文本的自动空格。
+	- 中英文之间自动补全空格，包括中文前的英文标点(`',.;?'`)
+	- 行内 latex 公式(比如：$x=y$)和中英文之间自动补全空格
+	- 行内代码片段和中英文间及相关标点的自动补全空格
+	- 英文句首字母和前面的标点 (`',.;?'`) 中间自动添加空格。
+	- 英文行首字母大写，可以撤销
+  - 行内小括号与文本的自动空格
+  - `[[WikiLink]]`, `[markdown link](https://)` 和 纯链接 `https://obsidian.md` 与文本的自动空格。
 - 插件设置面板
-  - [x] 自动格式化总开关
-  - [x] 单个行内自动格式化功能都可以分别关闭、打开
+  - 自动格式化总开关
+  - 单个行内自动格式化功能都可以分别关闭、打开
 - 快捷键/命令
-	- [x]  格式化当前行
-  - [x]  一键全文格式化
-  - [x] 打开/关闭 自动格式化文本（不会影响上面的两个命令，在打字的时候不会自动格式化文本）
-- [x] 用户自定义正则表达式对特定文本不格式化
+	- 格式化当前行
+  - 一键全文格式化
+  - 打开/关闭 自动格式化文本（不会影响上面的两个命令，在打字的时候不会自动格式化文本）
+- 用户自定义正则表达式对特定文本不格式化
 
 ---
 - Auto formatting when editting
-  - [x] auto spacing between Chinese and English
-  - [x] auto spacing between inline latex and text
-  - [x] auto spacing between inline code and text
-  - [x] space between English with punctuate
-  - [x] capitalize the first letter of every sentence, which is revocable.
-  - [x] Space between English braces and text
-  - [x] Auto space for `[[WikiLink]]`, `[markdown link](https://)` and bare link `https://obsidian.md` with other text。
+  - auto spacing between Chinese and English
+  - auto spacing between inline latex and text
+  - auto spacing between inline code and text
+  - space between English with punctuate
+  - capitalize the first letter of every sentence, which is revocable.
+  - Space between English braces and text
+  - Auto space for `[[WikiLink]]`, `[markdown link](https://)` and bare link `https://obsidian.md` with other text。
 - SettingTab
-  - [x] switch auto formatting 
-  - [x] switch every single rule of auto formatting
-- Short cut / command pane
-  - [x] format current line
-  - [x] format current note
-  - [x] Switch Autoformatting 
-- [x] Full-width symbol enhancement
-  - [x] Entering two ￥ in a row will become $$, and the cursor will be positioned in the middle, two【 will become `[[cursor]]`, two `·` will become \`cursor\`
-  - [x] `》` at the beginning of the line is automatically converted to `>`, `>>》` will be converted to `>>>`, and `、` at the beginning of the line are automatically converted to `/` (in order to cooperate with the core plug-in slash commands)
-  - [x] when something selected (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
-    - [x] pressing the `￥` will format the selected text to `$selected text$`
-    - [x] pressing the `·` will format the selected text to inline code
-    - [x]  pressing the `【` will format the selected text to `[selected text]`
-- [x] User-defined regular expressions do not format specific text
+  - switch auto formatting 
+  - switch every single rule of auto formatting
+- Shortcut / command pane
+  - format current line
+  - format current note
+  - Switch Autoformatting 
+- Full-width symbol enhancement
+  - Entering two ￥ in a row will become $$, and the cursor will be positioned in the middle, two【 will become `[[cursor]]`, two `·` will become \`cursor\`
+  - `》` at the beginning of the line is automatically converted to `>`, `>>》` will be converted to `>>>`, and `、` at the beginning of the line are automatically converted to `/` (in order to cooperate with the core plug-in slash commands)
+  - Two successive `：` will be converted to `:`; two successive `》` will be converted to `>`; two successive `。` will be converted to `.`; two successive `、` will be converted to `/`; two successive `（` will be converted to `()`, and the cursor will be in the middle. It only works when you input, and it won't affect the existing context. 
+  - when something selected (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
+    - pressing the `￥` will format the selected text to `$selected text$`
+    - pressing the `·` will format the selected text to inline code
+    - pressing the `【` will format the selected text to `[selected text]`
+- User-defined regular expressions do not format specific text
 
 ### 展望功能/改进空间 Future todo
+- [ ] 适配 obsiidan live preview 模式
 - [ ] 支持一些英文常用缩写的识别
 - [ ] 中英文标点智能切换
 
