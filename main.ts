@@ -1573,6 +1573,7 @@ export default class EasyTypingPlugin extends Plugin {
                     }
                     break;
                 case '：':
+                case ';':
                 case ':':
                     if(twoCharactersBeforeCursor === '：：')
                     {
