@@ -181,11 +181,11 @@ export default class EasyTypingPlugin extends Plugin {
 		let editor = this.getEditor();
 		if(!editor) return;
 
-		// obsidian 在 live preview 模式下会有错误选中区域的问题
-		let specialChar = new Set(['【', '】','·', '=', '“', '”', '《', '》', '‘', '’']);
+		// obsidian 在 live preview 模式下会有错误选中区域的 Bug
+		let specialChar = new Set(['【', '】','·', '=', '“', '”', '《', '》', '‘', '’', '（', '）', '￥']);
 
 		if(editor.somethingSelected() && editor.getSelection()!=""){
-			// console.log('Before Change Selection:', editor.getSelection());
+			// console.log('Before Change Selection:', editor.getSelection(), "替换内容",ev.data);
 			if(ev.data.length!=1 || specialChar.has(editor.getSelection())) return;
 
 			let selectedFormatRange = editor.listSelections()[0];
@@ -237,6 +237,7 @@ export default class EasyTypingPlugin extends Plugin {
 					break;
                 case '（':
                 case '）':
+					console.log("I am here")
                     text = '（'+editor.getSelection()+'）';
 					break;
                 case '{':
@@ -503,12 +504,23 @@ export default class EasyTypingPlugin extends Plugin {
                     }
                     break;
                 case '：':
-                case ';':
                 case ':':
                     if(twoCharactersBeforeCursor === '：：')
                     {
                         editor.replaceRange(
                             ':',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
+				case `,`:
+				case `，`:
+					if(twoCharactersBeforeCursor === '，，')
+                    {
+                        editor.replaceRange(
+                            ',',
                             {line: cursor.line, ch:cursor.ch-2},
                             {line: cursor.line, ch:cursor.ch}
                         );
@@ -547,7 +559,18 @@ export default class EasyTypingPlugin extends Plugin {
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                     }
                     break;
-
+				case `;`:
+				case `；`:
+					if(twoCharactersBeforeCursor === '；；')
+                    {
+                        editor.replaceRange(
+                            ';',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
                 case '(':
                 case '（':
                     if(twoCharactersBeforeCursor === '（（')
@@ -697,7 +720,7 @@ export default class EasyTypingPlugin extends Plugin {
 		{
 			this.articleParts = reparseArticleParts(editor.getValue(), this.articleParts, this.reparseArticle.beginLineNumber, this.settings.Debug);
 			this.reparseArticle.check = false;
-			if(this.settings.Debug) this.printArticleParts(editor);
+			// if(this.settings.Debug) this.printArticleParts(editor);
 		}
 	}
 
@@ -839,6 +862,16 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', {text: '详细规则开关 (Sub Switches)'});
 
 		new Setting(containerEl)
+		.setName("Full-Width symbol input enhancement")
+		.setDesc("全角符号输入增强")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.FullWidthCharacterEnhance).onChange(async (value)=>{
+				this.plugin.settings.FullWidthCharacterEnhance = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
 		.setName("Space between Chinese and English/number")
 		.setDesc("在中文和英文/数字间空格")
 		.addToggle((toggle)=>{
@@ -859,11 +892,11 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		});
 
 		new Setting(containerEl)
-		.setName("Space between English with punctuate")
-		.setDesc("在英文文本和标点间空格")
+		.setName("Smartly insert space between text and punctuation")
+		.setDesc("在文本和标点间智能空格")
 		.addToggle((toggle)=>{
-			toggle.setValue(this.plugin.settings.EnglishSpace).onChange(async (value)=>{
-				this.plugin.settings.EnglishSpace = value;
+			toggle.setValue(this.plugin.settings.PunctuationSpace).onChange(async (value)=>{
+				this.plugin.settings.PunctuationSpace = value;
 				await this.plugin.saveSettings();
 			});
 		});
@@ -874,26 +907,6 @@ class EasyTypingSettingTab extends PluginSettingTab {
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.Capitalization).onChange(async (value)=>{
 				this.plugin.settings.Capitalization = value;
-				await this.plugin.saveSettings();
-			});
-		});
-
-		new Setting(containerEl)
-		.setName("Space between number and English text")
-		.setDesc("数字和标点间空格")
-		.addToggle((toggle)=>{
-			toggle.setValue(this.plugin.settings.NumberSpace).onChange(async (value)=>{
-				this.plugin.settings.NumberSpace = value;
-				await this.plugin.saveSettings();
-			});
-		});
-
-		new Setting(containerEl)
-		.setName("Space between English braces and text")
-		.setDesc("在英文小括号和文本间空格")
-		.addToggle((toggle)=>{
-			toggle.setValue(this.plugin.settings.BraceSpace).onChange(async (value)=>{
-				this.plugin.settings.BraceSpace = value;
 				await this.plugin.saveSettings();
 			});
 		});
@@ -938,32 +951,23 @@ class EasyTypingSettingTab extends PluginSettingTab {
 			});
 		});
 
-        new Setting(containerEl)
-		.setName("Full-Width symbol input enhancement")
-		.setDesc("全角符号输入增强")
-		.addToggle((toggle)=>{
-			toggle.setValue(this.plugin.settings.FullWidthCharacterEnhance).onChange(async (value)=>{
-				this.plugin.settings.FullWidthCharacterEnhance = value;
-				await this.plugin.saveSettings();
-			});
-		});
-
-        new Setting(containerEl)
-		.setName("Space between User Defined Part(selected by RegExp) and text")
-		.setDesc("在用户自定义区块(正则表达式选择)和文本之间空格")
-		.addToggle((toggle)=>{
-			toggle.setValue(this.plugin.settings.UserPartSpace).onChange(async (value)=>{
-				this.plugin.settings.UserPartSpace = value;
-				await this.plugin.saveSettings();
-			});
-		});
-
+		containerEl.createEl('h2', {text: '自定义正则 (Custom regular expressions)'});
         new Setting(containerEl)
 		.setName("User Defined RegExp Switch")
 		.setDesc("自定义正则表达式开关，匹配到的内容不进行格式化")
 		.addToggle((toggle)=>{
 			toggle.setValue(this.plugin.settings.UserDefinedRegSwitch).onChange(async (value)=>{
 				this.plugin.settings.UserDefinedRegSwitch = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("Space between User Defined Part(selected by RegExp) and text")
+		.setDesc("在用户自定义区块(正则表达式选择)和文本之间空格")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.UserPartSpace).onChange(async (value)=>{
+				this.plugin.settings.UserPartSpace = value;
 				await this.plugin.saveSettings();
 			});
 		});

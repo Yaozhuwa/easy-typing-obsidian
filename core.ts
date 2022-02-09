@@ -765,7 +765,7 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
                 // Text.2 处理中文间无空格
                 if(settings.ChineseNoSpace)
 				{
-					var reg=/([\u4e00-\u9fa5，。、；‘’《》]+)(\s+)([\u4e00-\u9fa5，。、；‘’《》]+)/g;
+					let reg=/([\u4e00-\u9fa5，。、；‘’《》]+)(\s+)([\u4e00-\u9fa5，。、；‘’《》]+)/g;
 					while(reg.exec(content))
 					{
 						lineParts[i].content = content.replace(reg, "$1$3");
@@ -773,56 +773,60 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
 					}
 				}
 
-                // Text.3 处理英文字母与标点间空格
-                if(settings.EnglishSpace)
-				{
-					var reg = /([,\.;\?\!])([A-Za-z])/gi;
-                    // let tempContent = content.replace(reg, "$1 $2");
-                    // let tempContent = content;
-                    while(true)
+                if(settings.PunctuationSpace)
+                {
+                    // Text.3 处理英文字母与标点间空格
+                    // if(settings.EnglishSpace)
                     {
-                        let match = reg.exec(content);
-                        if(!match) break;
-                        let tempIndex = reg.lastIndex-1;
-                        if(!prevCursor)
+                        let reg = /([,\.;\?\!])([A-Za-z])/gi;
+                        while(true)
                         {
-                            content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
-                        }
-                        else if(prevCursor && cursorLinePartIndex===i && prevCursor.line===curCursor.line)
-                        {
-                            if(tempIndex>=prevCursor.ch-offset && tempIndex<curCursor.ch-offset)
+                            let match = reg.exec(content);
+                            if(!match) break;
+                            let tempIndex = reg.lastIndex-1;
+                            if(!prevCursor)
                             {
                                 content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
                             }
+                            else if(prevCursor && cursorLinePartIndex===i && prevCursor.line===curCursor.line)
+                            {
+                                if(tempIndex>=prevCursor.ch-offset && tempIndex<curCursor.ch-offset)
+                                {
+                                    content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                                }
+                            }
                         }
+
+                        // 单独处理冒号后文本的自动空格，为了兼容 :emoji: 格式的输入
+                        var reg2 = /(:)([A-Za-z0-9_]+[ ,\.\?\\\/;'"，。？；‘“”’、\[\]\-\{\}])/gi;
+                        lineParts[i].content = content.replace(reg2, "$1 $2");
+                        // console.log(lineParts[i].content);
+                        content = lineParts[i].content;
                     }
 
-                    var reg2 = /(:)([A-Za-z0-9_]+[ ,\.\?\\\/;'"，。？；‘“”’、\[\]\-\{\}])/gi;
-					lineParts[i].content = content.replace(reg2, "$1 $2");
-                    // console.log(lineParts[i].content);
-                    content = lineParts[i].content;
-				}
+                    // Text.5 处理英文括号与外部文本空格
+                    // if(settings.BraceSpace)
+                    {
+                        let reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
+                        let reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()/gi;
+                        lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
+                        content = lineParts[i].content;
+                    }
 
-                // Text.5 处理英文括号与外部文本空格
-                if(settings.BraceSpace)
-				{
-					let reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
-					let reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,\.\?']+)(\()/gi;
-					lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
-                    content = lineParts[i].content;
-				}
+                    // Text.6 处理数字与标点的空格
+                    // if(settings.NumberSpace)
+                    {
+                        let reg1 = /([,;\?\!\]\}])([0-9])/g;
+                        let reg2 = /([0-9])([\[\{])/g;
+                        lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
+                        content = lineParts[i].content;
+                    }
+                }
+                
 
-                // Text.6 处理数字与标点的空格
-                if(settings.NumberSpace)
-				{
-					let reg1 = /([,;\?\!\]\}])([0-9])/g;
-					let reg2 = /([0-9])([\[\{])/g;
-                    lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
-                    content = lineParts[i].content;
-				}
                 // Text.7 得到文本部分是否以空白符开始或结束，用来判断后续文本前后是否需要添加空格
-                let regStartWithSpace = /^\0?[\s,\.;\?\!，。；？！（\]\)\}]/;
-                let regEndWithSpace = /[\s，。：？！）\[\(\{]\0?$/;
+                let regStartWithSpace = /^\0?[\s,\.;\?\!，。；？！、（\]\)\}]/;
+                let regEndWithSpace = /[\s，。、：？！）\[\(\{]\0?$/;
                 let textStartWithSpace = regStartWithSpace.test(content);
                 let textEndWithSpace = regEndWithSpace.test(content);
 

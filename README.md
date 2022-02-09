@@ -1,225 +1,106 @@
+# Easy-Typing Plugin for Obsidian
+**本插件自 4.0.0 版本开始同时支持 live preview 模式（CodeMirror 6 编辑器）和旧版（CodeMirror 5）编辑器。** （在 windows10 环境下开发/测试）
 
-## Easy Typing
+**This plugin support both live preview mode (CodeMirror 6) and legacy mode (CodeMirror 5) after version 4.0.0**. (Developed/tested in windows10 environment)
 
-这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写等等。并且提供全角符号输入增强功能，比如连续输入两个￥会变成$$，并将光标定位到中间，输入两个【会变成`[[]]`。让中文用户在很多情况下无需切换输入法，在 Obsidian 得到流畅的书写体验。更多功能详见：[插件功能 Features](#插件功能-features)
+这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写，标点与文本间智能空格，链接 (`[[wiki link]]`, `[markdown link](file link)` 以及纯链接) 与文本间智能空格等等。并且针对中文用户提供全角符号输入增强功能，比如连续输入两个 `￥` 会变成 `$$`，并将光标定位到中间，输入两个 `【` 会变成 `[[]]`。让中文用户在很多情况下无需切换输入法，在 Obsidian 得到流畅的书写体验。
 
-This plugin designed for better typing experience. Autoformat your note when you are typing (Auto captalize and autospace). It also provides full-angle symbol input enhancement functions. For example, two consecutive input of `￥` will become `$$`, and the cursor will be positioned in the middle; two `【` will become `[[]]`. It can help Chinese users get smooth writing experience in Obsidian. More feature is shown in: [插件功能 Features](#插件功能-features)
+This plugin designed for better typing experience. Autoformat your note when you are typing (Auto captalize and autospace), smartly insert spaces between punctuation and text, insert spaces between links (`[wiki link]]`,  `[markdown link](file link)` and plain links) and text, etc. It also provides full-angle symbol input enhancement functions. For example, two consecutive input of `￥` will become `$$`, and the cursor will be positioned in the middle; two `【` will become `[[]]`. It can help Chinese users get smooth writing experience in Obsidian.
 
-![show](showfeature.gif)
+> ==注意==：本插件在很多情况下需要解析全文从而判断每行文本的是否需要格式化，所以对于处理超大文档的情况可能会产生卡顿。
+> ==Notice==: In many cases, the plug-in parses the full text to determine if each line of text needs formatting, so it can cause delay when dealing with very large documents.
 
-而且你可以在插件的设置面板自定义你想要的格式化功能。
+## 插件核心功能 Features
+该插件对不同的功能进行细分，可以在设置面板自由地开关想设置的功能。
 
-And you can set the formatting rules freely in the plugin Settings panel.
+This plugin subdivides different features, and you can freely switch the features you want to set in the setting panel.
 
-![settings](showsettings.gif)
-
-建议更新时查看一下 [更新日志 Changelog](#更新日志-changelog)
-It is recommended to check [更新日志 Changelog](#更新日志-changelog) when updating
-
-### 插件功能 Features
-- 全角符号输入增强
-  - 连续输入两个￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`
-  - 行首的`》`自动转换成`>`，`>>》`转换成`>>>`，行首的`、`自动转换成`/`(为了配合核心插件slash commands)
-  - 两个连续的`：`将被转换为`:`； 两个连续的`》`将被转换为`>`； 两个连续的`。`将被转换为`.`； 两个连续的`、`将被转换为`/`； 两个连续的`（`会被转换成`()`，光标会在中间。该功能只在你输入的时候触发，不会影响已经存在的文本。
-  - 选中文本的功能 (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
-  	- 选中文本情况下，按中文的￥键，将自动替换成\$，变成`$selected text$`
-  	- 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
-    - 选中文情况下，按中文的【，将自动变成`[selected text]`
-- 编辑过程中行内自动格式化
-	- 中英文之间自动补全空格，包括中文前的英文标点(`',.;?'`)
-	- 行内 latex 公式(比如：$x=y$)和中英文之间自动补全空格
-	- 行内代码片段和中英文间及相关标点的自动补全空格
-	- 英文句首字母和前面的标点 (`',.;?'`) 中间自动添加空格。
-	- 英文行首字母大写，可以撤销
-  - 行内小括号与文本的自动空格
-  - `[[WikiLink]]`, `[markdown link](https://)` 和 纯链接 `https://obsidian.md` 与文本的自动空格。
-- 插件设置面板
-  - 自动格式化总开关
-  - 单个行内自动格式化功能都可以分别关闭、打开
-- 快捷键/命令
-	- 格式化当前行
-  - 一键全文格式化
-  - 打开/关闭 自动格式化文本（不会影响上面的两个命令，在打字的时候不会自动格式化文本）
-- 用户自定义正则表达式对特定文本不格式化
+![插件设置面板|700](https://s1.vika.cn/space/2022/02/09/f7130aebd6a64ffb8b0203ddf5379200)
+### 全角输入增强/辅助
+全角输入增强/辅助功能通过根据用户的输入情境，改变输出的结果，避免了很多情况下的中英文来回切换，提高了生产效率。可以在本插件的设置面板打开 `Full-Width symbol input enhancement` 功能开关来启动该功能。
 
 ---
-- Auto formatting when editting
-  - auto spacing between Chinese and English
-  - auto spacing between inline latex and text
-  - auto spacing between inline code and text
-  - space between English with punctuate
-  - capitalize the first letter of every sentence, which is revocable.
-  - Space between English braces and text
-  - Auto space for `[[WikiLink]]`, `[markdown link](https://)` and bare link `https://obsidian.md` with other text。
-- SettingTab
-  - switch auto formatting 
-  - switch every single rule of auto formatting
-- Shortcut / command pane
-  - format current line
-  - format current note
-  - Switch Autoformatting 
-- Full-width symbol enhancement
-  - Entering two ￥ in a row will become $$, and the cursor will be positioned in the middle, two【 will become `[[cursor]]`, two `·` will become \`cursor\`
-  - `》` at the beginning of the line is automatically converted to `>`, `>>》` will be converted to `>>>`, and `、` at the beginning of the line are automatically converted to `/` (in order to cooperate with the core plug-in slash commands)
-  - Two successive `：` will be converted to `:`; two successive `》` will be converted to `>`; two successive `。` will be converted to `.`; two successive `、` will be converted to `/`; two successive `（` will be converted to `()`, and the cursor will be in the middle. It only works when you input, and it won't affect the existing context. 
-  - when something selected (Thanks to [renmu123](https://github.com/renmu123/obsidian-auto-pair-chinese-symbol)'s inspiration)
-    - pressing the `￥` will format the selected text to `$selected text$`
-    - pressing the `·` will format the selected text to inline code
-    - pressing the `【` will format the selected text to `[selected text]`
-- User-defined regular expressions do not format specific text
+行首的 `》` 会变成 `>`，行首的 `、` 会变成 `/` （适配 Obsidian 内置插件 Slash commands）；
 
-### 展望功能/改进空间 Future todo
-- [ ] 适配 obsiidan live preview 模式
-- [ ] 支持一些英文常用缩写的识别
-- [ ] 中英文标点智能切换
+**连续输入中文符号场景**：连续输入两个 `》` (`《` ) 会变成 `>` ( `<` )；连续输入两个 `、` 会变成 `/`；连续输入两个中文冒号 `：` 会变成 `:`；连续输入两个中文句号 `。` 会变成 `.`；连续输入两个中文感叹号 `！` 会变成 `!`；连续输入两个中文括号 `（` 会被转换成英文括号 `()`，并且光标会定位在中间。
 
-### 其他说明 Other explanation
-#### 自定义正则表达式 User-defined regular expressions
-用户自定义正则表达式用于用户不希望对符合特定规则的区块进行格式化的情形。目前不支持多行模式的正则表达式。
-User-defined regular expressions are used when the user does not want to format blocks that conform to a particular rule. Do not support the multi-line pattern.
+**针对代码块输入情境**：连续输入两个 `·` (即按键  \`)，会变成 \`\`，并且光标定位到中间。此时再次输入 `·`，则会变成 \`\`\`，并且光标定位到最后。选中文本的情况下，键入 `·`，会在选中文本两端各加一个 \` 符号，并且选中的区域不变。
 
-下面是一些示例 Some examples:
-- `:\w*:`: 识别出markdown的emoji. For `:emoji:`.
+**针对公式输入情境**：连续输入两个 `￥`，会变成 `$$` 并且光标定位到中间。此时再次键入 `￥`，会变成 `$$$$` 并且光标自动定位到中间。选中文本的情况下，键入 `￥`，会在选中文本两端各加一个 `$` 符号，并且选中的区域不变。
+
+==在选中文本的情况下==：按键 `【` 或者 `】` 会在选中文本两边分别插入英文中括号，变成 `[选中的文本]` （编辑器默认效果是选中的文本会被替换成键入的 `【` 或者 `】` ），并且选中区域不变。其他中文按键也会产生类似的效果：
+- 按键 `【` 或者 `】` -> `[选中的文本]`
+- 按键 `（` 或者 `）` -> `（选中的文本）`
+- 按键 `‘` 或者 `’` -> `‘选中的文本’`
+- 按键 `“` 或者 `”` -> `“选中的文本”`
+- 按键 `《` 或者 `》` -> `《选中的文本》`
+- 按键 `{` 或者 `}` -> `{选中的文本}`
+- 按键 `<` 或者 `>` -> `<选中的文本>`
+
+### 首字母自动大写 (Auto Captalize)
+![Autocapitalize](https://s1.vika.cn/space/2022/02/09/01c66adc8b1748848350d96c106bfc43)
+
+首字母自动大写功能只会在打字的时候生效，不会影响当前行中之前或者之后的句子的首字母。首字母大写后可以撤销（Ctrl+Z）。
+
+==注意==：由于 live prevew (新版编辑器) 的撤销操作并不单单撤销上一次编辑的操作（应该是 obsidian 的 bug），所以会过度撤销导致回到了输入首字母前的情况，从而导致首字母大写的功能无法撤销。可根据需要关闭该功能。而在旧版编辑器（Legacy mode）下不会有该问题。
+
+The auto-capitalization feature only takes effect when typing, and does not affect the first letter of the sentence before or after the current line. Can be undone (Ctrl+Z) after capitalizing.
+
+==Notice==: Since the undo operation of live prevew (CodeMirror6 editor) does not only undo the last editing operation (should be an obsidian bug), it will be excessively undoed and will return to the situation before entering the first letter, which will make the function of capitalizing the first letter impossible. Revoke. This feature can be turned off if desired. In legacy mode (CodeMirror5 editor), there is no such problem.
+
+### 文本与标点间智能插入空格 
+Intelligently insert spaces between text and punctuation
+- 英文、数字与其前部的英文断句的标点符号之间自动添加空格
+- 英文小括号 `()` 分别与其左右的文本间添加空格
+
+### 文本与特定区块间插入空格
+Intelligently insert spaces between text and  \`inline code\`, `$inline latex formula$`, `[[wiki link]]`, `[markdown link](adress)`, links like `https://obsidian.md`, etc.
+
+1. 文本和 \`行内代码\` 间插入空格
+2. 文本和 `$行内公式$` 间插入空格
+3. 文本和链接 (包括 `[[wiki 链接]]` 、 `[markdown 链接](链接地址)` 以及 `https://obsidian.md` 这样的纯链接文本) 间插入空格。
+4. **链接与文本智能空格功能**：该功能会更具链接的显示文本内容来决定是否在其与文本间插入空格。比如 `[[wiki 链接]]后面的文本` 就不会插入空格，因为链接显示的文本是 `wiki 链接`，其末尾的 `接` 字和其后文本的 `后` 字都为中文，就不插入空格。
+
+
+### 用户自定义正则 User-Defined Regular Expressions
+![自定义正则区域|700](https://s1.vika.cn/space/2022/02/09/1b9b4dac91ef41248ed134f715c89df1)
+在有些情况下，用户不希望对某特定形式的内容进行格式化，比如 `{}` 内部的内容，或者 `<>` 内部的内容。**本插件可以通过用户自定义正则表达式的方式来让本插件对特定形式的内容不进行格式化**。
+
+首先需要在设置中打开 `用户自定义正则` 的功能开关。然后在自定义正则的输入区域填写自己需要定义的正则表达式。填写的时候需要注意每一行只能写一个表达式，如果不想多匹配空格导致没有得到想要的效果，请不要在行尾随意添加空格。例如填写 `{{.*?}}` 将识别双花括号部分内容，并且不会对内部的文本进行格式化。
+
+此外，还可以通过打开 `自定义正则表达式区域与文本间空格` 的设置开关，实现更多用户需要的功能：比如添加正则表达式 `(?<!#)#[^\s,，。？；！]+` 就可以实现标签的识别，并且在文本和标签之间自动空格。
+
+---
+自定义正则表达式示例：
+- `:\w*:` : 识别出 markdown 的 emoji. For `:emoji:`.
 - `{{.*?}}`: 将识别双花括号部分内容. Recognization for the double curly braces.
 - `[a-zA-Z0-9_\-.]+@[a-zA-Z0-9_\-.]+`. 识别邮箱地址 Recognization for EMail address.
-- `#[A-Za-z0-9\u4e00-\u9fa5\/]+` 识别中英文混合的tag。Recognize tags with mixed Chinese and English.
 
-### 手动安装插件 Manually installing the plugin
+## 现存问题 Known Issue
+### Live Preview 模式下输入法的问题
+![live preview 模式-微软输入法](https://s1.vika.cn/space/2022/02/09/aa5fda89d6bc4ba99f83903b6cb622e1)
+上面的 gif 演示了在新版编辑器（CodeMirror6）下，微软输入法（==或者其他在输入中文时会上屏正在输入的字符的输入法==）会出现的问题。但是下图演示的使用 legacy mode 的情况下，是可以正常输入的。这应该是 Obsidian 的 Bug。
 
-- 下载最新的 release 包（不是源代码）, 将 `main.js`, `styles.css`, `manifest.json` 复制到您的保管库 `VaultFolder/.obsidian/plugins/your-plugin-id/` 中。
-- Down load newest release (not source code). Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+![legacy mode-微软输入法](https://s1.vika.cn/space/2022/02/09/1cfd4dd29c634801b88a7cd8e1d5063b)
 
-### 更新日志 Changelog
-- v3.4.3 2021.11.18
-  - Bug fix
-    - fix that two successive `：` will be converted to `:` not working in ubuntu;
-- v3.4.2 2021.11.18
-  - New feature
-    - Add new feature to full-width symbol enhancement. Two successive `：` will be converted to `:`; two successive `》` will be converted to `>`; two successive `。` will be converted to `.`; two successive `、` will be converted to `/`; two successive `（` will be converted to `()`, and the cursor will be in the middle. It only works when you input, and it won't affect the existing context. 为全角符号增强添加新功能。 两个连续的`：`将被转换为`:`； 两个连续的`》`将被转换为`>`； 两个连续的`。`将被转换为`.`； 两个连续的`、`将被转换为`/`； 两个连续的`（`会被转换成`()`，光标会在中间。该功能只在你输入的时候触发，不会影响已经存在的文本。
-- v3.4.1 2021.11.17
-  - Improvement
-    - Be compatible with plugins: Obsidian Emoji Shortcodes. 与插件 Obsidian Emoji Shortcodes 兼容。
-- v3.4.0 2021.10.23
-  - New feature
-    - 全角字符增强功能增加了行首的`》`自动转换成`>`，行首的`、`自动转换成`/`（为了配合核心插件slash commands）。The full-width character enhancement has new feature: The `》` at the beginning of the line is automatically converted to `>`, and the `and` at the beginning of the line are automatically converted to `/` (in order to cooperate with the core plug-in slash commands) #17
-  - Bug fix
-    - 修复了鼠标点击到新的空白行首再输入时，句首字母大写失效的问题。Fixed an issue where capitalizing the first letter of a sentence would not work when clicking on the beginning of a blank line
-- v3.3.5 2021.10.20
-  - Bug fix
-    - Try to fix #17 which happened on MacOS: 2 `￥` can't convert to `$$`。
-- v3.3.4 2021.9.29
-  - Improvement
-    - 提升了对链接的识别，不带`https://` 的 www.开头的链接也能识别。Enhance the recognization for link, link not begin with `https://` but begin with `www.` can be recognized.
-  - Changes
-    - 全角字符增强的功能不再将中文省略号（中文输入法下`shift+6`）自动转化成`^`。The enhanced function of full-width characters no longer automatically converts Chinese ellipsis (`shift+6` under Chinese input method) into `^`.
-- v3.3.3 2021.6.22
-  - Change
-    - 移除了分号后面的首字母大写，英文用法中分号后面不用大写。Remove capitalization after ";", for I had midsunderstood the use of ";" in English.
-- v3.3.2 2021.6.20
-  - bug fix
-    - 修复了首字母大写在某些情况失效的bug. Fixed a bug where initial capitalization failed in some cases.
-- v3.3.0 2021.6.19
-  - Shinny new things
-    - 首字母大写可撤销 Feature of capitalizing the first letter of every sentence is revocable now.
-    - 增加了[[wikilink]]的智能空格选项，可以根据其上下文决定是否加空格。 Add setting for smart spacing for [[wikilink]], which decide whether to add spaces from the context.
-  - Bug fix
-    - 解决了之前格式化一行文本的命令不生效的bug。Fixed a bug where formatting a line of text doesn't work
-- v3.2.2 2021.6.16
-  - Improvement
-    - 增加了对错误的自定义正则的处理，修复了空字符串的正则导致软件卡死的bug, 正则表达式功能应该没问题了。
-    - 修改了formatLine的方式，只对一行中需要格式化的部分进行replaceRange，解决了一行中如果有%`-时每次格式化都需要重新解析全文的问题，提升了性能。
-    - 全角字符增强的功能增加了输入……（shift+6）转换为^的功能。issue #10.
-    - 修改了很多if-else，改成switch，略微提升性能
-- v3.2.1 2021.6.10
-  - Improvement
-    - 增加了连续三次键入·，会变成\`\`\`
-- v3.2.0 2021.6.10
-  - Shiny new things
-    - 增加了用户自定义正则表达式的功能，对正则表达式选取的部分不进行格式化。如`:\w*:`将识别emoji，并不会格式化其内部。`{{.*?}}`将识别双花括号部分，并对其内部不格式化。
-    - 还可以选择自定义区块和其他文本区块之间空格。
-  - Change
-    - 合并了之前的 wikilink, mdlink, barelink，统称为link，相关的自动空格开关也合并为1个。
-  - Others
-    - 部分代码重新命名/注释，更加清晰
-- v3.1.9 2021.6.9
-  - Bug fix
-    - 修复 v3.1.8 全角输入增强对 Mac 版本 obsidian无效的问题
-- v3.1.8 2021.6.9
-  - Improvement
-    - 增加了全角符号输入增强，现在连续两个￥￥会变成$$，并将光标定位到中间，输入两个【会变成`[[cursor]]`，同理输入两个`·`会变成\`cursor\`
-    - 重写了splitLine函数，改善逻辑，增加可维护性，并支持行内`$$block formula$$`的识别。  
-    - readme 增加了对插件设置面板的说明
-- v3.1.7 2021.6.7
-  - Improvement
-    - selectFormat 增加了选中文本时按【则在文本两边增加`[]`的效果.
-    - 现在选中文本再【或者￥后，文本还保持选中
-    - list或者task内部开头的整行公式(如`$$x+y=z$$`)现在也能被识别，不会导致错误的格式化。
-- v3.1.6 2021.5.28
-  - Improvement
-    - 在设置项增加了Debug，可以在控制台输出调试信息，方便调试。
-  - Bug fix
-    - 修复光标定位新行时，prevCursor没更新导致的bug。
-- v3.1.5 2021.5.28
-  - Bug fix
-    - 修复了在text类型的行编辑后，光标定位到codeblock内编辑情况下，format会对codeblock起作用的bug。
-- v3.1.4 2021.5.26
-  - Improvement
-    - Reduce computatio: 不再在每次按键输入时解析全文，分析段的类型，而是在文本行数变化，或者在本文增减 `$- 这几个符号的时候重新解析全文的行类型。 
-    - Effect change: 修改了数字空格选项的逻辑，不再在数字与字母之间空格。
-  - Bugs fix
-    - set `manifest.json`: `"isDesktopOnly": true`, Since I'm using the CodeMirror 5 API
-    - remove unused imports
-    - unhook events in `onunload()`
-- v3.1.3 2021.5.16
-  - bug fix
-    - [x] 修复了标题首字母大写不生效的bug
-    - [x] 修复了`[https://xxx]()` mdlink中方括号内部两边会自动生成空格的问题。 
-- v3.1.2 2021.5.16
-  - bug fix
-    - [x] 文本和inline元素之间打空格回多添加一个空格, that won't happen again.
-- v3.1.1 2021.5.15
-  - Improve
-  	- [x] 选中文本情况下，按中文的￥键，将自动替换成$，变成行内公式
-  	- [x] 选中文本情况下，按中文的·，将自动替换成`，变成行内代码块
-- v3.1.0 2021.5.14
-  - Improve
-    - **增加了全文的内容识别，在全文语境下的代码块和公式中不自动格式化**
-    - 增加了快捷键：全文格式化
-    - 增加了快捷键：AutoFormat 开关切换
-    - Md 链接将不论小括号内容
-- v3.0.1
-  - bug fix
-    - 修复了inline code 等元素和前后的标点符号空格的bug。
-- v3.0.0
-  - Improvement
-    - **重构代码逻辑**，提升可维护性
-    - 增强了行内公式和行内代码块的识别逻辑
-    - 增加了多种链接的识别：wiki link, markdown link and bare link.
-    - 增加了多种链接的自动空格功能开关
-    - 开发了**光标位置计算算法**，大大提升了行内编辑的体验
-- v2.3.1
-  - bug fix
-    - [x] 修复数字和后面的冒号自动空格的 bug
-- v2.3.0
-  - improvement
-    - 增加了对obsidian 和 zotero 链接的识别（`obsidian://`, `zotero://`），链接内部不自动 format
-  - Bug fix
-    - 修复了对部分链接内部字符无法识别的bug
-- v2.2.0
-  - improvement
-    - 去除部分冗余代码
-    - 对main.ts中类重新命名
-- v2.1.0
-  - bugs fix    
-    - 修复上个版本中链接在某些情况下还是会被格式化的bug
-- v2.0.0
-  - Improvement
-    - 独立设置数字和英文文本，标点的空格，数字和`.`不空格
-    - list，checkbox 中支持英文行首字母大写
-    - 自动识别网址链接，不格式化网址链接部分内容
-    - 识别 WikiLink 和 MarkDown link，不格式化其内容
-    - 设置面板分类更加清晰
-  - Bug fix
-    - inline 元素的范围识别逻辑
-- v1.0.0
-  - 基本功能完成
+---
+**解决方法**：
+1. 可以选择使用在输入中文的时候，输入完毕之后文字再上屏的输入法，如搜狗输入法。
+![](https://s1.vika.cn/space/2022/02/09/78ed5ecff24644f380800ae7891804d1)
+2. 关闭 `中英文自动空格` 和 `英文首字母大写` 的功能。
+3. 使用 legacy mode
+
+## 更新记录
+- V4.0.0 2022.02.09 
+    - （在 windows10 环境下开发/测试）
+    - Improvement
+        - **同时支持 live preview 模式 (Support Live preview) 和 legacy editor**
+        - 优化文本解析的时机和解析的范围，提升性能；在切换文档的时候重新解析文档。
+        - 支持 Admonition 代码块内部文本自动格式化
+        - 增加命令：格式化选中的文本
+        - 增强了 `链接与文本智能空格` 的功能
+        - 大大增强了 `全角字符输入增强/辅助` 功能
+        - 回车后，对上一行文本进行格式化
+    - Bug fix
+        - 解决了某些情况下，格式化行时最终光标计算错误的 Bug。
+        - 修复了解析全文时，在某些情况下在全文最后会多计算一行 undefined 的 Bug
