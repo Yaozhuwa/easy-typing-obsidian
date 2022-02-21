@@ -1,3 +1,13 @@
+- [Easy-Typing Plugin for Obsidian](#easy-typing-plugin-for-obsidian)
+  - [插件核心功能 Features](#插件核心功能-features)
+    - [全角输入增强/辅助](#全角输入增强辅助)
+    - [首字母自动大写 (Auto Captalize)](#首字母自动大写-auto-captalize)
+    - [文本与标点间智能插入空格](#文本与标点间智能插入空格)
+    - [文本与特定区块间插入空格](#文本与特定区块间插入空格)
+    - [用户自定义正则 User-Defined Regular Expressions](#用户自定义正则-user-defined-regular-expressions)
+  - [现存问题 Known Issue](#现存问题-known-issue)
+    - [Live Preview 模式下输入法的问题](#live-preview-模式下输入法的问题)
+  - [更新记录](#更新记录)
 # Easy-Typing Plugin for Obsidian
 **本插件自 4.0.0 版本开始同时支持 live preview 模式（CodeMirror 6 编辑器）和旧版（CodeMirror 5）编辑器。** （在 windows10 环境下开发/测试）
 

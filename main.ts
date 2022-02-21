@@ -455,6 +455,11 @@ export default class EasyTypingPlugin extends Plugin {
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
 						this.reparseArticle = {check: true, beginLineNumber:cursor.line};
                     }
+					else if(twoCharactersBeforeCursor === '$$')
+					{
+						editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+						this.reparseArticle = {check: true, beginLineNumber:cursor.line};
+					}
                     else if(character2cursor1==='$￥$' || character2cursor1==='$¥$')
                     {
                         editor.replaceRange(
@@ -602,6 +607,15 @@ export default class EasyTypingPlugin extends Plugin {
                         );
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                     }
+					else if(twoCharactersBeforeCursor === '>》')
+					{
+						editor.replaceRange(
+                            '>',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor(cursor);
+					}
                     break;
                 case '<':
                 case '《':
@@ -621,6 +635,18 @@ export default class EasyTypingPlugin extends Plugin {
                     {
                         editor.replaceRange(
                             '!',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+                    break;
+				case '|':
+				case '｜':
+					if(twoCharactersBeforeCursor === '｜｜')
+                    {
+                        editor.replaceRange(
+                            '|',
                             {line: cursor.line, ch:cursor.ch-2},
                             {line: cursor.line, ch:cursor.ch}
                         );
