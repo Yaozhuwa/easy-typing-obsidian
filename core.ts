@@ -29,6 +29,7 @@ export interface InlineChange
 export interface FormatSettings
 {
     AutoFormatting: boolean;
+    FormattingWhenLineEnd: boolean;
 	ChineseEnglishSpace: boolean;
 	ChineseNoSpace: boolean;
     Capitalization: boolean;
@@ -54,6 +55,7 @@ export interface FormatSettings
 
 export const DEFAULT_SETTINGS: FormatSettings = {
     AutoFormatting: true,
+    FormattingWhenLineEnd: false,
 	ChineseEnglishSpace: true,
 	ChineseNoSpace: true,
     Capitalization: true,
@@ -69,7 +71,7 @@ export const DEFAULT_SETTINGS: FormatSettings = {
     LinkSmartSpace: true,
 
     FullWidthCharacterEnhance: true,
-    UserDefinedRegExp:':\\w*:\n{{.*?}}',
+    UserDefinedRegExp:':\\w*:\n{{.*?}}\n<.*?>\n\\[\\!.*?\\][+-]{0,1}',
     UserDefinedRegSwitch: true,
     UserPartSpace:true,
     Debug:false
@@ -825,12 +827,12 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
                 
 
                 // Text.7 得到文本部分是否以空白符开始或结束，用来判断后续文本前后是否需要添加空格
-                let regStartWithSpace = /^\0?[\s,\.;\?\!，。；？！、（\]\)\}]/;
-                let regEndWithSpace = /[\s，。、：？！）\[\(\{]\0?$/;
+                let regStartWithSpace = /^\0?[\s,\.;\?\!，。；？！、（）\]\)\}]/;
+                let regEndWithSpace = /[\s，。、：；？！（）\[\(\{]\0?$/;
                 let textStartWithSpace = regStartWithSpace.test(content);
                 let textEndWithSpace = regEndWithSpace.test(content);
 
-                // console.log('Median', i, lineParts[i].content)
+                // console.log(i, lineParts[i].content, '; !startwithspace:',!textStartWithSpace)
 
                 // Text.8 根据前一部分的区块类型处理空格添加的问题
                 switch(prevPartType)
@@ -853,9 +855,10 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
                         break;
                     case InlineType.link:
                         if(lineParts[i].content.charAt(0)===' ') break;
-                        let regBareLink = /(https?:\/\/|ftp:\/\/|obsidian:\/\/|zotero:\/\/|www.)[^\s（）《》。,;:，！？；：“”‘’\)\(\[\]\{\}']+/g;
+                        let regBareLink = /^(https?:\/\/|ftp:\/\/|obsidian:\/\/|zotero:\/\/|www.)[^\s（）《》。,;:，！？；：“”‘’\)\(\[\]\{\}']+/g;
                         let isBareLink = false;
                         isBareLink = regBareLink.test(lineParts[i-1].content);
+                        // console.log('barelink', isBareLink)
                         if(isBareLink)
                         {
                             lineParts[i].content = ' '+content;

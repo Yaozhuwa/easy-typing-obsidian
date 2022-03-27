@@ -64,6 +64,16 @@ export default class EasyTypingPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "easy-typing-format-article",
+			name: "format current article",
+			callback: () => this.formatArticle(),
+			hotkeys: [{
+				modifiers: ['Ctrl', 'Alt'],
+				key: "l"
+			}],
+		});
+
+		this.addCommand({
 			id: "easy-typing-format-switch",
 			name: "switch autoformat",
 			callback: () => this.switchAutoFormatting(),
@@ -113,6 +123,28 @@ export default class EasyTypingPlugin extends Plugin {
 		return editor;
 	}
 
+	formatArticle = ():void=>
+	{
+		if(this.settings.Debug)
+		{
+			console.log("Begin format Article");
+		}
+		let editor = this.getEditor();
+		if(!editor) return;
+		let lineCount = editor.lineCount();
+		for (let i=0; i<lineCount; i++)
+		{
+			if(this.isTextPart(i))
+			{
+				this.FormatLineWithoutCheckPart(editor, i);
+			}
+		}
+		if(this.settings.Debug)
+		{
+			new Notice("Format Article Done!");
+		}
+	}
+
 	formatSelection = ():void=>
 	{
 		if(this.settings.Debug)
@@ -122,7 +154,16 @@ export default class EasyTypingPlugin extends Plugin {
 		let editor = this.getEditor();
 		if(!editor) return;
 
-		if(!editor.somethingSelected() || editor.getSelection()==='') return;
+		if(!editor.somethingSelected() || editor.getSelection()==='')
+		{
+			let lineNumber = editor.getCursor().line;
+			if(this.isTextPart(lineNumber))
+			{
+				this.FormatLineWithoutCheckPart(editor, lineNumber);
+			}
+			editor.setCursor({line: lineNumber, ch:editor.getLine(lineNumber).length});
+			return;
+		}
 
 		let selection = editor.listSelections()[0];
 		let lineBeginReparse = selection.anchor.line;
@@ -173,6 +214,7 @@ export default class EasyTypingPlugin extends Plugin {
         let status = this.settings.AutoFormatting?'on':'off';
         new Notice('Autoformat is '+ status +'!');
     }
+
 
 	handleBeforeInput=(ev: InputEvent):void=>
 	{
@@ -385,8 +427,15 @@ export default class EasyTypingPlugin extends Plugin {
 				this.updateArticleParts(editor);
 				if(this.isTextPart(prevLineIndex))
 				{
-					let prevLineEndCursor = {line: prevLineIndex, ch: editor.getLine(prevLineIndex).length}				
-					this.updateLine(editor, prevLineIndex, prevLineEndCursor, this.settings, prevLineEndCursor, editor.getCursor());
+					if(this.settings.FormattingWhenLineEnd)
+					{
+						this.FormatLineWithoutCheckPart(editor, prevLineIndex);
+					}
+					else
+					{
+						let prevLineEndCursor = {line: prevLineIndex, ch: editor.getLine(prevLineIndex).length}				
+						this.updateLine(editor, prevLineIndex, prevLineEndCursor, this.settings, prevLineEndCursor, editor.getCursor());
+					}
 				}
 				this.updateSelection(editor);
 				this.prevCursor = editor.getCursor();
@@ -510,7 +559,18 @@ export default class EasyTypingPlugin extends Plugin {
                     break;
                 case '：':
                 case ':':
-                    if(twoCharactersBeforeCursor === '：：')
+				case `;`:
+				case `；`:
+					if(twoCharactersBeforeCursor === '；；')
+					{
+						editor.replaceRange(
+							';',
+							{line: cursor.line, ch:cursor.ch-2},
+							{line: cursor.line, ch:cursor.ch}
+						);
+						editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+					}
+                    else if(twoCharactersBeforeCursor === '：：')
                     {
                         editor.replaceRange(
                             ':',
@@ -558,18 +618,6 @@ export default class EasyTypingPlugin extends Plugin {
                     {
                         editor.replaceRange(
                             '.',
-                            {line: cursor.line, ch:cursor.ch-2},
-                            {line: cursor.line, ch:cursor.ch}
-                        );
-                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
-                    }
-                    break;
-				case `;`:
-				case `；`:
-					if(twoCharactersBeforeCursor === '；；')
-                    {
-                        editor.replaceRange(
-                            ';',
                             {line: cursor.line, ch:cursor.ch-2},
                             {line: cursor.line, ch:cursor.ch}
                         );
@@ -672,7 +720,10 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 
 		//------------------对文本进行格式化---------------------
-		this.updateLine(editor, cursor.line, cursor, this.settings, this.prevCursor);
+		if(!this.settings.FormattingWhenLineEnd)
+		{
+			this.updateLine(editor, cursor.line, cursor, this.settings, this.prevCursor);
+		}
 		this.prevCursor = editor.getCursor();
 		this.editorChanged = false;
 	}
@@ -800,6 +851,18 @@ export default class EasyTypingPlugin extends Plugin {
 		// }
 	}
 
+	FormatLineWithoutCheckPart=(editor: Editor, line:number):void=>
+	{
+		let lineString = editor.getLine(line);
+		let cs = {line: line, ch:lineString.length};
+		let formattedChange = formatLine(lineString, cs, this.settings);
+		let changedLine = formattedChange[0];
+		if(changedLine != lineString)
+		{
+			editor.replaceRange(changedLine, {line:line, ch:0}, cs);
+		}
+	}
+
 	updateLine=(editor: Editor, lineIndex: number, curCursor: EditorPosition, settings: FormatSettings, 
 		prevCursor?: EditorPosition, setCursor?: EditorPosition):void=>
 	{
@@ -881,6 +944,18 @@ class EasyTypingSettingTab extends PluginSettingTab {
 			.onChange(async (value)=>{
 				this.plugin.settings.AutoFormatting = value;
 				console.log("AutoFormatting:",value);
+				await this.plugin.saveSettings();
+			});
+		});
+
+		new Setting(containerEl)
+		.setName("LineMode: Only formatting when line end.")
+		.setDesc("行模式：只在一行输入结束，回车创建新行的时候，对该行进行格式化。")
+		.addToggle((toggle)=>{
+			toggle.setValue(this.plugin.settings.FormattingWhenLineEnd)
+			.onChange(async (value)=>{
+				this.plugin.settings.FormattingWhenLineEnd = value;
+				console.log("FormattingWhenLineEnd:",value);
 				await this.plugin.saveSettings();
 			});
 		});

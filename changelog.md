@@ -1,4 +1,17 @@
 ## 更新日志 Changelog
+- V4.0.2 2022.03.27
+  - New Feature
+    - 新增了行模式：只在一行输入结束，回车创建新行的时候，对该行进行格式化。可以在插件设置中打开(Add LineMode: Only formatting when line end. need to be activated in setting pane)
+  - Improvement
+    - 增加了格式化全文的命令（add command to foramt the whole article）
+    - format-selection 命令在没有选中文本的情况下，格式化当前行。（format-selection command will format current line when there is no selection）
+  - Bug fix
+    - 修复了链接后面错误添加空格的 bug。（fix bug: sometime it mistakenly add space after link）
+    - 修复全角增强功能在 linux 下两次 `；`不会转换成 `;` 的 bug
+  - Others
+    - 建议在插件设置中的正则表达式设置中添加两行正则: 
+      - `\[\!.*?\][+-]{0,1}` 用于排除对 Obsidian 0.14 版本后新增的 callout 类型的格式化 
+      - `<.*?>` 用于排除 Templater 插件特定语法的格式化。
 - V4.0.1 2022.02.21
   - Improvement
     - 全角字符增强，增加了对Mac系统下两次中文竖线变英文竖线的功能 #24

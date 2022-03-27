@@ -5,6 +5,7 @@
     - [文本与标点间智能插入空格](#文本与标点间智能插入空格)
     - [文本与特定区块间插入空格](#文本与特定区块间插入空格)
     - [用户自定义正则 User-Defined Regular Expressions](#用户自定义正则-user-defined-regular-expressions)
+    - [行模式](#行模式)
   - [现存问题 Known Issue](#现存问题-known-issue)
     - [Live Preview 模式下输入法的问题](#live-preview-模式下输入法的问题)
   - [更新记录](#更新记录)
@@ -85,7 +86,12 @@ Intelligently insert spaces between text and  \`inline code\`, `$inline latex fo
 - `:\w*:` : 识别出 markdown 的 emoji. For `:emoji:`.
 - `{{.*?}}`: 将识别双花括号部分内容. Recognization for the double curly braces.
 - `[a-zA-Z0-9_\-.]+@[a-zA-Z0-9_\-.]+`. 识别邮箱地址 Recognization for EMail address.
+- `\[\!.*?\][+-]{0,1}` 用于排除对 Obsidian 0.14 版本后新增的 callout 类型的格式化。 Recongnize `callout` after obsidian 0.14.0
+- `<.*?>` 用于排除 Templater 插件特定语法的格式化. Recognization for function of Templater plugin.
 
+### 行模式
+只在一行输入结束，回车创建新行的时候，对该行进行格式化。可以在插件设置中打开
+Line Mode: Only formatting when line end. need to be activated in setting pane.
 ## 现存问题 Known Issue
 ### Live Preview 模式下输入法的问题
 ![live preview 模式-微软输入法](https://s1.vika.cn/space/2022/02/09/aa5fda89d6bc4ba99f83903b6cb622e1)
@@ -99,8 +105,23 @@ Intelligently insert spaces between text and  \`inline code\`, `$inline latex fo
 ![](https://s1.vika.cn/space/2022/02/09/78ed5ecff24644f380800ae7891804d1)
 2. 关闭 `中英文自动空格` 和 `英文首字母大写` 的功能。
 3. 使用 legacy mode
+4. 使用 `行模式`(LineMode) 【推荐】 (After EasyTyping 4.0.2)
+   在插件设置中打开行模式开关，这样只有在一行输入结束，按回车创建新行的时候，才会对该行进行格式化，避免了输入法的问题。算是一种折衷的解决方案。
 
 ## 更新记录
+- V4.0.2 2022.03.27
+  - New Feature
+    - 新增了行模式：只在一行输入结束，回车创建新行的时候，对该行进行格式化。可以在插件设置中打开(Add LineMode: Only formatting when line end. need to be activated in setting pane) 可用于部分解决 [Live Preview 模式下输入法的问题](#live-preview-模式下输入法的问题)
+  - Improvement
+    - 增加了格式化全文的命令（add command to foramt the whole article）
+    - format-selection 命令在没有选中文本的情况下，格式化当前行。（format-selection command will format current line when there is no selection）
+  - Bug fix
+    - 修复了链接后面错误添加空格的 bug。（fix bug: sometime it mistakenly add space after link）
+    - 修复全角增强功能在 linux 下两次 `；`不会转换成 `;` 的 bug
+  - Others
+    - 建议在插件设置中的正则表达式设置中添加两行正则: 
+      - `\[\!.*?\][+-]{0,1}` 用于排除对 Obsidian 0.14 版本后新增的 callout 类型的格式化 
+      - `<.*?>` 用于排除 Templater 插件特定语法的格式化。
 - V4.0.0 2022.02.09 
     - （在 windows10 环境下开发/测试）
     - Improvement
