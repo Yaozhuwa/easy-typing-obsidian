@@ -131,6 +131,7 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 		let editor = this.getEditor();
 		if(!editor) return;
+		this.updateArticleParts(editor);
 		let lineCount = editor.lineCount();
 		for (let i=0; i<lineCount; i++)
 		{
@@ -153,6 +154,7 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 		let editor = this.getEditor();
 		if(!editor) return;
+		this.updateArticleParts(editor);
 
 		if(!editor.somethingSelected() || editor.getSelection()==='')
 		{

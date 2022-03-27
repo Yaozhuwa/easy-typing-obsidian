@@ -109,7 +109,7 @@ Line Mode: Only formatting when line end. need to be activated in setting pane.
    在插件设置中打开行模式开关，这样只有在一行输入结束，按回车创建新行的时候，才会对该行进行格式化，避免了输入法的问题。算是一种折衷的解决方案。
 
 ## 更新记录
-- V4.0.2 2022.03.27
+- V4.0.3 2022.03.27
   - New Feature
     - 新增了行模式：只在一行输入结束，回车创建新行的时候，对该行进行格式化。可以在插件设置中打开(Add LineMode: Only formatting when line end. need to be activated in setting pane) 可用于部分解决 [Live Preview 模式下输入法的问题](#live-preview-模式下输入法的问题)
   - Improvement
