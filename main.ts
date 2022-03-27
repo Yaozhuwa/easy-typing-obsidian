@@ -340,7 +340,8 @@ export default class EasyTypingPlugin extends Plugin {
 		if(!editor) return;
 		this.keyDownFlag = false;
 
-		if(evt.key === 'Process')
+		// 处理不更新 editorChanged 的按键
+		if(evt.key === 'Process' || evt.key === 'Shift')
 		{
 			return;
 		}

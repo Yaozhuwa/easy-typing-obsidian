@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- V4.0.4 2022.03.27
+  - Bug fix
+    - 修复在 Ubuntu 下，全角增强开启下两次`：`不会变成`:`的 bug。
 - V4.0.3 2022.03.27
   - New Feature
     - 新增了行模式：只在一行输入结束，回车创建新行的时候，对该行进行格式化。可以在插件设置中打开(Add LineMode: Only formatting when line end. need to be activated in setting pane)
