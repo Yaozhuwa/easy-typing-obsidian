@@ -398,9 +398,24 @@ export default class EasyTypingPlugin extends Plugin {
 		// 删除文本后需要重新解析文本
 		let regTestReparse = /^[\-\$`]|[\-\$\`]\s*$|\n|\$\$|---|```/gm;
 		// let setTestReparse = new Set(['\n', '-', '$', '`']);
+		let cs = editor.getCursor();
+		let charAfterCursor = editor.getRange(
+			{line: cs.line, ch:cs.ch},
+			{line: cs.line, ch:cs.ch+1}
+		);
 		switch(evt.key)
 		{
 			case 'Backspace':
+				// console.log('selected', this.selectedText)
+				// if(this.settings.FullWidthCharacterEnhance)
+				// {
+				// 	if(this.selectedText==='《' && charAfterCursor==='》')
+				// 	{
+				// 		editor.replaceRange('', 
+				// 			{line: cs.line, ch:cs.ch},
+				// 			{line: cs.line, ch:cs.ch+1});
+				// 	}
+				// }
 				if((this.selectedText!="" && !regTestReparse.test(this.selectedText)) || 
 				    (this.selectedText==="" && !regTestReparse.test(this.charBeforeCursor)))
 				{
@@ -485,10 +500,10 @@ export default class EasyTypingPlugin extends Plugin {
 				{line: cursor.line, ch:cursor.ch-1},
 				{line: cursor.line, ch:cursor.ch}
 			);
-            // let twoCharactersNearCursor = editor.getRange(
-            //     {line: cursor.line, ch:cursor.ch-1},
-            //     {line: cursor.line, ch:cursor.ch+1}
-            // );
+            let twoCharactersNearCursor = editor.getRange(
+                {line: cursor.line, ch:cursor.ch-1},
+                {line: cursor.line, ch:cursor.ch+1}
+            );
             let character2cursor1 = editor.getRange(
                 {line: cursor.line, ch:cursor.ch-2},
                 {line: cursor.line, ch:cursor.ch+1}
@@ -635,12 +650,21 @@ export default class EasyTypingPlugin extends Plugin {
                     break;
                 case '(':
                 case '（':
-                    if(twoCharactersBeforeCursor === '（（')
+					if (charBeforeCursor==='（' && twoCharactersNearCursor!='（）')
+					{
+						editor.replaceRange(
+                            '（）',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+						editor.setCursor({line: cursor.line, ch:cursor.ch});
+					}
+                    else if(twoCharactersBeforeCursor === '（（' && twoCharactersNearCursor==='（）')
                     {
                         editor.replaceRange(
                             '()',
                             {line: cursor.line, ch:cursor.ch-2},
-                            {line: cursor.line, ch:cursor.ch}
+                            {line: cursor.line, ch:cursor.ch+1}
                         );
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                     }
@@ -676,12 +700,21 @@ export default class EasyTypingPlugin extends Plugin {
                     break;
                 case '<':
                 case '《':
-                    if(twoCharactersBeforeCursor === '《《')
+					if (charBeforeCursor==='《' && twoCharactersNearCursor!='《》')
+					{
+						editor.replaceRange(
+                            '《》',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+						editor.setCursor({line: cursor.line, ch:cursor.ch});
+					}
+                    else if(twoCharactersBeforeCursor === '《《' && twoCharactersNearCursor==='《》')
                     {
                         editor.replaceRange(
                             '<',
                             {line: cursor.line, ch:cursor.ch-2},
-                            {line: cursor.line, ch:cursor.ch}
+                            {line: cursor.line, ch:cursor.ch+1}
                         );
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                     }
@@ -710,6 +743,47 @@ export default class EasyTypingPlugin extends Plugin {
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                     }
                     break;
+				case '"':
+					if (charBeforeCursor==='“' && twoCharactersNearCursor!='“”')
+					{
+						editor.replaceRange(
+                            '“”',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+						editor.setCursor({line: cursor.line, ch:cursor.ch});
+					}
+					else if(twoCharactersBeforeCursor === '“”' && twoCharactersNearCursor==='””')
+                    {
+                        editor.replaceRange(
+                            '""',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch+1}
+                        );
+                        editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+                    }
+					break;
+
+				case '\'':
+					if (charBeforeCursor==='‘' && twoCharactersNearCursor!='‘’')
+					{
+						editor.replaceRange(
+							'‘’',
+							{line: cursor.line, ch:cursor.ch-1},
+							{line: cursor.line, ch:cursor.ch}
+						);
+						editor.setCursor({line: cursor.line, ch:cursor.ch});
+					}
+					else if(twoCharactersBeforeCursor === '‘’' && twoCharactersNearCursor==='’’')
+					{
+						editor.replaceRange(
+							'\'\'',
+							{line: cursor.line, ch:cursor.ch-2},
+							{line: cursor.line, ch:cursor.ch+1}
+						);
+						editor.setCursor({line: cursor.line, ch:cursor.ch-1});
+					}
+					break;
                 default:
                     break;
             }
