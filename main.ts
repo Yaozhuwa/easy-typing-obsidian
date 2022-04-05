@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TextAreaComponent, Workspace, WorkspaceLeaf } from 'obsidian';
 import { EditorPosition, TFile } from 'obsidian';
 import { InlineType, LineType, ArticlePart, InlinePart, InlineChange } from "./core" 
 import { FormatSettings, DEFAULT_SETTINGS } from './core'
@@ -17,6 +17,12 @@ interface EditorSelectionChange{
 interface ParseArticle{
 	check: boolean;
 	beginLineNumber: number;
+}
+
+function setAttributes(element: any, attributes: any) {
+	for (let key in attributes) {
+	  element.setAttribute(key, attributes[key]);
+	}
 }
 
 export default class EasyTypingPlugin extends Plugin {
@@ -1076,19 +1082,45 @@ class EasyTypingSettingTab extends PluginSettingTab {
 			});
 		});
 
-        new Setting(containerEl)
-		.setName("User defined RegExp to ignore, one expression per line")
-		.setDesc("用户自定义正则表达式，匹配到的内容不进行格式化，每行一个表达式，行尾不要随意加空格")
-		.addTextArea((text) =>
-			text
-			.setPlaceholder(':\\w*:\n{{.*?}}')
-			.setValue(this.plugin.settings.UserDefinedRegExp)
-			.onChange(async (value) => {
-				this.plugin.settings.UserDefinedRegExp = value;
-                if(this.plugin.settings.Debug) console.log("regExp changed:", value);
-				await this.plugin.saveSettings();
-			})
+
+		const regContentAreaSetting = new Setting(containerEl);
+		regContentAreaSetting.settingEl.setAttribute(
+		"style",
+		"display: grid; grid-template-columns: 1fr;"
 		);
+		regContentAreaSetting
+		.setName("User-defined RegExp to ignore, one expression per line")
+		.setDesc(
+			"用户自定义正则表达式，匹配到的内容不进行格式化，每行一个表达式，行尾不要随意加空格"
+		);
+		const regContentArea = new TextAreaComponent(
+		regContentAreaSetting.controlEl
+		);
+		setAttributes(regContentArea.inputEl, {
+		style: "margin-top: 12px; width: 100%;  height: 30vh;",
+		// class: "ms-css-editor",
+		});
+		regContentArea
+		.setValue(this.plugin.settings.UserDefinedRegExp)
+		.onChange(async (value) => {
+			this.plugin.settings.UserDefinedRegExp = value;
+			this.plugin.saveSettings();
+		});
+
+        // const regContentArea = new Setting(containerEl)
+		// .setName("User defined RegExp to ignore, one expression per line")
+		// .setDesc("用户自定义正则表达式，匹配到的内容不进行格式化，每行一个表达式，行尾不要随意加空格")
+		// .addTextArea((text) =>
+		// 	text
+		// 	.setPlaceholder(':\\w*:\n{{.*?}}')
+		// 	.setValue(this.plugin.settings.UserDefinedRegExp)
+		// 	.onChange(async (value) => {
+		// 		this.plugin.settings.UserDefinedRegExp = value;
+        //         if(this.plugin.settings.Debug) console.log("regExp changed:", value);
+		// 		await this.plugin.saveSettings();
+		// 	})
+		// );
+
 
         containerEl.createEl('a', {text: 'RegExp: 正则表达式', href:'https://javascript.ruanyifeng.com/stdlib/regexp.html#'});
 
