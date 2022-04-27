@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- V4.0.6 2022.04.27
+  - Improvement
+    - improve action when press 3 contiguous `·`。连续三次`·`的处理得到增强
+  - Bug fix
+    - fix press `{` when something selected will cause duplication. 修复在选中文本时按`{`会产生重复文本的问题。 #40
 - V4.0.5 2022.04.06
   - Improvement
     - 全角字符增强功能：增加了中文括号、书名号、引号的自动配对输入。
