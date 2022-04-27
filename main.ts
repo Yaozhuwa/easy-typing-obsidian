@@ -290,10 +290,10 @@ export default class EasyTypingPlugin extends Plugin {
 					console.log("I am here")
                     text = '（'+editor.getSelection()+'）';
 					break;
-                case '{':
-                case '}':
-                    text = '{'+editor.getSelection()+'}';
-					break;
+                // case '{':
+                // case '}':
+                //     text = '{'+editor.getSelection()+'}';
+				// 	break;
 				default:
 					this.prevCursor = begin;
 					let regReparse = /^[\-\$\`]|[\-\$\`]\s*$|\n/m;
@@ -573,9 +573,9 @@ export default class EasyTypingPlugin extends Plugin {
                     else if(character2cursor1==='`·`')
                     {
                         editor.replaceRange(
-                            '`',
-                            {line: cursor.line, ch:cursor.ch-1},
-                            {line: cursor.line, ch:cursor.ch}
+                            '```\n```',
+                            {line: cursor.line, ch:cursor.ch-2},
+                            {line: cursor.line, ch:cursor.ch+1}
                         );
                         editor.setCursor({line: cursor.line, ch:cursor.ch+1});
 						this.reparseArticle = {check: true, beginLineNumber:cursor.line};
