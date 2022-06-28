@@ -92,8 +92,16 @@ Intelligently insert spaces between text and  \`inline code\`, `$inline latex fo
 - `<.*?>` 用于排除 Templater 插件特定语法的格式化. Recognization for function of Templater plugin.
 
 ### 行模式
-只在一行输入结束，回车创建新行的时候，对该行进行格式化。可以在插件设置中打开
+只在一行输入结束，回车创建新行的时候，对该行进行格式化。可以在插件设置中打开.
+
+注意：行模式下，同样要打开第一个总开关! ！！
+
 Line Mode: Only formatting when line end. need to be activated in setting pane.
+
+Notice: Line mode also need to open the switch: Auto formatting when typing!
+
+<img width="917" alt="image" src="https://user-images.githubusercontent.com/28787183/176098563-cfb24dc9-c12d-4d8e-8995-52622bb5f229.png">
+
 ## 现存问题 Known Issue
 ### Live Preview 模式下输入法的问题
 ![live preview 模式-微软输入法](https://s1.vika.cn/space/2022/02/09/aa5fda89d6bc4ba99f83903b6cb622e1)
