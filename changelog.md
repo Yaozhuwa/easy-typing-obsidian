@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- V4.0.7 2022.08.23
+  - Bug Fix
+    - Fix Smart Space between text and link. #60
 - V4.0.6 2022.04.27
   - Improvement
     - improve action when press 3 contiguous `·`。连续三次`·`的处理得到增强

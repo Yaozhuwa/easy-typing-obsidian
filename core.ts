@@ -1126,8 +1126,15 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
                             let linkWithNoText = false;
                             if(regTestWikiLink.test(lineParts[i].content))
                             {
+                                let regAlias = /\|/;
+                                let charOfAliasBegin = lineParts[i].content.search(regAlias);
+                                // console.log("index: ", charOfAliasBegin, lineParts[i].content.charAt(charOfAliasBegin+1));
                                 let beginIndex = 2;
                                 if(lineParts[i].content.charAt(0)==='!') beginIndex=3;
+                                if (charOfAliasBegin!=0)
+                                {
+                                    beginIndex = charOfAliasBegin+1;
+                                }
                                 charAtLinkBegin = lineParts[i].content.charAt(beginIndex);
                                 if(charAtLinkBegin===']') linkWithNoText = true;                                
                             }
