@@ -692,8 +692,8 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
             if(prevCursor && cursorLinePartIndex!=0){}
             else
             {
-                let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?[a-z]/g;
-                let regHeaderSentence = /^(#+ |>+ ?)[a-z]/g;
+                let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?[a-z\u0401\u0451\u0410-\u044f]/g;
+                let regHeaderSentence = /^(#+ |>+ ?)[a-z\u0401\u0451\u0410-\u044f]/g;
                 let textcopy = lineParts[0].content;
                 let match = regFirstSentence.exec(textcopy);
                 let matchHeader = regHeaderSentence.exec(textcopy);
@@ -732,7 +732,7 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
                 // Text.4 处理句首字母大写
                 if(settings.Capitalization)
 				{
-					var reg = /[\.\?\!。！？]([\s]*)[a-z]/g;
+					var reg = /[\.\?\!。！？]([\s]*)[a-z\u0401\u0451\u0410-\u044f]/g;
 					while(true)
                     {
                         let match = reg.exec(content);
@@ -780,7 +780,7 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
                     // Text.3 处理英文字母与标点间空格
                     // if(settings.EnglishSpace)
                     {
-                        let reg = /([,\.;\?\!])([A-Za-z])/gi;
+                        let reg = /([,\.;\?\!])([A-Za-z\u0401\u0451\u0410-\u044f])/gi;
                         while(true)
                         {
                             let match = reg.exec(content);
@@ -827,8 +827,8 @@ export function formatLine(line: string, curCursor: EditorPosition, settings: Fo
                 
 
                 // Text.7 得到文本部分是否以空白符开始或结束，用来判断后续文本前后是否需要添加空格
-                let regStartWithSpace = /^\0?[\s,\.;\?\!，。；？！、（）\]\)\}]/;
-                let regEndWithSpace = /[\s，。、：；？！（）\[\(\{]\0?$/;
+                let regStartWithSpace = /^\0?[\s,\.;\?\!，。；？！、（）"”\]\)\}]/;
+                let regEndWithSpace = /[\s，。、：；？！（）"“\[\(\{]\0?$/;
                 let textStartWithSpace = regStartWithSpace.test(content);
                 let textEndWithSpace = regEndWithSpace.test(content);
 

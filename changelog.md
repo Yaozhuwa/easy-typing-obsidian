@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- V4.0.8 2022.09.05
+  - Bug Fix
+    - Auto-capitalization now work for cyrillic symbols #65
+    - 调整了中文引号的自动补全 #64
+    - 调整引号和其他区块的自动空格的特性。 #63
 - V4.0.7 2022.08.23
   - Bug Fix
     - Fix Smart Space between text and link. #60

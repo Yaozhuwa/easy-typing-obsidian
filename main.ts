@@ -755,16 +755,7 @@ export default class EasyTypingPlugin extends Plugin {
                     }
                     break;
 				case '"':
-					if (charBeforeCursor==='“' && twoCharactersNearCursor!='“”')
-					{
-						editor.replaceRange(
-                            '“”',
-                            {line: cursor.line, ch:cursor.ch-1},
-                            {line: cursor.line, ch:cursor.ch}
-                        );
-						editor.setCursor({line: cursor.line, ch:cursor.ch});
-					}
-					else if(twoCharactersBeforeCursor === '“”' && twoCharactersNearCursor==='””')
+					if(character2cursor1 === '“””' || character2cursor1==='““”')
                     {
                         editor.replaceRange(
                             '""',
@@ -773,6 +764,15 @@ export default class EasyTypingPlugin extends Plugin {
                         );
                         editor.setCursor({line: cursor.line, ch:cursor.ch-1});
                     }
+					else if ((charBeforeCursor==='“' || charBeforeCursor==='”') && twoCharactersNearCursor!='“”')
+					{
+						editor.replaceRange(
+                            '“”',
+                            {line: cursor.line, ch:cursor.ch-1},
+                            {line: cursor.line, ch:cursor.ch}
+                        );
+						editor.setCursor({line: cursor.line, ch:cursor.ch});
+					}
 					break;
 
 				case '\'':
