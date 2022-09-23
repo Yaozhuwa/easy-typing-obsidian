@@ -485,9 +485,13 @@ export class LineFormater {
                             }
 
                             // 单独处理冒号后文本的自动空格，为了兼容 :emoji: 格式的输入
-                            var reg2 = /(:)([A-Za-z0-9_]+[ ,\.\?\\\/;'"，。？；‘“”’、\[\]\-\{\}])/gi;
+                            let reg2 = /(:)([A-Za-z0-9_]+[ ,\.\?\\\/;'"，。？；‘“”’、\[\]\-\{\}])/gi;
                             lineParts[i].content = content.replace(reg2, "$1 $2");
                             // console.log(lineParts[i].content);
+                            content = lineParts[i].content;
+
+                            let reg3 = /(:)(["'])/g;
+                            lineParts[i].content = content.replace(reg3, "$1 $2");
                             content = lineParts[i].content;
                         }
 

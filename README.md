@@ -1,14 +1,3 @@
-- [Easy-Typing Plugin for Obsidian](#easy-typing-plugin-for-obsidian)
-  - [插件核心功能 Features](#插件核心功能-features)
-    - [全角输入增强/辅助](#全角输入增强辅助)
-    - [首字母自动大写 (Auto Captalize)](#首字母自动大写-auto-captalize)
-    - [文本与标点间智能插入空格](#文本与标点间智能插入空格)
-    - [文本与特定区块间插入空格](#文本与特定区块间插入空格)
-    - [用户自定义正则 User-Defined Regular Expressions](#用户自定义正则-user-defined-regular-expressions)
-    - [行模式](#行模式)
-  - [现存问题 Known Issue](#现存问题-known-issue)
-    - [Live Preview 模式下输入法的问题](#live-preview-模式下输入法的问题)
-  - [更新记录](#更新记录)
 # Easy-Typing Plugin for Obsidian
 **本插件自 4.0.0 版本开始同时支持 live preview 模式（CodeMirror 6 编辑器）和旧版（CodeMirror 5）编辑器。** （在 windows10 环境下开发/测试）
 
@@ -16,10 +5,9 @@
 
 这是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件。本插件可以在笔记编辑过程中自动格式化书写，比如自动在中英文之间添加空格，英文首字母大写，标点与文本间智能空格，链接 (`[[wiki link]]`, `[markdown link](file link)` 以及纯链接) 与文本间智能空格等等。并且针对中文用户提供全角符号输入增强功能，比如连续输入两个 `￥` 会变成 `$$`，并将光标定位到中间，输入两个 `【` 会变成 `[[]]`。让中文用户在很多情况下无需切换输入法，在 Obsidian 得到流畅的书写体验。
 
-This plugin designed for better typing experience. Autoformat your note when you are typing (Auto captalize and autospace), smartly insert spaces between punctuation and text, insert spaces between links (`[wiki link]]`,  `[markdown link](file link)` and plain links) and text, etc. It also provides full-angle symbol input enhancement functions. For example, two consecutive input of `￥` will become `$$`, and the cursor will be positioned in the middle; two `【` will become `[[]]`. It can help Chinese users get smooth writing experience in Obsidian.
+This plugin designed for better typing experience. Autoformat your note when you are typing (Auto captalize and autospace), smartly insert spaces between punctuation and text, insert spaces between links (`[wiki link]]`,  `[markdown link](file link)` and plain links) and text, etc. 
 
-> ==注意==：本插件在很多情况下需要解析全文从而判断每行文本的是否需要格式化，所以对于处理超大文档的情况可能会产生卡顿。
-> ==Notice==: In many cases, the plug-in parses the full text to determine if each line of text needs formatting, so it can cause delay when dealing with very large documents.
+This plugin also provides full-width symbol input enhancement functions. For example, two consecutive input of `￥` will become `$$`, and the cursor will be positioned in the middle; two `【` will become `[[]]`. It can help Chinese users get smooth writing experience in Obsidian.
 
 ## 插件核心功能 Features
 该插件对不同的功能进行细分，可以在设置面板自由地开关想设置的功能。

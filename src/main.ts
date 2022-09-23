@@ -31,7 +31,7 @@ export default class EasyTypingPlugin extends Plugin {
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"], [' 、|', " /|"]];
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
-		["：：|", ":|"], ['？？|', '?|'], ['、、|', '/|'],
+		["：：|", ":|"], ['？？|', '?|'], ['、、|', '/|'], ['（（|）', "(|)"], ['（（|', '(|)'],
 		["》》|", ">|"], ["《《|》", "<|"], ['《《|', "<|"]];
 		this.FW2HWSymbolRules = ruleStringList2RuleList(FW2HWSymbolRulesStrList);
 
