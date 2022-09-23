@@ -31,7 +31,7 @@ export default class EasyTypingPlugin extends Plugin {
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"], [' 、|', " /|"]];
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
-		["：：|", ":|"], ['？？|', '?|'], ['、、|', '/|'], ['（（|）', "(|)"], ['（（|', '(|)'],
+		["：：|", ":|"], ['？？|', '?|'], ['、、|', '/|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""],
 		["》》|", ">|"], ["《《|》", "<|"], ['《《|', "<|"]];
 		this.FW2HWSymbolRules = ruleStringList2RuleList(FW2HWSymbolRulesStrList);
 
@@ -99,15 +99,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf: WorkspaceLeaf) => {
 			if (leaf.view.getViewType()=='markdown'){
-				let editor = this.getEditor();
-				if (editor === null) return;
-				let file = this.app.workspace.getActiveFile();
-				if (this.PrevActiveMarkdown!=file.path)
-				{
-					this.ContentParser.parseNewArticle(editor.getValue());
-					this.PrevActiveMarkdown = file.path;
-					new Notice("EasyTyping: Parse New Active Article: "+file.path);
-				}
+				this.parseFileIfNeeded();
 			}
 		}));
 
@@ -125,6 +117,18 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	onunload() {
+	}
+
+	parseFileIfNeeded = ():void=>{
+		const editor = this.getEditor();
+		if (editor==null) return;
+		let file = this.app.workspace.getActiveFile();
+		if (file!=null && this.PrevActiveMarkdown!=file.path)
+		{
+			this.PrevActiveMarkdown = file.path;
+			this.ContentParser.parseNewArticle(editor.getValue());
+			if (this.settings.debug) new Notice("EasyTyping: Parse New Article: "+file.path);
+		}
 	}
 
 	transactionFilterPlugin = (tr: Transaction): TransactionSpec | readonly TransactionSpec[] => {
@@ -282,85 +286,84 @@ export default class EasyTypingPlugin extends Plugin {
 		let formatLineFlag = true;
 		let mainSelection = update.view.state.selection.asSingle().main;
 		if (mainSelection.anchor != mainSelection.head) formatLineFlag = false;
+		if (!update.docChanged) return;
+		this.parseFileIfNeeded();
 
-		if (update.docChanged) {
-			// if (this.settings.debug) console.log("-----ViewUpdateWChange-----");
-			let tr = update.transactions[0]
-			let changeType = getTypeStrOfTransac(tr);
-			tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
-				let insertedStr = inserted.sliceString(0);
-				let changedStr = tr.startState.doc.sliceString(fromA, toA);
-				if (this.settings.debug)
-					console.log("ViewUpdate Catch Change: Type: " + changeType + ", ", fromA, toA, changedStr, fromB, toB, insertedStr);
+		// if (this.settings.debug) console.log("-----ViewUpdateWChange-----");
+		let tr = update.transactions[0]
+		let changeType = getTypeStrOfTransac(tr);
+		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
+			let insertedStr = inserted.sliceString(0);
+			let changedStr = tr.startState.doc.sliceString(fromA, toA);
+			if (this.settings.debug)
+				console.log("ViewUpdate Catch Change: Type: " + changeType + ", ", fromA, toA, changedStr, fromB, toB, insertedStr);
 
-				// 每次改动都判断是否需要重新解析全文
-				let reparseRegEx = /[`$\n]/gm;
-				let newArticle = update.view.state.doc.sliceString(0, update.view.state.doc.length);
-				if (reparseRegEx.test(insertedStr) || reparseRegEx.test(changedStr)) {
-					let updateLineStart = offsetToPos(update.view.state.doc, fromA).line;
-					this.ContentParser.reparse(newArticle, updateLineStart);
-					if (this.settings.debug) {
-						new Notice("EasyTyping: Reparse At Line: " + String(updateLineStart));
-						// this.ContentParser.print();
+			// 每次改动都判断是否需要重新解析全文
+			let reparseRegEx = /[`$\n]/gm;
+			let newArticle = update.view.state.doc.sliceString(0, update.view.state.doc.length);
+			if (reparseRegEx.test(insertedStr) || reparseRegEx.test(changedStr)) {
+				let updateLineStart = offsetToPos(update.view.state.doc, fromA).line;
+				this.ContentParser.reparse(newArticle, updateLineStart);
+				if (this.settings.debug) {
+					new Notice("EasyTyping: Reparse At Line: " + String(updateLineStart));
+					// this.ContentParser.print();
+				}
+			}
+			this.ContentParser.updateContent(newArticle)
+
+			// if (changeType == 'input.type' || changeType == "input" || changeType=="input.type.compose") {
+			// 	// ========== FullWSymbol2HalfWSymbol convert rules=======
+			// 	// support undo and redo
+			// 	if (this.settings.FW2HWEnhance) {
+			// 		for (let rule of this.FW2HWSymbolRules) {
+			// 			if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
+			// 			let left = update.view.state.doc.sliceString(toB - rule.before.left.length, toB);
+			// 			let right = update.view.state.doc.sliceString(toB, toB + rule.before.right.length);
+			// 			if (left === rule.before.left && right === rule.before.right) {
+			// 				update.view.dispatch({
+			// 					changes: {
+			// 						from: toB - rule.before.left.length,
+			// 						to: toB + rule.before.right.length,
+			// 						insert: rule.after.left + rule.after.right
+			// 					},
+			// 					selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
+			// 					userEvent: "EasyTyping.change"
+			// 				})
+			// 				return;
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			if (changeType == 'input.type' || changeType == "input") {
+				if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
+					let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, mainSelection.anchor, insertedStr);
+					if (changes != null) {
+						update.view.dispatch(...changes[0]);
+						update.view.dispatch(changes[1]);
+						return;
 					}
 				}
-				this.ContentParser.updateContent(newArticle)
 
-				// if (changeType == 'input.type' || changeType == "input" || changeType=="input.type.compose") {
-				// 	// ========== FullWSymbol2HalfWSymbol convert rules=======
-				// 	// support undo and redo
-				// 	if (this.settings.FW2HWEnhance) {
-				// 		for (let rule of this.FW2HWSymbolRules) {
-				// 			if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
-				// 			let left = update.view.state.doc.sliceString(toB - rule.before.left.length, toB);
-				// 			let right = update.view.state.doc.sliceString(toB, toB + rule.before.right.length);
-				// 			if (left === rule.before.left && right === rule.before.right) {
-				// 				update.view.dispatch({
-				// 					changes: {
-				// 						from: toB - rule.before.left.length,
-				// 						to: toB + rule.before.right.length,
-				// 						insert: rule.after.left + rule.after.right
-				// 					},
-				// 					selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
-				// 					userEvent: "EasyTyping.change"
-				// 				})
-				// 				return;
-				// 			}
-				// 		}
-				// 	}
-				// }
-
-				if (changeType == 'input.type' || changeType == "input") {
+			}
+			else if (changeType === 'input.type.compose') {
+				// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
+				let cursor = update.view.state.selection.asSingle().main;
+				let ChineseRegExp = /[\u4e00-\u9fa5]/;
+				if (cursor.anchor === cursor.head && cursor.anchor === toB && ChineseRegExp.test(insertedStr)) {
+					// let curCh = offsetToPos(update.view.state.doc, cursor.anchor).ch;
+					// if (this.settings.debug) new Notice("EasyTyping: 中文输入结束");
 					if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
-						let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, mainSelection.anchor, insertedStr);
+						let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, toB, insertedStr);
 						if (changes != null) {
 							update.view.dispatch(...changes[0]);
 							update.view.dispatch(changes[1]);
 							return;
 						}
 					}
-
 				}
-				else if (changeType === 'input.type.compose') {
-					// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
-					let cursor = update.view.state.selection.asSingle().main;
-					let ChineseRegExp = /[\u4e00-\u9fa5]/;
-					if (cursor.anchor === cursor.head && cursor.anchor === toB && ChineseRegExp.test(insertedStr)) {
-						// let curCh = offsetToPos(update.view.state.doc, cursor.anchor).ch;
-						// if (this.settings.debug) new Notice("EasyTyping: 中文输入结束");
-						if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
-							let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, toB, insertedStr);
-							if (changes != null) {
-								update.view.dispatch(...changes[0]);
-								update.view.dispatch(changes[1]);
-								return;
-							}
-						}
-					}
-				}
-			})
-
-		}
+			}
+		});	// iterchanges end
 	}
 
 	formatArticle = (editor:Editor): void => {
