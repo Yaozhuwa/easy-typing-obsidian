@@ -161,14 +161,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 								new Notice("Inlvalid trigger, trigger must be a symbol of length 1");
 								return;
 							}
-							if (!this.plugin.settings.userSelRepRuleTrigger.includes(trigger)) {
-								this.plugin.settings.userSelRepRuleTrigger.push(trigger);
-								this.plugin.settings.userSelRepRuleValue.push({ left: left, right: right });
+							if (this.plugin.addUserSelectionRepRule(trigger, left, right)){
 								await this.plugin.saveSettings();
-								this.plugin.updateSelectionReplaceRule();
 								this.display();
 							}
-							else {
+							else{
 								new Notice("warning! Trigger " + trigger + " is already exist!")
 							}
 						}
@@ -192,10 +189,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						.setTooltip("Edit rule")
 						.onClick(() => {
 							new SelectRuleEditModal(this.app, trigger,left_s, right_s, async (new_left, new_right) => {
-								this.plugin.settings.userSelRepRuleValue[i].left = new_left;
-								this.plugin.settings.userSelRepRuleValue[i].right = new_right;
+								this.plugin.updateUserSelectionRepRule(i, new_left, new_right);
 								await this.plugin.saveSettings();
-								this.plugin.updateSelectionReplaceRule();
 								this.display();
 							}).open();
 						})
@@ -204,9 +199,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					button.setIcon("trash")
 						.setTooltip("Remove rule")
 						.onClick(async () => {
-							this.plugin.settings.userSelRepRuleTrigger.splice(i, 1);
-							this.plugin.settings.userSelRepRuleValue.splice(i, 1);
-							this.plugin.updateSelectionReplaceRule();
+							this.plugin.deleteUserSelectionRepRule(i);
 							await this.plugin.saveSettings();
 							this.display();
 						})

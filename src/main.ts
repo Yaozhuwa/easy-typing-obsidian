@@ -22,7 +22,7 @@ export default class EasyTypingPlugin extends Plugin {
 		this.selectionReplaceMapInitalData = [
 			["【", {left:"[", right:"]"}], ["￥", {left:"$", right:"$"}], ["·", {left:"`", right:"`"}],
 			["《", {left:"《", right:"》"}], ["“", {left:"“", right:"”"}], ["”", {left:"“", right:"”"}], ["（", {left:"（", right:"）"}],
-			["<", {left:"<", right:">"}], ["「", {left:"「", right:"」"}], ["『", {left:"『", right:"』"}]                           
+			["<", {left:"<", right:">"}]                         
 			];
 		this.updateSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
@@ -479,6 +479,29 @@ export default class EasyTypingPlugin extends Plugin {
 			this.SelectionReplaceMap.set(trigger, {left: lefts, right:rights});
 		}
 	}
+
+	addUserSelectionRepRule(trigger:string, left:string, right:string):boolean{
+		if(this.settings.userSelRepRuleTrigger.includes(trigger)) return false;
+		this.settings.userSelRepRuleTrigger.push(trigger)
+		this.settings.userSelRepRuleValue.push({left:left, right:right});
+		this.updateSelectionReplaceRule();
+		return true;
+	}
+
+	deleteUserSelectionRepRule(idx:number):void{
+		if (idx <0 || idx>=this.settings.userSelRepRuleTrigger.length) return;
+		this.settings.userSelRepRuleTrigger.splice(idx, 1);
+		this.settings.userSelRepRuleValue.splice(idx, 1);
+		this.updateSelectionReplaceRule();
+	}
+
+	updateUserSelectionRepRule(idx:number, left:string, right:string){
+		if (idx <0 || idx>=this.settings.userSelRepRuleTrigger.length) return;
+		this.settings.userSelRepRuleValue[idx].left = left;
+		this.settings.userSelRepRuleValue[idx].right = right;
+		this.updateSelectionReplaceRule();
+	}
+	
 
 	getEditor = (): Editor | null => {
 		let editor = null;
