@@ -7,6 +7,7 @@ import { ArticleParser, LineFormater } from './core'
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
+	selectionReplaceMapInitalData: [string, PairString][];
 	SelectionReplaceMap: Map<string, PairString>;
 	SymbolPairsMap: Map<string, string>;
 	BasicConvRules: ConvertRule[];
@@ -18,11 +19,12 @@ export default class EasyTypingPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.SelectionReplaceMap = new Map([
+		this.selectionReplaceMapInitalData = [
 			["【", {left:"[", right:"]"}], ["￥", {left:"$", right:"$"}], ["·", {left:"`", right:"`"}],
 			["《", {left:"《", right:"》"}], ["“", {left:"“", right:"”"}], ["”", {left:"“", right:"”"}], ["（", {left:"（", right:"）"}],
-			["<", {left:"<", right:">"}], ["「", {left:"[", right:"]"}], ["『", {left:"[", right:"]"}]                                
-			]);
+			["<", {left:"<", right:">"}], ["「", {left:"「", right:"」"}], ["『", {left:"『", right:"』"}]                           
+			];
+		this.updateSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
 		let SymbolPairs = ["【】", "（）", "<>", "《》", "“”", "‘’", "「」", "『』"]
 		for (let pairStr of SymbolPairs) this.SymbolPairsMap.set(pairStr.charAt(0), pairStr.charAt(1));
@@ -464,6 +466,18 @@ export default class EasyTypingPlugin extends Plugin {
 			this.ContentParser.reparse(editor.getValue(), cs.line);
 		}
 		
+	}
+
+	updateSelectionReplaceRule(){
+		this.SelectionReplaceMap = new Map(this.selectionReplaceMapInitalData);
+		for (let i=0;i<this.settings.userSelRepRuleTrigger.length; i++)
+		{
+			let trigger = this.settings.userSelRepRuleTrigger[i];
+			let lefts = this.settings.userSelRepRuleValue[i].left;
+			let rights = this.settings.userSelRepRuleValue[i].right;
+			
+			this.SelectionReplaceMap.set(trigger, {left: lefts, right:rights});
+		}
 	}
 
 	getEditor = (): Editor | null => {
