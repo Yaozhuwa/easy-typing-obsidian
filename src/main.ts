@@ -146,10 +146,10 @@ export default class EasyTypingPlugin extends Plugin {
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
 			let insertedStr = inserted.sliceString(0);
-			if (this.settings.debug)
-			{
-				console.log("TransactionFilter catch change:",changeTypeStr, fromA, toA, fromB, toB, insertedStr);
-			}
+			// if (this.settings.debug)
+			// {
+			// 	console.log("TransactionFilter catch change:",changeTypeStr, fromA, toA, fromB, toB, insertedStr);
+			// }
 			// ========== Selection Replace ============
 			if (this.settings.SelectionEnhance) {
 				if ((changeTypeStr == 'input.type'||changeTypeStr=="input.type.compose") && fromA != toA && fromB + 1 === toB) {
@@ -346,32 +346,6 @@ export default class EasyTypingPlugin extends Plugin {
 			let chineseEndFlag = changeType=="input.type.compose" && 
 								cursor.anchor == cursor.head && cursor.anchor === toB && 
 								ChineseRegExp.test(insertedStr);
-			
-
-			// if (changeType == 'input.type' || changeType == "input" || changeType=="input.type.compose") {
-			// 	// ========== FullWSymbol2HalfWSymbol convert rules=======
-			// 	// support undo and redo
-			// 	if (this.settings.FW2HWEnhance) {
-			// 		for (let rule of this.FW2HWSymbolRules) {
-			// 			if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
-			// 			let left = update.view.state.doc.sliceString(toB - rule.before.left.length, toB);
-			// 			let right = update.view.state.doc.sliceString(toB, toB + rule.before.right.length);
-			// 			if (left === rule.before.left && right === rule.before.right) {
-			// 				update.view.dispatch({
-			// 					changes: {
-			// 						from: toB - rule.before.left.length,
-			// 						to: toB + rule.before.right.length,
-			// 						insert: rule.after.left + rule.after.right
-			// 					},
-			// 					selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
-			// 					userEvent: "EasyTyping.change"
-			// 				})
-			// 				return;
-			// 			}
-			// 		}
-			// 	}
-			// }
-
 
 			// 判断每次输入结束
 			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag) {

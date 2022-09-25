@@ -39,6 +39,9 @@ export interface EasyTypingSettings {
 	userSelRepRuleValue: PairString[];
 	userDeleteRulesStrList: [string, string][];
 	userConvertRulesStrList: [string, string][];
+	userSelRuleSettingsOpen: boolean;
+	userDelRuleSettingsOpen: boolean;
+	userCvtRuleSettingsOpen: boolean;
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
@@ -67,7 +70,10 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	userSelRepRuleTrigger: [],
 	userSelRepRuleValue: [],
 	userDeleteRulesStrList: [],
-	userConvertRulesStrList: []
+	userConvertRulesStrList: [],
+	userSelRuleSettingsOpen: true,
+	userDelRuleSettingsOpen: true,
+	userCvtRuleSettingsOpen: true,
 }
 
 export class EasyTypingSettingTab extends PluginSettingTab {
@@ -135,25 +141,25 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		containerEl.createEl('h2', { text: '自定义编辑增强规则 (Customize Editting Enhance Rule)' });
+		containerEl.createEl('h2', { text: '自定义编辑转换规则 (Customize Edit Convertion Rule)' });
 		this.buildUserSelRepRuleSetting(this.containerEl.createEl("details", {
 			cls: "easytyping-nested-settings",
 			attr: {
-				...({ open: true })
+				...(this.plugin.settings.userSelRuleSettingsOpen?{ open: true }:{})
 			}
 		}))
 
 		this.buildUserDeleteRuleSetting(this.containerEl.createEl("details", {
 			cls: "easytyping-nested-settings",
 			attr: {
-				...({ open: true })
+				...(this.plugin.settings.userDelRuleSettingsOpen?{ open: true }:{})
 			}
 		}))
 
 		this.buildUserConvertRuleSetting(this.containerEl.createEl("details", {
 			cls: "easytyping-nested-settings",
 			attr: {
-				...({ open: true })
+				...(this.plugin.settings.userCvtRuleSettingsOpen?{ open: true }:{})
 			}
 		}))
 		
@@ -344,8 +350,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	buildUserSelRepRuleSetting(containerEl: HTMLDetailsElement){
 		containerEl.empty();
-        containerEl.ontoggle = () => {
-			new Notice(String(containerEl.open));
+        containerEl.ontoggle = async () => {
+			this.plugin.settings.userSelRuleSettingsOpen = containerEl.open;
+			await this.plugin.saveSettings();
         };
 		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
 		summary.setText("自定义选中文本编辑增强规则 (Customize Selection Replace Rule)")
@@ -430,8 +437,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	buildUserDeleteRuleSetting(containerEl: HTMLDetailsElement){
 		containerEl.empty();
-        containerEl.ontoggle = () => {
-			new Notice(String(containerEl.open));
+        containerEl.ontoggle = async () => {
+			this.plugin.settings.userDelRuleSettingsOpen = containerEl.open;
+			await this.plugin.saveSettings();
         };
 		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
 		summary.setText("自定义删除编辑增强规则 (Customize Delete Rule)")
@@ -439,6 +447,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const deleteRuleSetting = new Setting(containerEl);
 		deleteRuleSetting
 			.setName("Delete Rule")
+			.setDesc("规则：用|代表光标位置，必须包含光标。 Tips: Using | to indicate the cursor position.")
 
 		const patternBefore = new TextComponent(deleteRuleSetting.controlEl);
 		patternBefore.setPlaceholder("Before Delete");
@@ -504,8 +513,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	buildUserConvertRuleSetting(containerEl: HTMLDetailsElement){
 		containerEl.empty();
-        containerEl.ontoggle = () => {
-			new Notice(String(containerEl.open));
+        containerEl.ontoggle = async () => {
+			this.plugin.settings.userCvtRuleSettingsOpen = containerEl.open;
+			await this.plugin.saveSettings();
         };
 		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
 		summary.setText("自定义编辑转换规则 (Customize Convert Rule)")
@@ -513,6 +523,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const convertRuleSetting = new Setting(containerEl);
 		convertRuleSetting
 			.setName("Convert Rule")
+			.setDesc("规则：用|代表光标位置，必须包含光标。 Tips: Using | to indicate the cursor position.")
 
 		const patternBefore = new TextComponent(convertRuleSetting.controlEl);
 		patternBefore.setPlaceholder("Before Convert");
