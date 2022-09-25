@@ -1,4 +1,6 @@
 # Easy-Typing Plugin For Obsidian
+[中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English
+
 This plugin is designed for better typing experience in [Obsidian](https://obsidian.md). The plugin's features includes automatic formatting of text and symbol editing enhancement during editing. Auto format text standardizes the format of the document and beautifies the appearance of the document. Editing enhancement optimizes the user's editing experience.
 
 **Automatic text formatting** provides the feature of capitalizing the first letter. In addition, automatic text formatting can automatically add spaces to specific parts of each line during the input process according to the rules set by the user, such as spaces between Chinese and English, spaces between text and English punctuation, spaces between text and inline formula/inline code/wiki link, spaces between text blocks and user-defined regular matching blocks, etc. So as to standardize the format of the document and beautify the appearance of the document.
@@ -74,46 +76,47 @@ Three space strategies are represented by three symbols, No require（-）, Soft
 
 More Detail about regular expression, see [《阮一峰：正则表达式简明教程》](https://javascript.ruanyifeng.com/stdlib/regexp.html#)
 
-#### 1.4.1 自定义正则表达式语法
-在自定义正则表达式的文本编辑区域，每一行字符串都为一个正则规则，其格式如下：
+#### 1.4.1 Custom regular expression syntax
+In the text editing area of the custom regular expression, each line of string is a regular rule, and its format is as follows:
 ```
-<正则表达式>|<左空格策略><右空格策略>
+<regular expression>|<left space policy><right space policy>
 ```
-#### 1.4.2 自定义正则表达式规则示例
-举例说明，如默认正则表达式区块的第二行内容如下：
+#### 1.4.2 Examples of custom regular expression rules
+For example, the second line of the default regular expression block is as follows:
 ```
 #[\u4e00-\u9fa5\w\/]+|++
 ```
-首先最后的两个字符串为该正则区块的左右空格策略，这里为++代表左右空格策略都为严格空格。
-倒数第三个字符必须为 | ，其用于将正则表达式部分和左右空格策略部分分开，使其视觉上更容易辨认。
+First, the last two chars are the left and right space strategies of the regular block. Here, `++` means that the left and right space strategies are strict spaces.
 
-剩下的字符串为正则表达式本身，`#[\u4e00-\u9fa5\w\/]+`，该正则表达式可以匹配以 `#` 键开头的后续有一个或者多个符合 `[\u4e00-\u9fa5\w\/]` 范围的字符，该字符包含汉字、字母、数字、下划线以及 / 符号。
+Third from the tail character must be `|`, which is used to separate the regular expression part from the left and right space strategy part to make it more visually recognizable.。
 
-这样说起来比较复杂，简单点就是用来识别 Obsidian 中的标签（即 tag）的。
-Obsidian 的标签需要在标签左右都添加空格（中文标点符号也不行，必须是空格），否则不会识别为标签。
+The remaining string is the regular expression itself, `#[\u4e00-\u9fa5\w\/]+`, This regular expression can match one or more characters that meet the regexp of `[\u4e00-\u9fa5\w\/]` starting with the `#` key. The characters include Chinese characters, letters, numbers, underscores, and `/`.
+
+The simple point is to identify the tag in the Obsidian.
+
+Obsidian's tags need to add spaces on both sides of the tag (Chinese punctuation is not allowed, it must be spaces), otherwise they will not be recognized as tags.
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/input-tag-plugin-off.gif)
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/input-tag-plugin-on.gif)
 
-上面两张 Gif 演示了使用该自定义正则表达式前后，在 Obsidian 输入标签时的不同。
+The two Gifs above demonstrate the difference between before and after using the custom regular expression and when inputs tag in obsidian.
 
-#### 1.4.3 更多自定义正则的应用
-比如默认设置中的如下自定义正则规则是用来识别网络链接的
+#### 1.4.3 More custom regular applications
+For example, the following custom regular rules in the default settings are used to identify network links(also obsidian links)
 ```
 (https?:\/\/|ftp:\/\/|obsidian:\/\/|zotero:\/\/|www.)[^\s（）《》。,，！？;；：“”‘’\)\(\[\]\{\}']+|++
 ```
-下面的规则是用来识别 Obsidian 的 callout 语法块的。
-
+The following rules are used to identify the callout syntax block of the Obsidian.
 ```
 \[\!.*?\][-+]{0,1}|-+
 ```
 
-`<.*?>|--` 是用来识别双尖括号块的，保证其内部文本不被自动格式化影响。如在使用 Templater 插件创建模板时，需要使用<% tp.file.cursor() %>这样的语法。启用该自定义规则可以防止其内容被错误添加空格（因为内部的点号会被认为句子的结束，从而本插件会自动在点号与后面的文本间添加空格）。
+`<.*?>|--` is used to identify double angle bracket blocks to ensure that their internal text is not affected by automatic formatting. If you use the Template plug-in to create a template, you need to use syntax like <% tp.file.cursor() %>. Enabling this custom rule can prevent its content from being wrongly added with spaces (because the internal `.` will be considered the end of the sentence, so this plug-in will automatically add spaces between `.` and the following text).
 
-我期待该自定义正则表达式规则可以满足不同用户的个性化需求，它的更多用法也有待大家发掘~~
+I expect that the custom regular expression rule can meet the personalized needs of different users, and more uses of it need to be explored~~
 
-## 2 增强编辑
+## 2 Edit Enhance
 编辑增强包含了 4 个部分的功能，包括 1. 符号自动配对/删除；2. 选中文本的符号编辑增强；3. 连续全角符号转半角符号；4. Obsidian 语法相关的编辑增强。可以在插件设置中分别设置 4 个功能的打开和关闭。
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926003124.png)

@@ -1,4 +1,6 @@
 # Easy-Typing Plugin For Obsidian
+中文 | [English](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README.md)
+
 EasyTyping 是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件，功能包含编辑时自动格式化文本和符号编辑增强。自动格式化文本对文档的格式进行规范化，并且美化文档的观感。编辑增强优化用户的编辑体验。
 
 **文本自动格式化**提供了首字母大写功能。此外，文本自动格式化可以根据用户设置的规则，在输入过程中对每一行的特定部分自动添加空格，如中文英文间自动添加空格，文本与英文标点间添加空格，文本和行内公式/行内代码/双向链接间自动添加空格，文本区块和用户自定义正则匹配区块间添加空格等。从而对文档的格式进行规范化，并且美化文档的观感。
@@ -69,6 +71,7 @@ some text, [[markdown link|双向链接]]还有 `inline code`。其他文本。
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926002222.png)
 
 三种空格策略分别用三个符号来表示，不要求空格（-），软空格（=），严格空格（+）。
+
 想要了解正则表达式的使用，可以查看 [《阮一峰：正则表达式简明教程》](https://javascript.ruanyifeng.com/stdlib/regexp.html#)
 
 #### 1.4.1 自定义正则表达式语法
@@ -82,11 +85,13 @@ some text, [[markdown link|双向链接]]还有 `inline code`。其他文本。
 #[\u4e00-\u9fa5\w\/]+|++
 ```
 首先最后的两个字符串为该正则区块的左右空格策略，这里为++代表左右空格策略都为严格空格。
+
 倒数第三个字符必须为 | ，其用于将正则表达式部分和左右空格策略部分分开，使其视觉上更容易辨认。
 
 剩下的字符串为正则表达式本身，`#[\u4e00-\u9fa5\w\/]+`，该正则表达式可以匹配以 `#` 键开头的后续有一个或者多个符合 `[\u4e00-\u9fa5\w\/]` 范围的字符，该字符包含汉字、字母、数字、下划线以及 / 符号。
 
 这样说起来比较复杂，简单点就是用来识别 Obsidian 中的标签（即 tag）的。
+
 Obsidian 的标签需要在标签左右都添加空格（中文标点符号也不行，必须是空格），否则不会识别为标签。
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/input-tag-plugin-off.gif)
