@@ -164,7 +164,6 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// UserDefined Delete Rule
 			if (changeTypeStr == "delete.backward"){
-				console.log(this.UserDeleteRules);
 				for (let rule of this.UserDeleteRules)
 				{
 					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
@@ -378,7 +377,7 @@ export default class EasyTypingPlugin extends Plugin {
 			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag) {
 				// 用户自定义转化规则
 				for (let rule of this.UserConvertRules) {
-					if (insertedStr != rule.before.left.charAt(rule.before.left.length - insertedStr.length)) continue;
+					// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
 					let left = update.view.state.doc.sliceString(toB - rule.before.left.length, toB);
 					let right = update.view.state.doc.sliceString(toB, toB + rule.before.right.length);
 					if (left === rule.before.left && right === rule.before.right) {
