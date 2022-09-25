@@ -14,8 +14,11 @@ export default class EasyTypingPlugin extends Plugin {
 	FW2HWSymbolRules: ConvertRule[];
 	ContentParser: ArticleParser;
 	Formater: LineFormater;
-	DeleteRules: ConvertRule[];
+	IntrinsicDeleteRules: ConvertRule[];
 	PrevActiveMarkdown: string;
+
+	UserDeleteRules: ConvertRule[];
+	UserConvertRules: ConvertRule[];
 
 	async onload() {
 		await this.loadSettings();
@@ -24,7 +27,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["《", {left:"《", right:"》"}], ["“", {left:"“", right:"”"}], ["”", {left:"“", right:"”"}], ["（", {left:"（", right:"）"}],
 			["<", {left:"<", right:">"}]                         
 			];
-		this.updateSelectionReplaceRule();
+		this.refreshSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
 		let SymbolPairs = ["【】", "（）", "<>", "《》", "“”", "‘’", "「」", "『』"]
 		for (let pairStr of SymbolPairs) this.SymbolPairsMap.set(pairStr.charAt(0), pairStr.charAt(1));
@@ -38,7 +41,9 @@ export default class EasyTypingPlugin extends Plugin {
 		this.FW2HWSymbolRules = ruleStringList2RuleList(FW2HWSymbolRulesStrList);
 
 		let DeleteRulesStrList: Array<[string, string]> = [["$|$", "|"], ['```|\n```', '|'], ['==|==', '|'], ['$$\n|\n$$', "|"]];
-		this.DeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
+		this.IntrinsicDeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
+		this.refreshUserDeleteRule();
+		this.refreshUserConvertRule();
 		
 		this.PrevActiveMarkdown = "";
 
@@ -157,14 +162,37 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
+			// UserDefined Delete Rule
+			if (changeTypeStr == "delete.backward"){
+				console.log(this.UserDeleteRules);
+				for (let rule of this.UserDeleteRules)
+				{
+					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
+					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
+					if (left === rule.before.left && right === rule.before.right) {
+						changes.push({
+							changes: {
+								from: toA - rule.before.left.length,
+								to: toA + rule.before.right.length,
+								insert: rule.after.left + rule.after.right
+							},
+							selection: { anchor: toA - rule.before.left.length + rule.after.left.length },
+							userEvent: "EasyTyping.change"
+						});
+						tr = tr.startState.update(...changes);
+						return tr;
+					}
+				}
+			}
+
 			// ========== delete pair symbol ============
-			if (changeTypeStr === "delete.backward" && this.settings.SymbolAutoPairDelete) {
+			if (changeTypeStr === "delete.backward" && this.settings.IntrinsicSymbolPairs) {
 				if (this.SymbolPairsMap.has(changedStr) && this.SymbolPairsMap.get(changedStr) === tr.startState.sliceDoc(toA, toA + 1)) {
 					changes.push({ changes: { from: fromA, to: toA + 1 }, userEvent: "EasyTyping.change" });
 					tr = tr.startState.update(...changes);
 					return tr;
 				}
-				for (let rule of this.DeleteRules)
+				for (let rule of this.IntrinsicDeleteRules)
 				{
 					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
 					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
@@ -255,7 +283,7 @@ export default class EasyTypingPlugin extends Plugin {
 				// ================ auto pair =================
 				// let PairValidSet = new Set(["", " ","\n"])
 				// let charAfterCursor = tr.startState.sliceDoc(toA, toA+1);
-				if (this.settings.SymbolAutoPairDelete)
+				if (this.settings.IntrinsicSymbolPairs)
 				{
 					if (this.SymbolPairsMap.has(insertedStr)) {
 						changes.push({
@@ -313,6 +341,14 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 			this.ContentParser.updateContent(newArticle)
 
+			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
+			let cursor = update.view.state.selection.asSingle().main;
+			let ChineseRegExp = /[\u4e00-\u9fa5]/;
+			let chineseEndFlag = changeType=="input.type.compose" && 
+								cursor.anchor == cursor.head && cursor.anchor === toB && 
+								ChineseRegExp.test(insertedStr);
+			
+
 			// if (changeType == 'input.type' || changeType == "input" || changeType=="input.type.compose") {
 			// 	// ========== FullWSymbol2HalfWSymbol convert rules=======
 			// 	// support undo and redo
@@ -337,31 +373,35 @@ export default class EasyTypingPlugin extends Plugin {
 			// 	}
 			// }
 
-			if (changeType == 'input.type' || changeType == "input") {
-				if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
-					let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, mainSelection.anchor, insertedStr);
-					if (changes != null) {
-						update.view.dispatch(...changes[0]);
-						update.view.dispatch(changes[1]);
+
+			// 判断每次输入结束
+			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag) {
+				// 用户自定义转化规则
+				for (let rule of this.UserConvertRules) {
+					if (insertedStr != rule.before.left.charAt(rule.before.left.length - insertedStr.length)) continue;
+					let left = update.view.state.doc.sliceString(toB - rule.before.left.length, toB);
+					let right = update.view.state.doc.sliceString(toB, toB + rule.before.right.length);
+					if (left === rule.before.left && right === rule.before.right) {
+						update.view.dispatch({
+							changes: {
+								from: toB - rule.before.left.length,
+								to: toB + rule.before.right.length,
+								insert: rule.after.left + rule.after.right
+							},
+							selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
+							userEvent: "EasyTyping.change"
+						})
 						return;
 					}
 				}
 
-			}
-			else if (changeType === 'input.type.compose') {
-				// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
-				let cursor = update.view.state.selection.asSingle().main;
-				let ChineseRegExp = /[\u4e00-\u9fa5]/;
-				if (cursor.anchor === cursor.head && cursor.anchor === toB && ChineseRegExp.test(insertedStr)) {
-					// let curCh = offsetToPos(update.view.state.doc, cursor.anchor).ch;
-					// if (this.settings.debug) new Notice("EasyTyping: 中文输入结束");
-					if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
-						let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, toB, insertedStr);
-						if (changes != null) {
-							update.view.dispatch(...changes[0]);
-							update.view.dispatch(changes[1]);
-							return;
-						}
+				// 判断格式化文本
+				if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
+					let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, cursor.anchor, insertedStr);
+					if (changes != null) {
+						update.view.dispatch(...changes[0]);
+						update.view.dispatch(changes[1]);
+						return;
 					}
 				}
 			}
@@ -468,7 +508,7 @@ export default class EasyTypingPlugin extends Plugin {
 		
 	}
 
-	updateSelectionReplaceRule(){
+	refreshSelectionReplaceRule(){
 		this.SelectionReplaceMap = new Map(this.selectionReplaceMapInitalData);
 		for (let i=0;i<this.settings.userSelRepRuleTrigger.length; i++)
 		{
@@ -484,7 +524,7 @@ export default class EasyTypingPlugin extends Plugin {
 		if(this.settings.userSelRepRuleTrigger.includes(trigger)) return false;
 		this.settings.userSelRepRuleTrigger.push(trigger)
 		this.settings.userSelRepRuleValue.push({left:left, right:right});
-		this.updateSelectionReplaceRule();
+		this.refreshSelectionReplaceRule();
 		return true;
 	}
 
@@ -492,16 +532,61 @@ export default class EasyTypingPlugin extends Plugin {
 		if (idx <0 || idx>=this.settings.userSelRepRuleTrigger.length) return;
 		this.settings.userSelRepRuleTrigger.splice(idx, 1);
 		this.settings.userSelRepRuleValue.splice(idx, 1);
-		this.updateSelectionReplaceRule();
+		this.refreshSelectionReplaceRule();
 	}
 
 	updateUserSelectionRepRule(idx:number, left:string, right:string){
 		if (idx <0 || idx>=this.settings.userSelRepRuleTrigger.length) return;
 		this.settings.userSelRepRuleValue[idx].left = left;
 		this.settings.userSelRepRuleValue[idx].right = right;
-		this.updateSelectionReplaceRule();
+		this.refreshSelectionReplaceRule();
 	}
 	
+	refreshUserDeleteRule(){
+		this.UserDeleteRules = ruleStringList2RuleList(this.settings.userDeleteRulesStrList);
+	}
+
+	addUserDeleteRule(before:string, after:string)
+	{
+		this.settings.userDeleteRulesStrList.push([before, after]);
+		this.refreshUserDeleteRule();
+	}
+
+	deleteUserDeleteRule(idx:number){
+		if (idx>=this.settings.userDeleteRulesStrList.length || idx<0) return;
+		this.settings.userDeleteRulesStrList.splice(idx, 1);
+		this.refreshUserDeleteRule();
+	}
+
+	updateUserDeleteRule(idx:number, before:string, after:string){
+		if (idx>=this.settings.userDeleteRulesStrList.length || idx<0) return;
+		this.settings.userDeleteRulesStrList[idx][0] = before;
+		this.settings.userDeleteRulesStrList[idx][1] = after;
+		this.refreshUserDeleteRule();
+	}
+
+	refreshUserConvertRule(){
+		this.UserConvertRules = ruleStringList2RuleList(this.settings.userConvertRulesStrList);
+	}
+
+	addUserConvertRule(before:string, after:string)
+	{
+		this.settings.userConvertRulesStrList.push([before, after]);
+		this.refreshUserConvertRule();
+	}
+
+	deleteUserConvertRule(idx:number){
+		if (idx>=this.settings.userConvertRulesStrList.length || idx<0) return;
+		this.settings.userConvertRulesStrList.splice(idx, 1);
+		this.refreshUserConvertRule();
+	}
+
+	updateUserConvertRule(idx:number, before:string, after:string){
+		if (idx>=this.settings.userConvertRulesStrList.length || idx<0) return;
+		this.settings.userConvertRulesStrList[idx][0] = before;
+		this.settings.userConvertRulesStrList[idx][1] = after;
+		this.refreshUserConvertRule();
+	}
 
 	getEditor = (): Editor | null => {
 		let editor = null;

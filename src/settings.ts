@@ -12,11 +12,12 @@ export interface ConvertRule {
 	after: PairString;
 }
 
+export enum RuleType {delete= "Delete Rule", convert='Convert Rule'}
 export enum WorkMode { OnlyWhenTyping = "typing", Globally = "global" }
 
 export interface EasyTypingSettings {
 	SelectionEnhance: boolean;
-	SymbolAutoPairDelete: boolean;
+	IntrinsicSymbolPairs: boolean;
 	BaseObEditEnhance: boolean;
 	FW2HWEnhance: boolean;
 	AutoFormat: boolean;
@@ -36,11 +37,13 @@ export interface EasyTypingSettings {
 
 	userSelRepRuleTrigger: string[];
 	userSelRepRuleValue: PairString[];
+	userDeleteRulesStrList: [string, string][];
+	userConvertRulesStrList: [string, string][];
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	SelectionEnhance: true,
-	SymbolAutoPairDelete: true,
+	IntrinsicSymbolPairs: true,
 	BaseObEditEnhance: true,
 	FW2HWEnhance: true,
 
@@ -63,6 +66,8 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	debug: false,
 	userSelRepRuleTrigger: [],
 	userSelRepRuleValue: [],
+	userDeleteRulesStrList: [],
+	userConvertRulesStrList: []
 }
 
 export class EasyTypingSettingTab extends PluginSettingTab {
@@ -90,9 +95,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.setName("Symbol auto pair and delete with pair")
 			.setDesc("增加多种符号配对输入，配对删除，如《》, <>, “”, 「」, 『』,【】等")
 			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.SymbolAutoPairDelete)
+				toggle.setValue(this.plugin.settings.IntrinsicSymbolPairs)
 					.onChange(async (value) => {
-						this.plugin.settings.SymbolAutoPairDelete = value;
+						this.plugin.settings.IntrinsicSymbolPairs = value;
 						await this.plugin.saveSettings();
 					});
 			});
@@ -130,82 +135,28 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		containerEl.createEl('h2', { text: '自定义选中文本编辑增强规则 (Customize Selection Replace Rule)' });
-		const selectionRuleSetting = new Setting(containerEl);
-		selectionRuleSetting
-			.setName("Selection Replece Rule")
-		// .setDesc(
-		// 	`Create new highlight colors by providing a color name and using the color picker to set the hex code value.`
-		//   );
+		containerEl.createEl('h2', { text: '自定义编辑增强规则 (Customize Editting Enhance Rule)' });
+		this.buildUserSelRepRuleSetting(this.containerEl.createEl("details", {
+			cls: "easytyping-nested-settings",
+			attr: {
+				...({ open: true })
+			}
+		}))
 
-		const replaceRuleTrigger = new TextComponent(selectionRuleSetting.controlEl);
-		replaceRuleTrigger.setPlaceholder("Triggr Symbol");
+		this.buildUserDeleteRuleSetting(this.containerEl.createEl("details", {
+			cls: "easytyping-nested-settings",
+			attr: {
+				...({ open: true })
+			}
+		}))
 
-		const replaceLeftString = new TextComponent(selectionRuleSetting.controlEl);
-		replaceLeftString.setPlaceholder("New Left Side String");
-
-		const replaceRightString = new TextComponent(selectionRuleSetting.controlEl);
-		replaceRightString.setPlaceholder("New Right Side String");
-
-		selectionRuleSetting
-			.addButton((button) => {
-				button
-					.setButtonText("+")
-					.setTooltip("Add Rule")
-					.onClick(async (buttonEl: any) => {
-						let trigger = replaceRuleTrigger.inputEl.value;
-						let left = replaceLeftString.inputEl.value;
-						let right = replaceRightString.inputEl.value;
-						if (trigger && left && right) {
-							if(trigger.length>1){
-								new Notice("Inlvalid trigger, trigger must be a symbol of length 1");
-								return;
-							}
-							if (this.plugin.addUserSelectionRepRule(trigger, left, right)){
-								await this.plugin.saveSettings();
-								this.display();
-							}
-							else{
-								new Notice("warning! Trigger " + trigger + " is already exist!")
-							}
-						}
-						else {
-							new Notice("missing input");
-						}
-					});
-			});
-
-		// const selRepRuleContainer = containerEl.createEl("div");
-		for (let i = 0; i < this.plugin.settings.userSelRepRuleTrigger.length; i++) {
-			let trigger = this.plugin.settings.userSelRepRuleTrigger[i];
-			let left_s = this.plugin.settings.userSelRepRuleValue[i].left;
-			let right_s = this.plugin.settings.userSelRepRuleValue[i].right;
-			let showStr = "Trigger: " + trigger + " → " + left_s + "selected" + right_s;
-			// const settingItem = selRepRuleContainer.createEl("div");
-			new Setting(containerEl)
-				.setName(showStr)
-				.addExtraButton(button => {
-					button.setIcon("gear")
-						.setTooltip("Edit rule")
-						.onClick(() => {
-							new SelectRuleEditModal(this.app, trigger,left_s, right_s, async (new_left, new_right) => {
-								this.plugin.updateUserSelectionRepRule(i, new_left, new_right);
-								await this.plugin.saveSettings();
-								this.display();
-							}).open();
-						})
-				})
-				.addExtraButton(button => {
-					button.setIcon("trash")
-						.setTooltip("Remove rule")
-						.onClick(async () => {
-							this.plugin.deleteUserSelectionRepRule(i);
-							await this.plugin.saveSettings();
-							this.display();
-						})
-				});
-		}
-
+		this.buildUserConvertRuleSetting(this.containerEl.createEl("details", {
+			cls: "easytyping-nested-settings",
+			attr: {
+				...({ open: true })
+			}
+		}))
+		
 
 		containerEl.createEl('h2', { text: '自动格式化设置 (Autoformat Setting)' });
 
@@ -390,6 +341,240 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 	}
+
+	buildUserSelRepRuleSetting(containerEl: HTMLDetailsElement){
+		containerEl.empty();
+        containerEl.ontoggle = () => {
+			new Notice(String(containerEl.open));
+        };
+		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
+		summary.setText("自定义选中文本编辑增强规则 (Customize Selection Replace Rule)")
+
+        // summary.setHeading().setName("User defined Selection Replace Rule");
+        // summary.createDiv("collapser").createDiv("handle");
+
+		const selectionRuleSetting = new Setting(containerEl);
+		selectionRuleSetting
+			.setName("Selection Replece Rule")
+
+		const replaceRuleTrigger = new TextComponent(selectionRuleSetting.controlEl);
+		replaceRuleTrigger.setPlaceholder("Triggr Symbol");
+
+		const replaceLeftString = new TextComponent(selectionRuleSetting.controlEl);
+		replaceLeftString.setPlaceholder("New Left Side String");
+
+		const replaceRightString = new TextComponent(selectionRuleSetting.controlEl);
+		replaceRightString.setPlaceholder("New Right Side String");
+
+		selectionRuleSetting
+			.addButton((button) => {
+				button
+					.setButtonText("+")
+					.setTooltip("Add Rule")
+					.onClick(async (buttonEl: any) => {
+						let trigger = replaceRuleTrigger.inputEl.value;
+						let left = replaceLeftString.inputEl.value;
+						let right = replaceRightString.inputEl.value;
+						if (trigger && left && right) {
+							if(trigger.length>1){
+								new Notice("Inlvalid trigger, trigger must be a symbol of length 1");
+								return;
+							}
+							if (this.plugin.addUserSelectionRepRule(trigger, left, right)){
+								await this.plugin.saveSettings();
+								this.display();
+							}
+							else{
+								new Notice("warning! Trigger " + trigger + " is already exist!")
+							}
+						}
+						else {
+							new Notice("missing input");
+						}
+					});
+			});
+
+		// const selRepRuleContainer = containerEl.createEl("div");
+		for (let i = 0; i < this.plugin.settings.userSelRepRuleTrigger.length; i++) {
+			let trigger = this.plugin.settings.userSelRepRuleTrigger[i];
+			let left_s = this.plugin.settings.userSelRepRuleValue[i].left;
+			let right_s = this.plugin.settings.userSelRepRuleValue[i].right;
+			let showStr = "Trigger: " + trigger + " → " + left_s + "selected" + right_s;
+			// const settingItem = selRepRuleContainer.createEl("div");
+			new Setting(containerEl)
+				.setName(showStr)
+				.addExtraButton(button => {
+					button.setIcon("gear")
+						.setTooltip("Edit rule")
+						.onClick(() => {
+							new SelectRuleEditModal(this.app, trigger,left_s, right_s, async (new_left, new_right) => {
+								this.plugin.updateUserSelectionRepRule(i, new_left, new_right);
+								await this.plugin.saveSettings();
+								this.display();
+							}).open();
+						})
+				})
+				.addExtraButton(button => {
+					button.setIcon("trash")
+						.setTooltip("Remove rule")
+						.onClick(async () => {
+							this.plugin.deleteUserSelectionRepRule(i);
+							await this.plugin.saveSettings();
+							this.display();
+						})
+				});
+		}
+
+
+	}
+
+	buildUserDeleteRuleSetting(containerEl: HTMLDetailsElement){
+		containerEl.empty();
+        containerEl.ontoggle = () => {
+			new Notice(String(containerEl.open));
+        };
+		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
+		summary.setText("自定义删除编辑增强规则 (Customize Delete Rule)")
+
+		const deleteRuleSetting = new Setting(containerEl);
+		deleteRuleSetting
+			.setName("Delete Rule")
+
+		const patternBefore = new TextComponent(deleteRuleSetting.controlEl);
+		patternBefore.setPlaceholder("Before Delete");
+
+		const patternAfter = new TextComponent(deleteRuleSetting.controlEl);
+		patternAfter.setPlaceholder("New Pattern");
+
+		deleteRuleSetting
+			.addButton((button) => {
+				button
+					.setButtonText("+")
+					.setTooltip("Add Rule")
+					.onClick(async (buttonEl: any) => {
+						let before = patternBefore.inputEl.value;
+						let after = patternAfter.inputEl.value;
+						if (before && after) {
+							let regRule = /\|/g;
+							if(before.search(regRule)==-1||after.search(regRule)==-1){
+								new Notice("Inlvalid trigger, pattern must contain symbol \| which indicate cursor position");
+								return;
+							}
+							else{
+								this.plugin.addUserDeleteRule(before, after);
+								await this.plugin.saveSettings();
+								this.display();
+							}
+						}
+						else {
+							new Notice("missing input");
+						}
+					});
+			});
+
+		for (let i = 0; i < this.plugin.settings.userDeleteRulesStrList.length; i++){
+			let before = this.plugin.settings.userDeleteRulesStrList[i][0];
+			let after = this.plugin.settings.userDeleteRulesStrList[i][1];
+			let showStr = "\"" + before + "\"  delete.backwards  → \""+ after+"\""; 
+			new Setting(containerEl)
+				.setName(showStr)
+				.addExtraButton(button => {
+					button.setIcon("gear")
+						.setTooltip("Edit rule")
+						.onClick(() => {
+							new EditConvertRuleModal(this.app, RuleType.delete, before, after, async (new_before, new_after) => {
+								this.plugin.updateUserDeleteRule(i, new_before, new_after);
+								await this.plugin.saveSettings();
+								this.display();
+							}).open();
+						})
+				})
+				.addExtraButton(button => {
+					button.setIcon("trash")
+						.setTooltip("Remove rule")
+						.onClick(async () => {
+							this.plugin.deleteUserDeleteRule(i);
+							await this.plugin.saveSettings();
+							this.display();
+						})
+				});
+		}
+
+	}
+
+	buildUserConvertRuleSetting(containerEl: HTMLDetailsElement){
+		containerEl.empty();
+        containerEl.ontoggle = () => {
+			new Notice(String(containerEl.open));
+        };
+		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
+		summary.setText("自定义编辑转换规则 (Customize Convert Rule)")
+
+		const convertRuleSetting = new Setting(containerEl);
+		convertRuleSetting
+			.setName("Convert Rule")
+
+		const patternBefore = new TextComponent(convertRuleSetting.controlEl);
+		patternBefore.setPlaceholder("Before Convert");
+
+		const patternAfter = new TextComponent(convertRuleSetting.controlEl);
+		patternAfter.setPlaceholder("New Pattern");
+
+		convertRuleSetting
+			.addButton((button) => {
+				button
+					.setButtonText("+")
+					.setTooltip("Add Rule")
+					.onClick(async (buttonEl: any) => {
+						let before = patternBefore.inputEl.value;
+						let after = patternAfter.inputEl.value;
+						if (before && after) {
+							let regRule = /\|/g;
+							if(before.search(regRule)==-1||after.search(regRule)==-1){
+								new Notice("Inlvalid trigger, pattern must contain symbol \| which indicate cursor position");
+								return;
+							}
+							else{
+								this.plugin.addUserConvertRule(before, after);
+								await this.plugin.saveSettings();
+								this.display();
+							}
+						}
+						else {
+							new Notice("missing input");
+						}
+					});
+			});
+
+		for (let i = 0; i < this.plugin.settings.userConvertRulesStrList.length; i++){
+			let before = this.plugin.settings.userConvertRulesStrList[i][0];
+			let after = this.plugin.settings.userConvertRulesStrList[i][1];
+			let showStr = "\"" + before + "\"  auto convert to \""+ after+"\""; 
+			new Setting(containerEl)
+				.setName(showStr)
+				.addExtraButton(button => {
+					button.setIcon("gear")
+						.setTooltip("Edit rule")
+						.onClick(() => {
+							new EditConvertRuleModal(this.app, RuleType.convert, before, after, async (new_before, new_after) => {
+								this.plugin.updateUserConvertRule(i, new_before, new_after);
+								await this.plugin.saveSettings();
+								this.display();
+							}).open();
+						})
+				})
+				.addExtraButton(button => {
+					button.setIcon("trash")
+						.setTooltip("Remove rule")
+						.onClick(async () => {
+							this.plugin.deleteUserConvertRule(i);
+							await this.plugin.saveSettings();
+							this.display();
+						})
+				});
+		}
+	}
+
 }
 
 
@@ -425,20 +610,24 @@ export class SelectRuleEditModal extends Modal {
 		contentEl.createEl("h1", { text: "Edit Selection Replace Rule" });
 
 		new Setting(contentEl)
-			.setName("Trigger: " + this.trigger)
+			.setName("Trigger")
+			.addText((text) => {
+				text.setValue(this.trigger);
+				text.setDisabled(true);
+			})
 		
 		new Setting(contentEl)
-			.setName("left")
+			.setName("Left")
 			.addText((text) => {
-				text.setPlaceholder(this.old_left);
+				text.setValue(this.old_left);
 				text.onChange((value) => {
 					this.new_left = value
 				})
 			})
 		new Setting(contentEl)
-			.setName("right")
+			.setName("Right")
 			.addText((text) => {
-				text.setPlaceholder(this.old_right);
+				text.setValue(this.old_right);
 				text.onChange((value) => {
 					this.new_right = value
 				})
@@ -448,7 +637,7 @@ export class SelectRuleEditModal extends Modal {
 		new Setting(contentEl)
 			.addButton((btn) =>
 				btn
-					.setButtonText("Submit")
+					.setButtonText("Update")
 					.setCta()
 					.onClick(() => {
 						this.close();
@@ -461,3 +650,78 @@ export class SelectRuleEditModal extends Modal {
 		contentEl.empty();
 	}
 }
+
+
+
+export class EditConvertRuleModal extends Modal {
+	type: RuleType;
+	old_before: string;
+	old_after: string;
+	new_before: string;
+	new_after: string;
+	onSubmit: (new_before: string, new_after:string) => void;
+
+	constructor(app: App, type: RuleType, before: string, after: string, onSubmit: (new_before: string, new_after:string) => void) {
+		super(app);
+		this.type = type;
+		this.old_before = before;
+		this.old_after = after;
+		this.new_before = before;
+		this.new_after = after;
+
+		this.onSubmit = onSubmit;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+
+		contentEl.createEl("h1", { text: "Edit " + this.type});
+		
+		new Setting(contentEl)
+			.setName("Before Delete")
+			.addText((text) => {
+				text.setValue(this.old_before);
+				text.onChange((value) => {
+					this.new_before = value
+				})
+			})
+		new Setting(contentEl)
+			.setName("New Pattern")
+			.addText((text) => {
+				text.setValue(this.old_after);
+				text.onChange((value) => {
+					this.new_after = value
+				})
+			});
+
+
+		new Setting(contentEl)
+			.addButton((btn) =>
+				btn
+					.setButtonText("Update")
+					.setCta()
+					.onClick(() => {
+						if (this.checkConvertPatternString(this.new_before, this.new_after))
+						{
+							this.close();
+							this.onSubmit(this.new_before, this.new_after);
+						}
+						else{
+							new Notice("Invalid pattern string!");
+						}
+						
+					}));
+	}
+
+	checkConvertPatternString(before: string, after:string):boolean{
+		let regRule = /\|/g;
+		if(before.search(regRule)==-1 || after.search(regRule)==-1) return false;
+		return true;
+	}
+
+	onClose() {
+		let { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
