@@ -1,6 +1,8 @@
 # Easy-Typing Plugin For Obsidian
 [中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English
 
+Note: The 5.0 configuration file is incompatible with the old version. It is recommended to uninstall the old version first and then reinstall it~
+
 This plugin is designed for better typing experience in [Obsidian](https://obsidian.md). The plugin's features includes automatic formatting of text and symbol editing enhancement during editing. Auto format text standardizes the format of the document and beautifies the appearance of the document. Editing enhancement optimizes the user's editing experience.
 
 **Automatic text formatting** provides the feature of capitalizing the first letter. In addition, automatic text formatting can automatically add spaces to specific parts of each line during the input process according to the rules set by the user, such as spaces between Chinese and English, spaces between text and English punctuation, spaces between text and inline formula/inline code/wiki link, spaces between text blocks and user-defined regular matching blocks, etc. So as to standardize the format of the document and beautify the appearance of the document.
