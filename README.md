@@ -5,13 +5,13 @@ This plugin is designed for better typing experience in [Obsidian](https://obsid
 
 **Automatic text formatting** provides the feature of capitalizing the first letter. In addition, automatic text formatting can automatically add spaces to specific parts of each line during the input process according to the rules set by the user, such as spaces between Chinese and English, spaces between text and English punctuation, spaces between text and inline formula/inline code/wiki link, spaces between text blocks and user-defined regular matching blocks, etc. So as to standardize the format of the document and beautify the appearance of the document.
 
-**Automatic text formatting takes effect immediately during editing by default**. You can also turn off the option of automatic text formatting during editing in settings. You can also use the plug-in command to format the full text of the current article, the current line, or the currently selected area.
+**Automatic text formatting takes effect immediately during editing by default**. You can also turn off the option of automatic text formatting during editing in settings. You can also use the plugin command to format the full text of the current article, the current line, or the currently selected area.
 
-**Edit Enhance**. For example, entering two '￥' consecutively will become `$$`, and positioning the cursor in the middle, entering two `【` will become `[[|]]`. In many cases, Chinese users do not need to switch input methods to get a smooth writing experience in OBSIDIAN! The symbol input enhancements, Edit Enhance features including 1. Automatic pairing/deletion of symbols; 2. Symbol editing enhancement of selected text; 3. Continuous full width symbol to half width symbol; 4. Obsidian syntax related editing enhancements. This plug-in also supports user-defined conversion rules, which is highly playable.
+**Edit Enhance**. For example, entering two '￥' consecutively will become `$$`, and positioning the cursor in the middle, entering two `【` will become `[[|]]`. In many cases, Chinese users do not need to switch input methods to get a smooth writing experience in OBSIDIAN! The Edit Enhance features including 1. Automatic pairing/deletion of symbols; 2. Symbol editing enhancement of selected text; 3. Continuous full width symbol to half width symbol; 4. Obsidian syntax related editing enhancements. This plugin also supports user-defined conversion rules, which is highly playable.
 
-This plug-in also supports customizable conversion rules, which is highly playable.
+This plugin also supports customizable conversion rules, which is highly playable.
 
-Note: This plug-in is designed for the mixed input of Chinese and English in OBSIDIAN, and may not be effective for other languages.
+Note: This plugin is designed for the mixed input of Chinese and English in OBSIDIAN, and may not be effective for other languages.
 
 # Core Features
 ## 1. Text Autoformatting
@@ -19,18 +19,18 @@ Automatic text formatting provides the ability to capitalize the first letter. I
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926001743.png)
 
-The master switch of automatic text formatting is as above. After closing, the text will not be automatically formatted during the input process. However, it will not affect the enhanced functions of symbol editing, nor will it affect the plug-in's built-in commands: format full-text, format the current line/currently selected area.
+The master switch of automatic text formatting is as above. After closing, the text will not be automatically formatted during the input process. However, it will not affect the enhanced functions of symbol editing, nor will it affect the plugin's built-in commands: format full-text, format the current line/currently selected area.
 ### 1.1 Auto Capitalize
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926002011.png)
 
-This plug-in provides the feature of automatically capitalizing the first letter when the input method is in English input mode, that is, the letter at the beginning of each sentence is automatically capitalized. In setting tab, you can select whether auto capitalize works only when typing or work globally. **When the Only When Typing mode is choosen, auto capitalize operation can be undone, and the letter will not be capitalized after being undone.**
+This plugin provides the feature of automatically capitalizing the first letter when the input method is in English input mode, that is, the letter at the beginning of each sentence is automatically capitalized. In setting tab, you can select whether auto capitalize works only when typing or work globally. **When the Only When Typing mode is choosen, auto capitalize operation can be undone, and the letter will not be capitalized after being undone.**
 
 ### 1.2 AutoSpace between text and punctuation
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926002044.png)
 
 Automatic space between text and punctuation will intelligently add space between other text and English punctuation.
 ### 1.3 Space Policy of different inline Block
-This plug-in divides each text line into several blocks: text block, inline formula block, inline code block, link block, and user-defined regular matching block. The space policy between blocks can be set in settings tab.
+This plugin divides each text line into several blocks: text block, inline formula block, inline code block, link block, and user-defined regular matching block. The space policy between blocks can be set in settings tab.
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926002125.png)
 
@@ -55,7 +55,7 @@ This plugin devide the markdown above into 5 blocks:
 
 According to the default settings, there must be a soft space between the link block and other blocks, and the adjacent content between the link block and the left text block is a comma in English, which does not meet the requirements of soft space, so add a space between the text block 1 and the link block 2 (if it is a Chinese comma, it meets the requirements of soft space).
 
-The adjacent content between link block 2 and text block 3 is `还`, which does not meet the soft space requirements. However, because smart space mode is selected in the space policy setting of the link text, the plug-in will make smart space with the text on the right according to the display content of the link block (here is the alias of the link: `双向链接`). Then the two adjacent content of the block and text block 3 are `接还`, and no space is need between the two Chinese characters, Therefore, no space is added between the  wiki link block 2 and the text block 3.
+The adjacent content between link block 2 and text block 3 is `还`, which does not meet the soft space requirements. However, because smart space mode is selected in the space policy setting of the link text, the plugin will make smart space with the text on the right according to the display content of the link block (here is the alias of the link: `双向链接`). Then the two adjacent content of the block and text block 3 are `接还`, and no space is need between the two Chinese characters, Therefore, no space is added between the  wiki link block 2 and the text block 3.
 
 The adjacent characters between text block 3 and inline code block 4 is `有`, which not meet the requirements of the space policy for inline code blocks, so a space is added between text block 3 and inline code block 4.
 
@@ -66,7 +66,7 @@ So the final formatted text is below
 some text, [[markdown link|双向链接]]还有 `inline code`。其他文本。
 ```
 ### 1.4 User-defined Regular expression match block
-In some cases, users do not want to format a specific form of content, such as `{}` internal content or `<>` internal content. **This plug-in can enable the plug-in to not format specific forms of content by user-defined regular expressions**.
+In some cases, users do not want to format a specific form of content, such as `{}` internal content or `<>` internal content. **This plugin can enable the plugin to not format specific forms of content by user-defined regular expressions**.
 
 In addition, each custom regular matching block can set its left and right space policies.
 
@@ -112,123 +112,125 @@ The following rules are used to identify the callout syntax block of the Obsidia
 \[\!.*?\][-+]{0,1}|-+
 ```
 
-`<.*?>|--` is used to identify double angle bracket blocks to ensure that their internal text is not affected by automatic formatting. If you use the Template plug-in to create a template, you need to use syntax like <% tp.file.cursor() %>. Enabling this custom rule can prevent its content from being wrongly added with spaces (because the internal `.` will be considered the end of the sentence, so this plug-in will automatically add spaces between `.` and the following text).
+`<.*?>|--` is used to identify double angle bracket blocks to ensure that their internal text is not affected by automatic formatting. If you use the Template plugin to create a template, you need to use syntax like <% tp.file.cursor() %>. Enabling this custom rule can prevent its content from being wrongly added with spaces (because the internal `.` will be considered the end of the sentence, so this plugin will automatically add spaces between `.` and the following text).
 
 I expect that the custom regular expression rule can meet the personalized needs of different users, and more uses of it need to be explored~~
 
 ## 2 Edit Enhance
-编辑增强包含了 4 个部分的功能，包括 1. 符号自动配对/删除；2. 选中文本的符号编辑增强；3. 连续全角符号转半角符号；4. Obsidian 语法相关的编辑增强。可以在插件设置中分别设置 4 个功能的打开和关闭。
+The Edit Enhance features including 1. Automatic pairing/deletion of symbols; 2. Symbol editing enhancement of selected text; 3. Continuous full width symbol to half width symbol; 4. Obsidian syntax related editing enhancements. 
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926003124.png)
-### 2.1 基础编辑增强
-基础编辑增强功能提供了一些考虑 Obsidian 及 Markdown 语法的编辑增强。
+### 2.1 Basic Edit enhance
+Basic editing enhancements provide some editing enhancements based on Obsidian and Markdown syntax.
 
-以下为软件内部所有基础编辑增强的规则
+The following are the enhanced rules for all basic editing within the plugin
 ```python
 [['··|', '`|`'], ["`·|`", "```|\n```"],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"], ["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"], [' 、|', " /|"]]
 ```
-- 第一条规则表示 \·\·| 转化为 \`|\`
-- 第二条规则表示 \`·|\` 转化为 \`\`\`\\n|\`\`\`
-- 第三和第四条规则为两次【 输入会变成 \[\[|\]\]
-- 最后第二条规则表示句首输入、会转化为斜杠符号/。 (为了适配 Obsidian 核心插件 Slash commands)
-- 最后一条规则表示空格后面输入、会转化成斜杠符号 /。(为了适配 Obsidian 核心插件 Slash commands)
-- 以此类推
-### 2.2 符号配对/删除
-#### 2.2.1 符号自动配对
-符号自动配对即输入成对符号的左半边，插件会自动补全其右半边的内容。
+- The first rule: ··| will convert to \`|\`
+- Second rule: \`·|\` will convert to \`\`\`\\n|\`\`\`
+- Third and forth rule: input【 twice will convert to \[\[|\]\]
+- The penultimate rule indicates the sentence beginning input, which will be converted to slash/. (To adapt to the Obsidian core plugin Slash commands)
+- And so on
+### 2.2 Symbols Auto pair/delete
+#### 2.2.1  Symbols Auto pair
+The symbols auto pair feature, that is, the plugin will automatically complete the contents of the right half of a pair of symbols when the left half is input.
 
-比如：输入《|，会得到《|》（竖线|代表光标位置）。
+For example, if you enter 《|, you will get 《|》 (the vertical line | represents the cursor position).
 
-本插件支持的配对符号如下：
+The matching symbols supported in this plugin are as follows:
 ```python
 ["【】", "（）", "<>", "《》", "“”", "‘’", "「」", "『』"]
 ```
-由于英文小括号、中括号、花括号等符号 Obsidian 本体已经提供了自动配对的选项，本插件不重复提供该功能，需要的话只要打开设置选项 `Editor→Auto pair brackets`。
-#### 2.2.2 配对符号删除
-当光标左右为配对符号时，使用退格键删除时，会自动把整个配对符号删除。
 
-比如：【|】 按退格键，会变成 |。（竖线|代表光标位置）
+Since the auto pair for `(` 、`[`、`{` is supported by obsidian(`Editor→Auto pair brackets`), This plugin does not provide this feature repeatedly.
 
-本插件支持所有上述自动配对的符号的配对删除。此外，插件还提供了公式块、代码块、高亮块符号的快捷配对删除，其规则如下：
+#### 2.2.2 paired symbol deletion
+When there are pairing symbols on the left and right side of the cursor, if you delete backwards, the whole pairing symbol will be automatically deleted.
+
+For example:【|】 press backspace, you will get |（| indicate cursor position）
+
+This plugin supports the pairing and deletion of all the above automatically paired symbols. In addition, the plugin also provides quick pairing and deletion of formula blocks, code blocks and highlighted block symbols. The rules are as follows:
 ```python
 [["$|$", "|"], ['```|\n```', '|'], ['==|==', '|'], ['$$\n|\n$$', "|"]]
 ```
 
-### 2.3 选中文本时的编辑增强
-有时我们会想对文中的某些部分转化为双向链接或者是代码块、公式块。在选中文本情况下，我们想输入英文 `$` 符号将选中部分转化为公式块，如果此时是中文输入法，选中的文本将被替换成￥符号。本插件会识别这些场景，并且实现用户心中所想。
+### 2.3 Editing enhancements when text is selected
+Sometimes we want to convert some parts of the text into wiki links or code blocks or formula blocks. When the text is selected, we need to input the `$` symbol to convert the selected part into a formula block. However, if the Chinese input method is used at this time, the selected text will be replaced with the ￥ symbol. This plugin will recognize these scenarios and realize what users want.
 
-|选中的文本|按键输入|最终结果| 
+|selected|input|result| 
 |:-----|:----|:-----|
 |文本|【|[文本]|
 |x+y|￥|\$x+y\$| 
 |some code|·|\`some code\`|
 
-此外，选中文本的情况下输入一些中文配对符号也会对选中的文本左右加上配对符号
+In addition, entering some Chinese pairing symbols when the text is selected will also add pairing symbols to the left and right of the selected text
 
-|选中的文本|按键输入|最终结果|
+|selected|input|result|
 |:-----|:-----|:-----|
 |文本|《|《文本》| 
-|文本|“ 或者 ”|“文本”| 
-|文本|‘ 或者 ’|‘文本’|
+|文本|“ or ”|“文本”| 
+|文本|‘ or ’|‘文本’|
 |文本|<|<文本>|
 |文本|（|（文本）| 
 
-### 2.4 连续全角符号转半角
-功能如其名称所示，连续输入两个全角符号会转化成半角符号。
-
-插件内置实现的转换规则如下
+### 2.4 Continuous full width symbol to half width
+The bultin convert rules are as follow
 ```python
 [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
 		["：：|", ":|"], ['？？|', '?|'], ['、、|', '/|'], ['（（|）', "(|)"], ['（（|', '(|)'],
 		["》》|", ">|"], ["《《|》", "<|"], ['《《|', "<|"]]
 ```
-如上面第一个规则代表两个连续的中文句号会变成英文的点。第二条规则表示输入两个连续的中文感叹号会变成一个英文叹号，以此类推。
+For example, the first rule above represents that two consecutive Chinese periods will become English dots. The second rule indicates that entering two consecutive Chinese exclamation marks will become an English exclamation mark, and so on.
 
-### 2.5 用户自定义编辑转化规则
+### 2.5 User defined conversion rules
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926003149.png)
 
-这里参考了 [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian) 的转换规则的想法，可以让用户自定义转换规则，从而使插件更通用。感谢 [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian)！
-#### 2.5.1 选中文本情况下的自定义转换规则
+Here I learn from [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian)'s idea of convert rule, which make the feature more playable。Thanks to [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian)!
+#### 2.5.1 Custom conversion rules with text selected
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926003230.png)
 
-在设置栏分别输入触发符号、转换后的左右的字符串，再点击右边的添加规则按钮，即可生成一条用户自定义规则。设置好规则后，在选中文本的情况下，输入设置的触发符号，就会在选中的文本的左右分别添加 `转换后左边字符串` 和 `转换后右边字符串`。
+Enter the trigger symbol and the converted left and right strings respectively in the setting column, and then click the Add Rule button on the right to generate a user-defined rule. 
 
-如我分别输入 `-`、`~~`、`~~`，然后添加规则，即可得到如上图中的第一条规则。该规则设置完成后，选中文本，再输入 `-`，则会得到 `~~选中的文本~~`。
+For example, input `-`、`~~`、`~~` to the input area, then click the add button, You can get the first rule as shown in the figure above. 
 
-已经添加的规则可以点击编辑按钮进行改动，或者删除按钮删除规则。
+After setting the rule, select the text and enter `-`, you'll get `~~selected~~`。
 
-选中文本自定义转换规则的优先级高于插件内置转换。
-#### 2.5.2 删除时的自定义转换规则
+The added rules can be modified by clicking Edit or deleted.
+
+The selected text custom conversion rule has higher priority level over the plugin's built-in conversion rule.
+#### 2.5.2 Custom conversion rules when deleting
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926003212.png)
 
-删除规则需要输入删除前的文本状态和按删除键后的文本状态，用|来表示光标的位置，前后的文本状态都必须有 | 以表明光标位置。光标左右都可以任意添加文本。
+For deletion rules, you need to enter the text status before deletion and the text status after pressing the Delete key. | is used to indicate the cursor position. The text status before and after deletion must have | to indicate the cursor position. You can add text to either side of the cursor.
 
-如内置的符号配对删除功能其实是添加了一系列删除规则，比如《》的配对删除规则如下
+The built-in symbol pairing deletion function actually adds a series of deletion rules. For example, the pairing deletion rules of `《》` are as follows
 
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926003249.png)
 
-点击右边加号按钮即可添加规则。同样的每条自定义删除规则也可以进行编辑和删除。
+Click the add button on the right to add rules. Each user-defined deletion rule can also be edited and deleted.
 
-**删除规则只在使用退格键删除光标前文本时生效**，在选中文本或者使用 delete 键向后删除时不会生效。
+The deletion rule only takes effect when the backspace key is used to delete the text in front of the cursor. It does not take effect when the text is selected or the delete key is used to delete the text forwards.
 
-用户自定义删除规则优先级高于插件内置删除规则。
-#### 2.5.3 输入时的自定义转换规则
+User defined delete rules have priority over plugin's built-in delete rules.
+#### 2.5.3 Custom conversion rules when typing
 ![](https://yaozhuwa-cloud.oss-cn-hangzhou.aliyuncs.com/Pictures/20220926003300.png)
 
-输入时的自定义转换规则类似删除时的自定义转换规则，差别在于其在输入字符的过程中生效。
-如上图中我添加了一条自定义转换规则，在我输入 `:)` 时，插件会将其转化为😀。这种转化操作是可以撤销的。
+The user-defined conversion rules for input are similar to those for deletion, except that they take effect during character input.
 
-输入时的自定义转换规则优先级比插件内置的转换规则（如符号自动配对、连续全角符号转半角）低。
+As shown in the figure above, I added a custom conversion rule. When I enter `:)`, the plugin will convert it to 😀。 This conversion can be undone.
+
+The priority of user-defined conversion rules during input is lower than that of plugin's built-in conversion rules (such as automatic symbol pairing and conversion of continuous full width symbols to half width).
 ## Change log
 FULL changelog see `./changelog.md`
 
 ### EasyTyping 5.0.0 Release!
-EasyTyping 5.0.0 reconstructs the code framework, re implements all previous functions with new interfaces, greatly improves the performance and scalability of the plug-in, and introduce a lot of new features.
+EasyTyping 5.0.0 reconstructs the code framework, re implements all previous functions with new interfaces, greatly improves the performance and scalability of the plugin, and introduce a lot of new features.
 - Improvement and new things
 	- **Now support for mobile device!**
-	- **The line mode has been canceled.** Now the plug-in can better identify the end of Chinese input. There is no need for line mode and there will be no previous bug with incorrect input. Now, the plug-in formats the text at the end of each Chinese input and at the end of each English character input.
+	- **The line mode has been canceled.** Now the plugin can better identify the end of Chinese input. There is no need for line mode and there will be no previous bug with incorrect input. Now, the plugin formats the text at the end of each Chinese input and at the end of each English character input.
 	- **Improve automatic pairing of symbols, add feature of quick deletion of paired symbols.** When the cursor is between paired symbols, pressing the Delete key will delete all the paired symbols. For example, pressing the Delete key when "《|》" will directly delete all the 《》. More symbol pairs are supported, such as ` "`, ` $$`, ` () `, etc.
 	- The feature classification of symbol input enhancement is refined and the switches are set respectively: 1. Automatic pairing/deletion of symbols; 2. Symbol editing enhancement of selected text; 3. Continuous full width symbol to half width symbol; 4. Obsidian syntax related editing enhancements. See the readme document for details.
 	- **A user-defined editing and conversion rule** has been added, which supports user-defined text conversion rules for selected text, backspace deletion, and typing situations. (Thanks to aptend's idea [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian))
