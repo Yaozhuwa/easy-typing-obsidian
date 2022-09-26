@@ -1,7 +1,7 @@
 # Easy-Typing Plugin For Obsidian
 中文 | [English](https://github.com/Yaozhuwa/easy-typing-obsidian)
 
-注意：5.0 版本的配置文件和旧版本不兼容，建议先卸载旧版本，再重新安装~
+**注意：5.0 版本的配置文件和旧版本不兼容，建议先卸载旧版本，再重新安装~**
 
 EasyTyping 是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件，功能包含编辑时自动格式化文本和符号编辑增强。自动格式化文本对文档的格式进行规范化，并且美化文档的观感。编辑增强优化用户的编辑体验。
 

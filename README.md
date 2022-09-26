@@ -1,7 +1,7 @@
 # Easy-Typing Plugin For Obsidian
 [中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English
 
-Note: The 5.0 configuration file is incompatible with the old version. It is recommended to uninstall the old version first and then reinstall it~
+**Notice: The 5.0 configuration file is incompatible with the old version. It is recommended to uninstall the old version first and then reinstall it~**
 
 This plugin is designed for better typing experience in [Obsidian](https://obsidian.md). The plugin's features includes automatic formatting of text and symbol editing enhancement during editing. Auto format text standardizes the format of the document and beautifies the appearance of the document. Editing enhancement optimizes the user's editing experience.
 
