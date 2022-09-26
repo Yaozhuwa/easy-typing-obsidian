@@ -15,10 +15,12 @@ export default class EasyTypingPlugin extends Plugin {
 	ContentParser: ArticleParser;
 	Formater: LineFormater;
 	IntrinsicDeleteRules: ConvertRule[];
+	IntrinsicAutoPairRulesPatch: ConvertRule[];
 	PrevActiveMarkdown: string;
 
 	UserDeleteRules: ConvertRule[];
 	UserConvertRules: ConvertRule[];
+
 
 	async onload() {
 		await this.loadSettings();
@@ -42,6 +44,13 @@ export default class EasyTypingPlugin extends Plugin {
 
 		let DeleteRulesStrList: Array<[string, string]> = [["$|$", "|"], ['```|\n```', '|'], ['==|==', '|'], ['$$\n|\n$$', "|"]];
 		this.IntrinsicDeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
+
+		// let
+		let autoPairRulesPatchStrList: Array<[string, string]> = [["【】|】", "【】|"], ["（）|）", "（）|"],
+							 ["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"]
+							]; 
+		this.IntrinsicAutoPairRulesPatch = ruleStringList2RuleList(autoPairRulesPatchStrList);
+
 		this.refreshUserDeleteRule();
 		this.refreshUserConvertRule();
 		
@@ -284,6 +293,25 @@ export default class EasyTypingPlugin extends Plugin {
 				// let charAfterCursor = tr.startState.sliceDoc(toA, toA+1);
 				if (this.settings.IntrinsicSymbolPairs)
 				{
+					for (let rule of this.IntrinsicAutoPairRulesPatch) {
+						if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
+						let left = tr.state.doc.sliceString(toB - rule.before.left.length, toB);
+						let right = tr.state.doc.sliceString(toB, toB + rule.before.right.length);
+						if (left === rule.before.left && right === rule.before.right) {
+							changes.push({
+								changes: {
+									from: toA - rule.before.left.length + 1,
+									to: toA + rule.before.right.length,
+									insert: rule.after.left + rule.after.right
+								},
+								selection: { anchor: toA - rule.before.left.length + rule.after.left.length + 1 },
+								userEvent: "EasyTyping.change"
+							});
+							tr = tr.startState.update(...changes);
+							return tr;
+						}
+					}
+
 					if (this.SymbolPairsMap.has(insertedStr)) {
 						changes.push({
 							changes: { from: fromA, to: toA, insert: insertedStr + this.SymbolPairsMap.get(insertedStr) },
