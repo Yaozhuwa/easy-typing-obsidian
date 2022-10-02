@@ -1,6 +1,7 @@
 import { SpaceState, string2SpaceState } from 'src/core';
 import { App, TextComponent, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TextAreaComponent } from 'obsidian';
 import EasyTypingPlugin from './main';
+import { showString } from './utils';
 
 export interface PairString {
 	left: string;
@@ -367,10 +368,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const replaceRuleTrigger = new TextComponent(selectionRuleSetting.controlEl);
 		replaceRuleTrigger.setPlaceholder("Triggr Symbol");
 
-		const replaceLeftString = new TextComponent(selectionRuleSetting.controlEl);
+		const replaceLeftString = new TextAreaComponent(selectionRuleSetting.controlEl);
 		replaceLeftString.setPlaceholder("New Left Side String");
 
-		const replaceRightString = new TextComponent(selectionRuleSetting.controlEl);
+		const replaceRightString = new TextAreaComponent(selectionRuleSetting.controlEl);
 		replaceRightString.setPlaceholder("New Right Side String");
 
 		selectionRuleSetting
@@ -406,7 +407,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			let trigger = this.plugin.settings.userSelRepRuleTrigger[i];
 			let left_s = this.plugin.settings.userSelRepRuleValue[i].left;
 			let right_s = this.plugin.settings.userSelRepRuleValue[i].right;
-			let showStr = "Trigger: " + trigger + " → " + left_s + "selected" + right_s;
+			let showStr = "Trigger: " + trigger + " → " + showString(left_s) + "selected" + showString(right_s);
 			// const settingItem = selRepRuleContainer.createEl("div");
 			new Setting(containerEl)
 				.setName(showStr)
@@ -449,10 +450,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.setName("Delete Rule")
 			.setDesc("规则：用|代表光标位置，必须包含光标。 Tips: Using | to indicate the cursor position.")
 
-		const patternBefore = new TextComponent(deleteRuleSetting.controlEl);
+		const patternBefore = new TextAreaComponent(deleteRuleSetting.controlEl);
 		patternBefore.setPlaceholder("Before Delete");
 
-		const patternAfter = new TextComponent(deleteRuleSetting.controlEl);
+		const patternAfter = new TextAreaComponent(deleteRuleSetting.controlEl);
 		patternAfter.setPlaceholder("New Pattern");
 
 		deleteRuleSetting
@@ -484,7 +485,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		for (let i = 0; i < this.plugin.settings.userDeleteRulesStrList.length; i++){
 			let before = this.plugin.settings.userDeleteRulesStrList[i][0];
 			let after = this.plugin.settings.userDeleteRulesStrList[i][1];
-			let showStr = "\"" + before + "\"  delete.backwards  → \""+ after+"\""; 
+			let showStr = "\"" + showString(before) + "\"  delete.backwards  → \""+ showString(after)+"\""; 
 			new Setting(containerEl)
 				.setName(showStr)
 				.addExtraButton(button => {
@@ -525,10 +526,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.setName("Convert Rule")
 			.setDesc("规则：用|代表光标位置，必须包含光标。 Tips: Using | to indicate the cursor position.")
 
-		const patternBefore = new TextComponent(convertRuleSetting.controlEl);
+		const patternBefore = new TextAreaComponent(convertRuleSetting.controlEl);
 		patternBefore.setPlaceholder("Before Convert");
 
-		const patternAfter = new TextComponent(convertRuleSetting.controlEl);
+		const patternAfter = new TextAreaComponent(convertRuleSetting.controlEl);
 		patternAfter.setPlaceholder("New Pattern");
 
 		convertRuleSetting
@@ -560,7 +561,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		for (let i = 0; i < this.plugin.settings.userConvertRulesStrList.length; i++){
 			let before = this.plugin.settings.userConvertRulesStrList[i][0];
 			let after = this.plugin.settings.userConvertRulesStrList[i][1];
-			let showStr = "\"" + before + "\"  auto convert to \""+ after+"\""; 
+			let showStr = "\"" + showString(before) + "\"  auto convert to \""+ showString(after)+"\""; 
 			new Setting(containerEl)
 				.setName(showStr)
 				.addExtraButton(button => {
@@ -629,7 +630,7 @@ export class SelectRuleEditModal extends Modal {
 		
 		new Setting(contentEl)
 			.setName("Left")
-			.addText((text) => {
+			.addTextArea((text) => {
 				text.setValue(this.old_left);
 				text.onChange((value) => {
 					this.new_left = value
@@ -637,7 +638,7 @@ export class SelectRuleEditModal extends Modal {
 			})
 		new Setting(contentEl)
 			.setName("Right")
-			.addText((text) => {
+			.addTextArea((text) => {
 				text.setValue(this.old_right);
 				text.onChange((value) => {
 					this.new_right = value
@@ -689,8 +690,8 @@ export class EditConvertRuleModal extends Modal {
 		contentEl.createEl("h1", { text: "Edit " + this.type});
 		
 		new Setting(contentEl)
-			.setName("Before Delete")
-			.addText((text) => {
+			.setName("Old Pattern")
+			.addTextArea((text) => {
 				text.setValue(this.old_before);
 				text.onChange((value) => {
 					this.new_before = value
@@ -698,7 +699,7 @@ export class EditConvertRuleModal extends Modal {
 			})
 		new Setting(contentEl)
 			.setName("New Pattern")
-			.addText((text) => {
+			.addTextArea((text) => {
 				text.setValue(this.old_after);
 				text.onChange((value) => {
 					this.new_after = value

@@ -54,3 +54,7 @@ export function isParamDefined(param: any):boolean
 {
 	return typeof param!=="undefined";
 }
+
+export function showString(s: string):string{
+	return s.replace(/\n/g, '\\n');
+}
