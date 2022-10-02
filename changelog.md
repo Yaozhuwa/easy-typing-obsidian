@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- V5.0.1~V5.0.2 2022.10.03
+  - 现在 * ~ 都会被认为是软空格. fix #41, now ~ * are considered as soft space
+  - 自定义转换规则支持换行. User defined conversion rules now support line breaking.
 - V5.0.0 2022.09.26
   - 重构了代码框架，使用新的接口重新实现了之前的所有功能，大大提升了本插件的性能及可拓展性，并且添加了一些新的功能。
   - 新功能与改进
