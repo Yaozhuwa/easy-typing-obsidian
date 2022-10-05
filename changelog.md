@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- V5.0.3 2022.10.05
+  - 增加缩写的识别,缩写部分不被格式化(#48, #5)。 缩写指的是符合正则表达式 `/([a-zA-Z]\.)+/` 的部分，如 i.e.
+  - 修复代码区块和公式区块类型改变时却没触发文档重解析的 bug。
 - V5.0.1~V5.0.2 2022.10.03
   - 现在 * ~ 都会被认为是软空格. fix #41, now ~ * are considered as soft space
   - 自定义转换规则支持换行. User defined conversion rules now support line breaking.
