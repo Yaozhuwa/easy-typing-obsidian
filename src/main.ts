@@ -366,7 +366,11 @@ export default class EasyTypingPlugin extends Plugin {
 					// this.ContentParser.print();
 				}
 			}
-			this.ContentParser.updateContent(newArticle)
+			let changedPosition = offsetToPos(tr.startState.doc, fromA);
+			if(this.ContentParser.isChangePosNeedReparse(changedPosition)){
+				this.ContentParser.reparse(newArticle, changedPosition.line);
+			}
+			this.ContentParser.updateContent(newArticle);
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
@@ -397,6 +401,9 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 
 				// 判断格式化文本
+				// console.log("ready to format");
+				// console.log(this.settings.AutoFormat, formatLineFlag, this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line))
+				// this.ContentParser.print();
 				if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
 					let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, cursor.anchor, insertedStr);
 					if (changes != null) {

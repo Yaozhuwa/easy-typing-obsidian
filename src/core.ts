@@ -153,6 +153,25 @@ export class ArticleParser {
         return LineType.none;
     }
 
+    isBlockBeginOrEndLine(line: number, type: LineType):boolean {
+        for (let i = 0; i < this.ArticleStructure.length; i++) {
+            if (this.ArticleStructure[i].type==type && (line == this.ArticleStructure[i].begin || line == this.ArticleStructure[i].end)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    isChangePosNeedReparse(pos: {line:number, ch:number}):boolean{
+        if (this.isBlockBeginOrEndLine(pos.line, LineType.formula) && pos.ch<2){
+            return true;
+        }
+        else if(this.isBlockBeginOrEndLine(pos.line, LineType.code) && pos.ch<3){
+            return true;
+        }
+        return false;
+    }
+
     isTextLine(line: number): boolean {
         return this.getLineType(line) === LineType.text;
     }
@@ -357,6 +376,7 @@ export class LineFormater {
 
     // 返回值： [最终的行，最终光标位置，内容改变]
     formatLine(line: string, settings: EasyTypingSettings, curCh: number, prevCh?: number): [string, number, InlineChange[]] | null {
+        // new Notice("format-now");
         let regNull = /^\s*$/g;
         if (regNull.test(line)) return [line, curCh, []];
         // 1. 划分一行文字的内部不同模块区域
@@ -437,7 +457,8 @@ export class LineFormater {
                             let match = reg.exec(content);
                             if (!match) break;
                             let tempIndex = reg.lastIndex - 1;
-
+                            // console.log("prevCh, curCh, offset, tempIndex")
+                            // console.log(prevCh, curCh, offset, tempIndex)
                             if (settings.AutoCapitalMode === WorkMode.Globally) {
                                 lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
                                 content = lineParts[i].content;
@@ -1034,41 +1055,7 @@ function matchWithReg(text: string, regExp: RegExp, type: InlineType, inlineType
         // 检查冲突
         if (checkArray) {
             for (let i = 0; i < retArray.length; i++) {
-                if (match.index <= retArray[i].begin) {
-                    if (regExp.lastIndex <= retArray[i].begin) {
-                        valid = true;
-                        break;
-                    }
-                    else if (regExp.lastIndex <= retArray[i].end) {
-                        valid = false;
-                        break;
-                    }
-                    else if (regExp.lastIndex > retArray[i].end) {
-                        let removeCount = 1;
-                        valid = true;
-                        for (let j = i + 1; j < retArray.length; j++) {
-                            if (regExp.lastIndex <= retArray[j].begin) {
-                                removeCount = j - i;
-                                valid = true;
-                                break;
-                            }
-                            else if (regExp.lastIndex < retArray[j].end) {
-                                valid = false;
-                                break;
-                            }
-                            else {
-                                continue;
-                            }
-                        }
-
-                        if (valid) {
-                            retArray.splice(i, removeCount);
-                            i -= 1;
-                        }
-                        break;
-                    }
-                }
-                if (match.index > retArray[i].begin && match.index < retArray[i].end) {
+                if(regExp.lastIndex>retArray[i].begin && retArray[i].end>match.index){
                     valid = false;
                     break;
                 }
@@ -1083,6 +1070,53 @@ function matchWithReg(text: string, regExp: RegExp, type: InlineType, inlineType
                 end: regExp.lastIndex,
                 leftSpaceRequire: leftSpaceRe,
                 rightSpaceRequire: rightSpaceRe
+            }
+        );
+    }
+    retArray = retArray.concat(matchArray);
+    // console.log('After===========\n', retArray);
+    return retArray;
+}
+
+function matchWithAbbr(text: string, type: InlineType, inlineTypeArray: InlinePart[], checkArray = false){
+    let retArray = inlineTypeArray;
+    let matchArray: InlinePart[] = [];
+    retArray = retArray.sort((a, b): number => a.begin - b.begin);
+    let regAbbr = /([a-zA-Z]\.)+/g;
+    while (true) {
+        let match = regAbbr.exec(text);
+        if (!match) break;
+        let valid = true;
+        let isInBlockBegin:boolean = (match.index==0);
+        // 检查冲突
+        if (checkArray) {
+            for (let i = 0; i < retArray.length; i++) {
+                if(match.index == retArray[i].end){
+                    isInBlockBegin = true;
+                }
+                if(regAbbr.lastIndex>retArray[i].begin && retArray[i].end>match.index){
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if(!isInBlockBegin && valid)
+        {
+            let regChar = /[a-zA-Z0-9]/;
+            if(regChar.test(text.charAt(match.index-1))){
+                valid = false;
+            }
+        }
+
+        if (!valid) continue;
+        matchArray.push(
+            {
+                content: match[0],
+                type: type,
+                begin: match.index,
+                end: regAbbr.lastIndex,
+                leftSpaceRequire: SpaceState.none,
+                rightSpaceRequire: SpaceState.none
             }
         );
     }
@@ -1148,6 +1182,9 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
 
     // 4. 匹配纯链接
     // retArray = matchWithReg(text, regBareLink, InlineType.barelink, retArray, true);
+
+    // 4. 匹配缩写如 a.m.
+    retArray = matchWithAbbr(text, InlineType.user, retArray, true);
 
     // 5. 得到剩余的文本部分
     retArray = retArray.sort((a, b): number => a.begin - b.begin);
