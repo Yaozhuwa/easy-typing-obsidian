@@ -1,4 +1,6 @@
 ## 更新日志 Changelog
+- V5.0.4 2022.10.10
+  - fix bug which cause conflict with obsidian-latex-suite
 - V5.0.3 2022.10.05
   - 增加缩写的识别,缩写部分不被格式化(#48, #5)。 缩写指的是符合正则表达式 `/([a-zA-Z]\.)+/` 的部分，如 i.e.
   - 修复代码区块和公式区块类型改变时却没触发文档重解析的 bug。
