@@ -359,7 +359,7 @@ export default class EasyTypingPlugin extends Plugin {
 			let reparseRegEx = /[`$\n]/gm;
 			let newArticle = update.view.state.doc.sliceString(0, update.view.state.doc.length);
 			if (reparseRegEx.test(insertedStr) || reparseRegEx.test(changedStr)) {
-				let updateLineStart = offsetToPos(update.view.state.doc, fromA).line;
+				let updateLineStart = offsetToPos(update.state.doc, fromB).line;
 				this.ContentParser.reparse(newArticle, updateLineStart);
 				if (this.settings.debug) {
 					new Notice("EasyTyping: Reparse At Line: " + String(updateLineStart));
