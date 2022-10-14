@@ -22,6 +22,7 @@ export interface EasyTypingSettings {
 	BaseObEditEnhance: boolean;
 	FW2HWEnhance: boolean;
 	AutoFormat: boolean;
+	ExcludeFiles: string;
 	AutoCapital: boolean;
 	AutoCapitalMode: WorkMode;
 	ChineseEnglishSpace: boolean;
@@ -52,6 +53,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	FW2HWEnhance: true,
 
 	AutoFormat: true,
+	ExcludeFiles: "",
 	ChineseEnglishSpace: true,
 	ChineseNoSpace: true,
 	PunctuationSpace: true,
@@ -336,6 +338,19 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				this.plugin.settings.UserDefinedRegExp = value;
 				this.plugin.saveSettings();
 			});
+
+		containerEl.createEl('h2', { text: '指定文件不自动格式化 (Exclude Folders/Files)' });
+		new Setting(containerEl)
+			.setName("Exclude Folders/Files")
+			.setDesc("This plugin will parse each line as a exlude folder or file. For example: DailyNote/, DailyNote/WeekNotes/, DailyNote/test.md")
+			.addTextArea((text) =>
+				text
+					.setValue(this.plugin.settings.ExcludeFiles)
+					.onChange(async (value) => {
+						this.plugin.settings.ExcludeFiles = value;
+						this.plugin.saveSettings();
+					})
+			);
 
 		containerEl.createEl('h2', { text: 'Debug' });
 		new Setting(containerEl)

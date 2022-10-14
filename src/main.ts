@@ -16,7 +16,7 @@ export default class EasyTypingPlugin extends Plugin {
 	Formater: LineFormater;
 	IntrinsicDeleteRules: ConvertRule[];
 	IntrinsicAutoPairRulesPatch: ConvertRule[];
-	PrevActiveMarkdown: string;
+	CurActiveMarkdown: string;
 
 	UserDeleteRules: ConvertRule[];
 	UserConvertRules: ConvertRule[];
@@ -54,7 +54,7 @@ export default class EasyTypingPlugin extends Plugin {
 		this.refreshUserDeleteRule();
 		this.refreshUserConvertRule();
 		
-		this.PrevActiveMarkdown = "";
+		this.CurActiveMarkdown = "";
 
 		this.ContentParser = new ArticleParser()
 		this.Formater = new LineFormater();
@@ -139,9 +139,10 @@ export default class EasyTypingPlugin extends Plugin {
 		const editor = this.getEditor();
 		if (editor==null) return;
 		let file = this.app.workspace.getActiveFile();
-		if (file!=null && this.PrevActiveMarkdown!=file.path)
+		if (file!=null && this.CurActiveMarkdown!=file.path)
 		{
-			this.PrevActiveMarkdown = file.path;
+			this.CurActiveMarkdown = file.path;
+			if (this.checkExclude(this.CurActiveMarkdown)) return;
 			this.ContentParser.parseNewArticle(editor.getValue());
 			if (this.settings.debug) new Notice("EasyTyping: Parse New Article: "+file.path);
 		}
@@ -340,11 +341,14 @@ export default class EasyTypingPlugin extends Plugin {
 
 	viewUpdatePlugin = (update: ViewUpdate) => {
 		// if (this.settings.debug) console.log("-------ViewUpdate---------");
-		let formatLineFlag = true;
+		let notSelected = true;
 		let mainSelection = update.view.state.selection.asSingle().main;
-		if (mainSelection.anchor != mainSelection.head) formatLineFlag = false;
+		if (mainSelection.anchor != mainSelection.head) notSelected = false;
 		if (!update.docChanged) return;
 		this.parseFileIfNeeded();
+
+		let isExcludeFile = this.checkExclude(this.CurActiveMarkdown);
+		// console.log(this.CurActiveMarkdown, isExcludeFile)
 
 		// if (this.settings.debug) console.log("-----ViewUpdateWChange-----");
 		let tr = update.transactions[0]
@@ -353,39 +357,41 @@ export default class EasyTypingPlugin extends Plugin {
 			let insertedStr = inserted.sliceString(0);
 			let changedStr = tr.startState.doc.sliceString(fromA, toA);
 			if (this.settings.debug)
-				console.log("ViewUpdate Catch Change: Type: " + changeType + ", ", fromA, toA, changedStr, fromB, toB, insertedStr);
+				console.log("ViewUpdate Catch Change-> Type: " + changeType + ", ", fromA, toA, changedStr, fromB, toB, insertedStr);
 
 			// 每次改动都判断是否需要重新解析全文
-			let reparseRegEx = /[`$\-\n]/gm;
-			let newArticle = update.view.state.doc.sliceString(0, update.view.state.doc.length);
-			// console.log(this.ContentParser.HasFrontMatter, this.ContentParser.ArticleHasFrontmatter(newArticle));
-			if (reparseRegEx.test(insertedStr) || reparseRegEx.test(changedStr)) {
-				let updateLineStart = offsetToPos(update.state.doc, fromB).line;
-				this.ContentParser.reparse(newArticle, updateLineStart);
-				if (this.settings.debug) {
-					new Notice("EasyTyping: Reparse At Line: " + String(updateLineStart));
-					// this.ContentParser.print();
-				}
-			}
-			// frontmatter 是否变化
-			else if (this.ContentParser.HasFrontMatter!=this.ContentParser.ArticleHasFrontmatter(newArticle)){
-				this.ContentParser.reparse(newArticle, 0);
-				if (this.settings.debug) {
-					new Notice("EasyTyping: Reparse At Line: " + String(0));
-					// this.ContentParser.print();
-				}
-			}
-			else{
-				let changedPosition = offsetToPos(tr.startState.doc, fromA);
-				if(this.ContentParser.isChangePosNeedReparse(changedPosition)){
-					this.ContentParser.reparse(newArticle, changedPosition.line);
+			if(!isExcludeFile){
+				let reparseRegEx = /[`\$\n]/gm;
+				let newArticle = update.view.state.doc.sliceString(0, update.view.state.doc.length);
+				// console.log(this.ContentParser.HasFrontMatter, this.ContentParser.ArticleHasFrontmatter(newArticle));
+				if (reparseRegEx.test(insertedStr) || reparseRegEx.test(changedStr)) {
+					let updateLineStart = offsetToPos(update.state.doc, fromB).line;
+					this.ContentParser.reparse(newArticle, updateLineStart);
 					if (this.settings.debug) {
-						new Notice("EasyTyping: Reparse At Line: " + String(changedPosition.line));
+						new Notice("EasyTyping: Reparse At Line: " + String(updateLineStart));
 						// this.ContentParser.print();
 					}
 				}
+				// frontmatter 是否变化
+				else if (this.ContentParser.HasFrontMatter != this.ContentParser.ArticleHasFrontmatter(newArticle)) {
+					this.ContentParser.reparse(newArticle, 0);
+					if (this.settings.debug) {
+						new Notice("EasyTyping: Reparse At Line: " + String(0));
+						// this.ContentParser.print();
+					}
+				}
+				else {
+					let changedPosition = offsetToPos(tr.startState.doc, fromA);
+					if (this.ContentParser.isChangePosNeedReparse(changedPosition)) {
+						this.ContentParser.reparse(newArticle, changedPosition.line);
+						if (this.settings.debug) {
+							new Notice("EasyTyping: Reparse At Line: " + String(changedPosition.line));
+							// this.ContentParser.print();
+						}
+					}
+				}
+				this.ContentParser.updateContent(newArticle);
 			}
-			this.ContentParser.updateContent(newArticle);
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
@@ -395,7 +401,7 @@ export default class EasyTypingPlugin extends Plugin {
 								ChineseRegExp.test(insertedStr);
 
 			// 判断每次输入结束
-			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag) {
+			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag || changeType == 'none') {
 				// 用户自定义转化规则
 				for (let rule of this.UserConvertRules) {
 					// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
@@ -419,7 +425,8 @@ export default class EasyTypingPlugin extends Plugin {
 				// console.log("ready to format");
 				// console.log(this.settings.AutoFormat, formatLineFlag, this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line))
 				// this.ContentParser.print();
-				if (this.settings.AutoFormat && formatLineFlag && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
+				if (this.settings.AutoFormat && notSelected && !isExcludeFile && 
+						this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
 					let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, cursor.anchor, insertedStr);
 					if (changes != null) {
 						update.view.dispatch(...changes[0]);
@@ -439,6 +446,20 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 		this.ContentParser.updateContent(editor.getValue());
 		new Notice("EasyTyping: Format Article Done!");
+	}
+
+	checkExclude(path:string):boolean{
+		let excludePaths = this.settings.ExcludeFiles.split('\n');
+		for (let epath of excludePaths){
+			if (epath.charAt(0) == '/') epath = epath.substring(1);
+			if(path==epath) return true;
+			let len = epath.length;
+			if (path.substring(0, len)==epath && (path.charAt(len)=='/' || path.charAt(len)=='\\' ||
+			epath.charAt(len-1)=="/" || epath.charAt(len-1)=="\\")){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	formatSelectionOrCurLine = (editor: Editor): void => {

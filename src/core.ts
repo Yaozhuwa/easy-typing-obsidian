@@ -193,22 +193,7 @@ export class ArticleParser {
         return false;
     }
 
-    // isFrontmatterChange(line: number):boolean{
-    //     if (this.ArticleStructure[0].type!=LineType.frontmatter) return false;
-    //     let lines = this.ArticleContent.split('\n');
-    //     let beginIdx = 0;
-    //     for(let i=0;i<this.ArticleStructure[0].end;i++){
-    //         if(lines[i]=='---'){
-    //             beginIdx = i;
-    //             break;
-    //         }
-    //     }
-    //     if(line<=beginIdx || line==this.ArticleStructure[0].end-1) return true;
-    //     return false;
-    // }
-
     ArticleHasFrontmatter(text:string):boolean {
-        console.log("new", text);   
         let lines = text.split('\n');
         let regNullLine = /^\s*$/;
         for (let i = 0; i < lines.length; i++) {
