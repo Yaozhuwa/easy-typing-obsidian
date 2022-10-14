@@ -417,7 +417,7 @@ export class LineFormater {
         if (res ===null || res[2].length==0) return null;
         
         let newline = stringInsertAt(res[0], res[1], "|");
-        if (settings.debug) console.log("EasyTyping: New Line String:", newline)
+        // if (settings.debug) console.log("EasyTyping: New Line String:", newline)
 
         let changes: TransactionSpec[] = [];
         let offset = doc.lineAt(fromB).from;

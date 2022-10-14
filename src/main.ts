@@ -89,6 +89,18 @@ export default class EasyTypingPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "easy-typing-delete-blank-line",
+			name: "Delete blank lines of the selected area or whole article",
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				this.deleteBlankLines(editor);
+			},
+			hotkeys: [{
+				modifiers: ['Ctrl', 'Shift'],
+				key: "k"
+			}],
+		});
+
+		this.addCommand({
 			id: "easy-typing-insert-codeblock",
 			name: "insert code block w/wo selection",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
@@ -435,6 +447,15 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 				}
 			}
+
+			if (changeType == "input.paste"){
+				let updateLineStart = offsetToPos(update.state.doc, fromB).line;
+				let updateLineEnd = offsetToPos(update.state.doc, toB).line;
+				for(let i=updateLineStart;i<=updateLineEnd;i++)
+				{
+					this.formatOneLine(this.getEditor(), i);
+				}
+			}
 		});	// iterchanges end
 	}
 
@@ -492,6 +513,28 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 		}
 		return;
+	}
+
+	deleteBlankLines = (editor: Editor): void => {
+		if (editor.somethingSelected() && editor.getSelection() != '') {
+			let selection = editor.listSelections()[0];
+			let begin = selection.anchor.line;
+			let end = selection.head.line;
+			if (begin > end) {
+				let temp = begin;
+				begin = end;
+				end = temp;
+			}
+			let selected = editor.getSelection();
+			let newSelectedLines = selected.replace(/\n+/g, "\n");
+			if(selected!=newSelectedLines) editor.replaceSelection(newSelectedLines);
+		}
+		else{
+			let newArticle = editor.getValue().replace(/\n+/g, "\n");
+			newArticle = newArticle.replace(/^\n/g, "");
+			editor.setValue(newArticle);
+		}
+		// this.ContentParser.reparse(editor.getValue(), 0);
 	}
 
 	switchAutoFormatting()
