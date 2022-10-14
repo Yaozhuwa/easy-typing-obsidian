@@ -1,4 +1,10 @@
 ## 更新日志 Changelog
+- V5.0.5 2022.10.14
+  - 自动格式化会忽略 frontmatter 区域。 autoformat ignore frontmatter
+  - 设置中增加自动格式化忽略文件、文件夹。support exclude folder/files for autoformat
+  - 增加粘贴内容时的自动格式化。support autoformat when paste.
+  - 增加删除多余空白行的命令（选中文本情况下只删除选中区域的空白行，未选中文本情况下对全文删除空白行）。add command to delete blank lines
+  - <> 符号不再自动配对，如有需要可以在设置自定义规则实现。
 - V5.0.4 2022.10.10
   - fix bug which cause conflict with obsidian-latex-suite
 - V5.0.3 2022.10.05
