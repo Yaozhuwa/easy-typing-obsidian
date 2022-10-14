@@ -31,7 +31,7 @@ export default class EasyTypingPlugin extends Plugin {
 			];
 		this.refreshSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
-		let SymbolPairs = ["【】", "（）", "<>", "《》", "“”", "‘’", "「」", "『』"]
+		let SymbolPairs = ["【】", "（）", "《》", "“”", "‘’", "「」", "『』"]
 		for (let pairStr of SymbolPairs) this.SymbolPairsMap.set(pairStr.charAt(0), pairStr.charAt(1));
 		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"], ["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
@@ -356,8 +356,9 @@ export default class EasyTypingPlugin extends Plugin {
 				console.log("ViewUpdate Catch Change: Type: " + changeType + ", ", fromA, toA, changedStr, fromB, toB, insertedStr);
 
 			// 每次改动都判断是否需要重新解析全文
-			let reparseRegEx = /[`$\n]/gm;
+			let reparseRegEx = /[`$\-\n]/gm;
 			let newArticle = update.view.state.doc.sliceString(0, update.view.state.doc.length);
+			// console.log(this.ContentParser.HasFrontMatter, this.ContentParser.ArticleHasFrontmatter(newArticle));
 			if (reparseRegEx.test(insertedStr) || reparseRegEx.test(changedStr)) {
 				let updateLineStart = offsetToPos(update.state.doc, fromB).line;
 				this.ContentParser.reparse(newArticle, updateLineStart);
@@ -366,9 +367,23 @@ export default class EasyTypingPlugin extends Plugin {
 					// this.ContentParser.print();
 				}
 			}
-			let changedPosition = offsetToPos(tr.startState.doc, fromA);
-			if(this.ContentParser.isChangePosNeedReparse(changedPosition)){
-				this.ContentParser.reparse(newArticle, changedPosition.line);
+			// frontmatter 是否变化
+			else if (this.ContentParser.HasFrontMatter!=this.ContentParser.ArticleHasFrontmatter(newArticle)){
+				this.ContentParser.reparse(newArticle, 0);
+				if (this.settings.debug) {
+					new Notice("EasyTyping: Reparse At Line: " + String(0));
+					// this.ContentParser.print();
+				}
+			}
+			else{
+				let changedPosition = offsetToPos(tr.startState.doc, fromA);
+				if(this.ContentParser.isChangePosNeedReparse(changedPosition)){
+					this.ContentParser.reparse(newArticle, changedPosition.line);
+					if (this.settings.debug) {
+						new Notice("EasyTyping: Reparse At Line: " + String(changedPosition.line));
+						// this.ContentParser.print();
+					}
+				}
 			}
 			this.ContentParser.updateContent(newArticle);
 

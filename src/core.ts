@@ -3,7 +3,7 @@ import { EasyTypingSettings, WorkMode } from './settings'
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text, Line } from '@codemirror/state';
 import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined} from './utils'
 
-export enum LineType { text = 'text', code = 'code', formula = 'formula', none = 'none' }
+export enum LineType { text = 'text', code = 'code', formula = 'formula', none = 'none', frontmatter="frontmatter" }
 
 export enum SpaceState {
     none,
@@ -33,9 +33,11 @@ export interface ArticlePart {
 export class ArticleParser {
     ArticleStructure: ArticlePart[];
     ArticleContent: string;
+    HasFrontMatter: boolean;
     constructor() {
         this.ArticleStructure = [];
         this.ArticleContent = "";
+        this.HasFrontMatter = false;
     }
 
     updateContent(newArticle: string) {
@@ -45,13 +47,42 @@ export class ArticleParser {
     parse(article: string, beginIndex: number = 0): ArticlePart[] {
         let retArray: ArticlePart[] = [];
         let lines = article.split('\n');
-        // let regNullLine = /^\s*$/;
+        let regNullLine = /^\s*$/;
         let regFormulaBegin = /^\s*(\- (\[[x ]\] )?)?\$\$/;
         let regFormulaEnd = /\$\$$/;
         let regCodeBegin = /^\s*```/;
         let regCodeEnd = /^\s*```$/;
-        let index = beginIndex;
+        // let regFrontMatter = /^---\n.*?\n---$/m;
+        if(beginIndex==0){
+            this.HasFrontMatter = false;
+            for (let i = 0; i < lines.length; i++) {
+                if (regNullLine.test(lines[i])) {
+                    continue;
+                }
+                else if (lines[i] == "---") {
+                    for (let j=i+1;j<lines.length;j++)
+                    {
+                        if(lines[j]=='---')
+                        {
+                            retArray.push({
+                                type: LineType.frontmatter,
+                                begin: 0,
+                                end: j + 1
+                            })
+                            this.HasFrontMatter = true;
+                            beginIndex = j+1;
+                            break;
+                        }
+                    }
+                    break;
+                }
+                else{
+                    break;
+                }
+            }
+        }
 
+        let index = beginIndex;
         while (index < lines.length) {
             // 1. 检测 CodeBlock
             if (regCodeBegin.test(lines[index])) {
@@ -162,6 +193,45 @@ export class ArticleParser {
         return false;
     }
 
+    // isFrontmatterChange(line: number):boolean{
+    //     if (this.ArticleStructure[0].type!=LineType.frontmatter) return false;
+    //     let lines = this.ArticleContent.split('\n');
+    //     let beginIdx = 0;
+    //     for(let i=0;i<this.ArticleStructure[0].end;i++){
+    //         if(lines[i]=='---'){
+    //             beginIdx = i;
+    //             break;
+    //         }
+    //     }
+    //     if(line<=beginIdx || line==this.ArticleStructure[0].end-1) return true;
+    //     return false;
+    // }
+
+    ArticleHasFrontmatter(text:string):boolean {
+        console.log("new", text);   
+        let lines = text.split('\n');
+        let regNullLine = /^\s*$/;
+        for (let i = 0; i < lines.length; i++) {
+            if (regNullLine.test(lines[i])) {
+                continue;
+            }
+            else if (lines[i] == "---") {
+                for (let j=i+1;j<lines.length;j++)
+                {
+                    if(lines[j]=='---')
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            else{
+                return false;
+            }
+        }
+        return false;
+    }
+
     isChangePosNeedReparse(pos: {line:number, ch:number}):boolean{
         if (this.isBlockBeginOrEndLine(pos.line, LineType.formula) && pos.ch<2){
             return true;
@@ -169,6 +239,9 @@ export class ArticleParser {
         else if(this.isBlockBeginOrEndLine(pos.line, LineType.code) && pos.ch<3){
             return true;
         }
+        // else if(this.getLineType(pos.line)==LineType.frontmatter){
+        //     return this.isFrontmatterChange(pos.line);
+        // }
         return false;
     }
 
@@ -1182,6 +1255,8 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
 
     // 4. 匹配纯链接
     // retArray = matchWithReg(text, regBareLink, InlineType.barelink, retArray, true);
+
+    retArray = matchWithReg(text, /\d{2}:\d{1,2}/g, InlineType.user, retArray, true);
 
     // 4. 匹配缩写如 a.m.
     retArray = matchWithAbbr(text, InlineType.user, retArray, true);
