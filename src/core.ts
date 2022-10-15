@@ -2,6 +2,7 @@ import { Notice} from "obsidian"
 import { EasyTypingSettings, WorkMode } from './settings'
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text, Line } from '@codemirror/state';
 import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined} from './utils'
+import { syntaxTree } from "@codemirror/language";
 
 export enum LineType { text = 'text', code = 'code', formula = 'formula', none = 'none', frontmatter="frontmatter" }
 
@@ -265,120 +266,67 @@ export interface InlinePart {
 
 export class LineFormater {
     constructor() { }
+    syntaxTreeNodeNameType(name:string):InlineType{
+        if(name.contains('code') && !name.contains("link")){
+            return InlineType.code;
+        }
+        else if(name.contains('math')){
+            return InlineType.formula;
+        }
+        else{
+            return InlineType.text;
+        }
+    }
 
-    parseLine(line: string, regRegExp?: string) {
-        let regMark = /\$|`/;
-        let flag = false;
-        let markList:{mark:string, ch:number}[] = [];
-        for (let i=0;i<line.length;i++)
-        {
-            if(!flag && regMark.test(line.charAt(i)))
-            {
-                markList.push({mark:line.charAt(i), ch:i});
-            }
-            flag = line.charAt(i)=="\\";
-        }
-    
+    // param lineNum: 1-based line number
+    parseLineWithSyntaxTree(state: EditorState, lineNum:number, regRegExp?: string){
         let linePartsOfTxtCodeFormula: InlinePart[] = [];
-        let txtBeginIdx = 0;
-        for (let i=0; i <markList.length; i++)
-        {
-            if(markList[i].ch<txtBeginIdx) continue;
-            if(markList[i].mark=="$")
-            {
-                let matchFlag = false;
-                for(let j=i+1; j < markList.length; j++)
-                {
-                    if(markList[j].mark=="$")
-                    {
-                        matchFlag = true;
-                        if(markList[i].ch > txtBeginIdx)
-                        {
-                            linePartsOfTxtCodeFormula.push({
-                                content: line.substring(txtBeginIdx, markList[i].ch),
-                                type: InlineType.text,
-                                begin: txtBeginIdx,
-                                end: markList[i].ch,
-                                leftSpaceRequire: SpaceState.none,
-                                rightSpaceRequire: SpaceState.none
-                            })
-                        }
-    
-                        linePartsOfTxtCodeFormula.push({
-                            content: line.substring(markList[i].ch, markList[j].ch+1),
-                            type: InlineType.formula,
-                            begin: markList[i].ch,
-                            end: markList[j].ch+1,
-                            leftSpaceRequire: SpaceState.none,
-                            rightSpaceRequire: SpaceState.none
-                        })
-                        txtBeginIdx = markList[j].ch+1;
-                        i = j;
-                        break;
-                    }
-                }
-                if (!matchFlag) continue;
+        let line = state.doc.line(lineNum);
+        const tree = syntaxTree(state);
+        let pos = line.from;
+        let prevNodeType:InlineType = InlineType.none;
+        let prevBeginIdx = 0;
+        while(pos<line.to){
+            let node = tree.resolve(pos, 1);
+            let curNodeType = this.syntaxTreeNodeNameType(node.name)
+            
+            if(prevNodeType==InlineType.none){
+                prevNodeType=curNodeType;
+                prevBeginIdx=0;
             }
-            // markList[j].mark=="`"
-            else
-            {
-                if(markList[i].ch > txtBeginIdx)
-                {
-                    linePartsOfTxtCodeFormula.push({
-                        content: line.substring(txtBeginIdx, markList[i].ch),
-                        type: InlineType.text,
-                        begin: txtBeginIdx,
-                        end: markList[i].ch,
-                        leftSpaceRequire: SpaceState.none,
-                        rightSpaceRequire: SpaceState.none
-                    })
-                }
-    
-                let matchFlag = false;
-                for(let j=i+1; j < markList.length; j++)
-                {
-                    if(markList[j].mark=="`")
-                    {
-                        matchFlag = true;
-                        linePartsOfTxtCodeFormula.push({
-                            content: line.substring(markList[i].ch, markList[j].ch+1),
-                            type: InlineType.code,
-                            begin: markList[i].ch,
-                            end: markList[j].ch+1,
-                            leftSpaceRequire: SpaceState.none,
-                            rightSpaceRequire: SpaceState.none
-                        })
-                        txtBeginIdx = markList[j].ch+1;
-                        i = j;
-                        break;
-                    }
-                }
-                if (!matchFlag)
-                {
-                    linePartsOfTxtCodeFormula.push({
-                        content: line.substring(markList[i].ch),
-                        type: InlineType.code,
-                        begin: markList[i].ch,
-                        end: line.length,
-                        leftSpaceRequire: SpaceState.none,
-                        rightSpaceRequire: SpaceState.none
-                    })
-                    txtBeginIdx = line.length;
-                }
+            else if(prevNodeType==curNodeType){}
+            else{
+                linePartsOfTxtCodeFormula.push({
+                    content:line.text.substring(prevBeginIdx, pos-line.from),
+                    type:prevNodeType,
+                    begin:prevBeginIdx,
+                    end:pos-line.from,
+                    leftSpaceRequire:SpaceState.none,
+                    rightSpaceRequire:SpaceState.none
+                })
+                prevNodeType = curNodeType;
+                prevBeginIdx = pos-line.from;
+            }
+            // update next pos
+            if (curNodeType == InlineType.text){
+                pos++;
+            }
+            else{
+                pos = node.to;
+            }
+
+            if(pos==line.to){
+                linePartsOfTxtCodeFormula.push({
+                    content:line.text.substring(prevBeginIdx, pos-line.from),
+                    type:prevNodeType,
+                    begin:prevBeginIdx,
+                    end:pos-line.from,
+                    leftSpaceRequire:SpaceState.none,
+                    rightSpaceRequire:SpaceState.none
+                })
             }
         }
-        if (txtBeginIdx < line.length)
-        {
-            linePartsOfTxtCodeFormula.push({
-                content: line.substring(txtBeginIdx),
-                    type: InlineType.text,
-                    begin: txtBeginIdx,
-                    end: line.length,
-                    leftSpaceRequire: SpaceState.none,
-                    rightSpaceRequire: SpaceState.none
-            })
-        }
-    
+        // console.log("line parts: ", linePartsOfTxtCodeFormula);
         // =======================================
         let retArray: InlinePart[] = [];
         for (let i = 0; i < linePartsOfTxtCodeFormula.length; i++) {
@@ -403,16 +351,17 @@ export class LineFormater {
     }
 
     // todo 还需要额外处理回车
-    formatLineOfDoc(doc: Text, settings: EasyTypingSettings, fromB: number, toB: number, insertedStr: string): [TransactionSpec[], TransactionSpec] | null {
+    formatLineOfDoc(state: EditorState, settings: EasyTypingSettings, fromB: number, toB: number, insertedStr: string): [TransactionSpec[], TransactionSpec] | null {
+        let doc = state.doc;
         let line = doc.lineAt(fromB).text;
         let res = null
         if (insertedStr=="\n")
         {
-            res = this.formatLine(line, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, fromB).ch);
+            res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, fromB).ch);
         }
         else
         {
-            res = this.formatLine(line, settings, offsetToPos(doc, toB).ch, offsetToPos(doc, fromB).ch);
+            res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, toB).ch, offsetToPos(doc, fromB).ch);
         }
         if (res ===null || res[2].length==0) return null;
         
@@ -433,17 +382,21 @@ export class LineFormater {
     }
 
     // 返回值： [最终的行，最终光标位置，内容改变]
-    formatLine(line: string, settings: EasyTypingSettings, curCh: number, prevCh?: number): [string, number, InlineChange[]] | null {
+    // param lineNum: 1-based line number
+    formatLine(state: EditorState, lineNum:number, settings: EasyTypingSettings, curCh: number, prevCh?: number): [string, number, InlineChange[]] | null {
         // new Notice("format-now");
+        let line = state.doc.line(lineNum).text;
         let regNull = /^\s*$/g;
         if (regNull.test(line)) return [line, curCh, []];
         // 1. 划分一行文字的内部不同模块区域
         let lineParts: InlinePart[];
         if (settings.UserDefinedRegSwitch) {
-            lineParts = this.parseLine(line, settings.UserDefinedRegExp);
+            // lineParts = this.parseLine(line, settings.UserDefinedRegExp);
+            lineParts = this.parseLineWithSyntaxTree(state, lineNum, settings.UserDefinedRegExp);
         }
         else {
-            lineParts = this.parseLine(line);
+            // lineParts = this.parseLine(line);
+            lineParts = this.parseLineWithSyntaxTree(state, lineNum);
         }
         // if (settings.debug) console.log("line parts\n", lineParts);
 
@@ -1096,7 +1049,7 @@ export class LineFormater {
         inlineChangeList = inlineChangeList.sort((a, b):number=>a.begin-b.begin);
         return [resultLine, resultCursorCh, inlineChangeList];
     }
-
+    
 }
 
 

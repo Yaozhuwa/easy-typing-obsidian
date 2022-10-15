@@ -68,7 +68,7 @@ export default class EasyTypingPlugin extends Plugin {
 			id: "easy-typing-format-article",
 			name: "format current article",
 			editorCallback: (editor: Editor, view: MarkdownView) =>{
-				this.formatArticle(editor);
+				this.formatArticle(editor, view);
 			},
 			hotkeys: [{
 				modifiers: ['Ctrl', 'Shift'],
@@ -80,7 +80,7 @@ export default class EasyTypingPlugin extends Plugin {
 			id: "easy-typing-format-selection",
 			name: "format selected text or current line",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				this.formatSelectionOrCurLine(editor);
+				this.formatSelectionOrCurLine(editor, view);
 			},
 			hotkeys: [{
 				modifiers: ['Ctrl', 'Shift'],
@@ -352,10 +352,22 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	viewUpdatePlugin = (update: ViewUpdate) => {
+		
+		// console.log(tree);
+
 		// if (this.settings.debug) console.log("-------ViewUpdate---------");
 		let notSelected = true;
 		let mainSelection = update.view.state.selection.asSingle().main;
 		if (mainSelection.anchor != mainSelection.head) notSelected = false;
+		// ------ Debug ------------
+		// if (notSelected){
+		// 	// this.Formater.parseLineWithSyntaxTree(update.state, update.state.doc.lineAt(mainSelection.anchor).number);
+		// 	const tree = syntaxTree(update.state);
+		// 	let pos = mainSelection.anchor;
+		// 	let node = tree.resolve(pos, 1);
+		// 	console.log(node.name, node.from, node.to, update.state.doc.sliceString(node.from, node.to));
+		// }
+
 		if (!update.docChanged) return;
 		this.parseFileIfNeeded();
 
@@ -439,7 +451,7 @@ export default class EasyTypingPlugin extends Plugin {
 				// this.ContentParser.print();
 				if (this.settings.AutoFormat && notSelected && changeType != 'none' && !isExcludeFile && 
 						this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
-					let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, cursor.anchor, insertedStr);
+					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, cursor.anchor, insertedStr);
 					if (changes != null) {
 						update.view.dispatch(...changes[0]);
 						update.view.dispatch(changes[1]);
@@ -449,8 +461,8 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			if (changeType == "input.paste"){
-				let updateLineStart = offsetToPos(update.state.doc, fromB).line;
-				let updateLineEnd = offsetToPos(update.state.doc, toB).line;
+				let updateLineStart = update.state.doc.lineAt(fromB).number;
+				let updateLineEnd = update.state.doc.lineAt(toB).number;
 				for(let i=updateLineStart;i<=updateLineEnd;i++)
 				{
 					this.formatOneLine(this.getEditor(), i);
@@ -459,11 +471,11 @@ export default class EasyTypingPlugin extends Plugin {
 		});	// iterchanges end
 	}
 
-	formatArticle = (editor:Editor): void => {
+	formatArticle = (editor:Editor, view:MarkdownView): void => {
 		if (this.ContentParser.ArticleStructure.length == 0) return;
 		let lineCount = editor.lineCount();
 		for (let i = 0; i < lineCount; i++) {
-			this.formatOneLine(editor, i);
+			this.formatOneLine(editor, i+1);
 		}
 		this.ContentParser.updateContent(editor.getValue());
 		new Notice("EasyTyping: Format Article Done!");
@@ -483,10 +495,10 @@ export default class EasyTypingPlugin extends Plugin {
 		return false;
 	}
 
-	formatSelectionOrCurLine = (editor: Editor): void => {
+	formatSelectionOrCurLine = (editor: Editor, view: MarkdownView): void => {
 		if (!editor.somethingSelected() || editor.getSelection() === '') {
 			let lineNumber = editor.getCursor().line;
-			this.formatOneLine(editor, lineNumber);
+			this.formatOneLine(editor, lineNumber+1);
 			return;
 		}
 		let selection = editor.listSelections()[0];
@@ -498,18 +510,30 @@ export default class EasyTypingPlugin extends Plugin {
 			end = temp;
 		}
 		for (; begin <= end; begin++) {
-			this.formatOneLine(editor, begin);
+			this.formatOneLine(editor, begin+1);
 		}
+		if(selection.anchor.line<selection.head.line){
+			editor.setSelection({line: selection.anchor.line, ch:0}, {line: selection.head.line, ch:editor.getLine(selection.head.line).length});
+		}
+		else{
+			editor.setSelection({line: selection.anchor.line, ch:editor.getLine(selection.anchor.line).length}, {line: selection.head.line, ch:0});
+		}
+		
 		this.ContentParser.updateContent(editor.getValue());
 	}
 
+	// param: lineNumber is (1-based)
 	formatOneLine = (editor:Editor, lineNumber: number): void => {
-		if (this.ContentParser.isTextLine(lineNumber)) {
-			let oldLine = editor.getLine(lineNumber);
-			let newLine = this.Formater.formatLine(oldLine, this.settings, oldLine.length)[0];
+		// @ts-expect-error, not typed
+		const editorView = editor.cm as EditorView;
+		let state = editorView.state;
+
+		if (this.ContentParser.isTextLine(lineNumber-1)) {
+			let oldLine = state.doc.line(lineNumber).text;
+			let newLine = this.Formater.formatLine(state, lineNumber, this.settings, oldLine.length)[0];
 			if (oldLine != newLine) {
-				editor.replaceRange(newLine, { line: lineNumber, ch: 0 }, { line: lineNumber, ch: oldLine.length });
-				editor.setCursor({ line: lineNumber, ch: editor.getLine(lineNumber).length });
+				editor.replaceRange(newLine, { line: lineNumber-1, ch: 0 }, { line: lineNumber-1, ch: oldLine.length });
+				editor.setCursor({ line: lineNumber-1, ch: editor.getLine(lineNumber-1).length });
 			}
 		}
 		return;
