@@ -102,7 +102,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Symbol auto pair and delete with pair")
-			.setDesc("增加多种符号配对输入，配对删除，如《》, <>, “”, 「」, 『』,【】等")
+			.setDesc("增加多种符号配对输入，配对删除，如《》, “”, 「」, 『』,【】等")
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.IntrinsicSymbolPairs)
 					.onChange(async (value) => {
@@ -310,6 +310,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		containerEl.createEl("p", { text: "正则表达式相关知识，见 " }).createEl("a", {
 			text: "《阮一峰：正则表达式简明教程》",
 			href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#",
+		});
+
+		containerEl.createEl("p", { text: "正则表达式规则使用说明与示例：" }).createEl("a", {
+			text: "自定义正则表达式规则",
+			href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md",
 		});
 
 		const regContentAreaSetting = new Setting(containerEl);

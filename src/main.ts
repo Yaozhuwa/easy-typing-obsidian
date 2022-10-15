@@ -437,7 +437,7 @@ export default class EasyTypingPlugin extends Plugin {
 				// console.log("ready to format");
 				// console.log(this.settings.AutoFormat, formatLineFlag, this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line))
 				// this.ContentParser.print();
-				if (this.settings.AutoFormat && notSelected && !isExcludeFile && 
+				if (this.settings.AutoFormat && notSelected && changeType != 'none' && !isExcludeFile && 
 						this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
 					let changes = this.Formater.formatLineOfDoc(update.view.state.doc, this.settings, fromB, cursor.anchor, insertedStr);
 					if (changes != null) {

@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- V5.0.6 2022.10.15
+  - 修复上个版本的小更新导致的和 Latex suite 冲突的问题。
+  - 修改一些设置面板的描述，和文档更新。
 - V5.0.5 2022.10.14
   - 自动格式化会忽略 frontmatter 区域。 autoformat ignore frontmatter
   - 设置中增加自动格式化忽略文件、文件夹。support exclude folder/files for autoformat
