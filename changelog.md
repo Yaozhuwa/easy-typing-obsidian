@@ -1,4 +1,6 @@
 ## 更新日志 Changelog
+- V5.0.7 2022.10.16
+  - 结合 @codemirror/language SyntaxTree 来解析行，行解析更准确。 #57 #84。 parser line with help of @codemirror/language SyntaxTree, make it more robust.
 - V5.0.6 2022.10.15
   - 修复上个版本的小更新导致的和 Latex suite 冲突的问题。
   - 修改一些设置面板的描述，和文档更新。
