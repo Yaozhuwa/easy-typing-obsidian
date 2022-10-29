@@ -419,7 +419,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
-			let ChineseRegExp = /[\u4e00-\u9fa5]/;
+			let ChineseRegExp = /[\u4e00-\u9fa5【】·￥《》？：’‘”“「」、。，（）！]/;
 			let chineseEndFlag = changeType=="input.type.compose" && 
 								cursor.anchor == cursor.head && cursor.anchor === toB && 
 								ChineseRegExp.test(insertedStr);
@@ -460,12 +460,21 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
-			if (changeType == "input.paste"){
+			if (this.settings.AutoFormat && !isExcludeFile && changeType == "input.paste"){
 				let updateLineStart = update.state.doc.lineAt(fromB).number;
 				let updateLineEnd = update.state.doc.lineAt(toB).number;
-				for(let i=updateLineStart;i<=updateLineEnd;i++)
-				{
-					this.formatOneLine(this.getEditor(), i);
+				if(updateLineStart==updateLineEnd && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, toB).line)){
+					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, toB, toB, insertedStr);
+					if (changes != null) {
+						update.view.dispatch(...changes[0]);
+						update.view.dispatch(changes[1]);
+						return;
+					}
+				}
+				else{
+					for(let i=updateLineStart;i<=updateLineEnd;i++){
+						this.formatOneLine(this.getEditor(), i);
+					}
 				}
 			}
 		});	// iterchanges end
