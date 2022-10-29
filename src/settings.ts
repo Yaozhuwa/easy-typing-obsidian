@@ -403,7 +403,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						let trigger = replaceRuleTrigger.inputEl.value;
 						let left = replaceLeftString.inputEl.value;
 						let right = replaceRightString.inputEl.value;
-						if (trigger && left && right) {
+						if (trigger && (left || right)) {
 							if(trigger.length>1){
 								new Notice("Inlvalid trigger, trigger must be a symbol of length 1");
 								return;

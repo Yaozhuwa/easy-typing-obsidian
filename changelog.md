@@ -1,4 +1,10 @@
 ## 更新日志 Changelog
+- v5.0.8 2022.10.29
+  - Bug fix
+    - 修复在关闭自动格式化时粘贴文本还会触发自动格式化的 Bug。Fix paste auto format when autoformat switch off
+    - 尝试修复在某些输入法下，转换规则在输入全角字符时不生效的 Bug。Try to fix convert rule not work when input fullwidth symbol.
+  - Inprovement
+    - 现在选中替换规则的左右字符串可以为空。Now Selection Replace Rule's left and right char can be left blank.
 - V5.0.7 2022.10.16
   - 结合 @codemirror/language SyntaxTree 来解析行，行解析更准确。 #57 #84。 parser line with help of @codemirror/language SyntaxTree, make it more robust.
 - V5.0.6 2022.10.15
