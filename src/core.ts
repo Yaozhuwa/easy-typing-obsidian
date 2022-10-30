@@ -350,12 +350,11 @@ export class LineFormater {
         return retArray;
     }
 
-    // todo 还需要额外处理回车
     formatLineOfDoc(state: EditorState, settings: EasyTypingSettings, fromB: number, toB: number, insertedStr: string): [TransactionSpec[], TransactionSpec] | null {
         let doc = state.doc;
         let line = doc.lineAt(fromB).text;
         let res = null
-        if (insertedStr=="\n")
+        if (insertedStr.contains("\n"))
         {
             res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, fromB).ch);
         }
@@ -377,7 +376,10 @@ export class LineFormater {
                 changes:{from: offset+changeItem.begin, to:offset+changeItem.end, insert:changeItem.text}, userEvent:"EasyTyping.change"
             })
         }
-        if (insertedStr=='\n') res[1]+= 1;
+        if (insertedStr.contains("\n")){
+            console.log("insertStr", insertedStr)
+            res[1]+= insertedStr.length;
+        }
         return [changes, {selection:{anchor:offset+res[1]}, userEvent:"EasyTyping.change"}];
     }
 
@@ -596,8 +598,8 @@ export class LineFormater {
                                 let charAtLinkEnd = lineParts[i - 1].content.charAt(charAtLinkEndIndex);
                                 if (charAtLinkEnd === '[') break;
                                 let twoNeighborChars = charAtLinkEnd + charAtTextBegin;
-                                let regNeedSpace = /[A-Za-z0-9,\.;\?:!][\u4e00-\u9fa5]|[\u4e00-\u9fa5][A-Za-z0-9]/g;
-                                if (regNeedSpace.test(twoNeighborChars)) {
+                                let regNotNeedSpace = /[\u4e00-\u9fa5，。？：；”“’‘-）}][\u4e00-\u9fa5]/g;
+                                if (!regNotNeedSpace.test(twoNeighborChars)) {
                                     lineParts[i].content = ' ' + content;
                                     content = lineParts[i].content;
                                 }
