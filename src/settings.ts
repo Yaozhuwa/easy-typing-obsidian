@@ -65,13 +65,14 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	InlineLinkSpaceMode: SpaceState.soft,
 	InlineLinkSmartSpace: true,
 	UserDefinedRegSwitch: true,
-	UserDefinedRegExp: "{{.*?}}|++\n" +
-		"#[\\u4e00-\\u9fa5\\w\\/]+|++\n" +
-		"\\[\\!.*?\\][-+]{0,1}|-+\n" +
-		"(https?:\\/\\/|ftp:\\/\\/|obsidian:\\/\\/|zotero:\\/\\/|www.)[^\\s（）《》。,，！？;；：“”‘’\\)\\(\\[\\]\\{\\}']+|++",
+	UserDefinedRegExp: "{{.*?}}|++\n"+
+		"\\[\\!.*?\\][-+]{0,1}|-+\n"+
+		"(file:///|https?://|ftp://|obsidian://|zotero://|www.)[^\\s（）《》。,，！？;；：“”‘’\\)\\(\\[\\]\\{\\}']+|++\n"+
+		"\\d{2}:\\d{1,2}|++\n"+
+		"#[\\u4e00-\\u9fa5\\w\\/]+|++",
 	debug: false,
-	userSelRepRuleTrigger: ["-"],
-	userSelRepRuleValue: [{left:"~~", right:"~~"}],
+	userSelRepRuleTrigger: ["-", "#"],
+	userSelRepRuleValue: [{left:"~~", right:"~~"}, {left:"#", right:" "}],
 	userDeleteRulesStrList: [["demo|", "|"]],
 	userConvertRulesStrList: [[":)|","😀|"]],
 	userSelRuleSettingsOpen: true,
