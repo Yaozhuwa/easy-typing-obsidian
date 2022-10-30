@@ -1,4 +1,8 @@
 ## 更新日志 Changelog
+- v5.0.9 2022.10.29
+  - Bug Fix
+    - 修复回车换行时的自动格式化在该行是列表或Task时失效的问题
+    - 修复链接右边的智能空格不正确的问题
 - v5.0.8 2022.10.29
   - Bug fix
     - 修复在关闭自动格式化时粘贴文本还会触发自动格式化的 Bug。Fix paste auto format when autoformat switch off
