@@ -434,8 +434,8 @@ export class LineFormater {
                 // 3.1.1 如果 prevCursor 且光标不在此部分，则跳过
                 if (isParamDefined(prevCh) && cursorLinePartIndex != 0) { }
                 else {
-                    let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?[a-z\u0401\u0451\u0410-\u044f]/g;
-                    let regHeaderSentence = /^(#+ |>+ ?)[a-z\u0401\u0451\u0410-\u044f]/g;
+                    let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?“?[a-z\u0401\u0451\u0410-\u044f]/g;
+                    let regHeaderSentence = /^(#+ |>+ ?|“)[a-z\u0401\u0451\u0410-\u044f]/g;
                     let textcopy = lineParts[0].content;
                     let match = regFirstSentence.exec(textcopy);
                     let matchHeader = regHeaderSentence.exec(textcopy);
