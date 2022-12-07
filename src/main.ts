@@ -4,6 +4,7 @@ import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString,
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
 import { ArticleParser, LineFormater } from './core'
+import { syntaxTree } from "@codemirror/language";
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
@@ -548,25 +549,82 @@ export default class EasyTypingPlugin extends Plugin {
 		return;
 	}
 
+
 	deleteBlankLines = (editor: Editor): void => {
+		// @ts-expect-error, not typed
+		const editorView = editor.cm as EditorView;
+		let state = editorView.state;
+		let doc = state.doc
+		const tree = syntaxTree(state);
+		let start_line = 1;
+		let end_line = doc.lines;
+		let line_num = doc.lines
 		if (editor.somethingSelected() && editor.getSelection() != '') {
 			let selection = editor.listSelections()[0];
-			let begin = selection.anchor.line;
-			let end = selection.head.line;
+			let begin = selection.anchor.line+1;
+			let end = selection.head.line+1;
 			if (begin > end) {
 				let temp = begin;
 				begin = end;
 				end = temp;
 			}
-			let selected = editor.getSelection();
-			let newSelectedLines = selected.replace(/\n+/g, "\n");
-			if(selected!=newSelectedLines) editor.replaceSelection(newSelectedLines);
+			start_line = begin;
+			end_line = end
 		}
-		else{
-			let newArticle = editor.getValue().replace(/\n+/g, "\n");
-			newArticle = newArticle.replace(/^\n/g, "");
-			editor.setValue(newArticle);
+
+		let delete_index: number[] = [];
+		let blank_reg = /^\s*$/;
+		let remain_next_blank = false;
+		
+		if(start_line!=1){
+			let node = tree.resolve(doc.line(start_line-1).from, 1);
+			if(node.name.contains('list') || node.name.contains('quote')){
+				remain_next_blank = true;
+			}
 		}
+		if(end_line!=line_num && !blank_reg.test(doc.line(end_line+1).text)){
+			end_line += 1;
+		}
+
+		for (let i=start_line; i<=end_line; i++){
+			let line = doc.line(i);
+			let pos = line.from;
+			let node = tree.resolve(pos, 1);
+			
+			// 对于空白行
+			if(blank_reg.test(line.text) && !remain_next_blank)
+			{
+				delete_index.push(i);
+				continue;
+			}
+			else if(blank_reg.test(line.text) && remain_next_blank)
+			{
+				remain_next_blank = false;
+				continue;
+			}
+
+			if (node.name.contains('hr') && delete_index[delete_index.length-1]==i-1){
+				delete_index.pop()
+			}
+			else if(node.name.contains('list') || node.name.contains('quote')){
+				remain_next_blank = true;
+			}
+			else{
+				remain_next_blank = false;
+			}
+		}
+		// console.log("delete_index",delete_index)
+		let newContent = "";
+		for (let i=1; i<line_num; i++){
+			if(!delete_index.contains(i)){
+				newContent += doc.line(i).text + '\n';
+			}
+		}
+		if (!delete_index.contains(line_num)){
+			newContent += doc.line(line_num).text
+		}
+
+		editor.setValue(newContent);
 		// this.ContentParser.reparse(editor.getValue(), 0);
 	}
 
