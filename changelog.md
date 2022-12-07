@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- v5.0.12 2022.12.07
+  - Improvement
+    - 增强了一键去除空格命令(Easy Typing: Delete blank lines of the selected area or whole article)的逻辑，不再去除列表、callout后面的第一个空白行，以及水平线前的第一个空白行。(enhance command:delete blank line. no longer delete first blank line after list, task, callout and blank line exact before hr)
 - v5.0.10 2022.11.07
   - bug fix
     - 修复转换规则在某些输入法下对中文符号 —— 不生效的 Bug。#96

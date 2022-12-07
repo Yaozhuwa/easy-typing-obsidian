@@ -142,9 +142,9 @@ The symbols auto pair feature, that is, the plugin will automatically complete t
 
 For example, if you enter 《|, you will get 《|》 (the vertical line | represents the cursor position).
 
-The matching symbols supported in this plugin are as follows:
+The default matching symbols in this plugin are as follows:
 ```python
-["【】", "（）", "<>", "《》", "“”", "‘’", "「」", "『』"]
+["【】", "（）", "《》", "“”", "‘’", "「」", "『』"]
 ```
 
 Since the auto pair for `(` 、`[`、`{` is supported by obsidian(`Editor→Auto pair brackets`), This plugin does not provide this feature repeatedly.
