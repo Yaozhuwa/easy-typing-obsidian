@@ -1,7 +1,8 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TFile } from 'obsidian';
 import { EditorState, Extension, StateField, Transaction, TransactionSpec, Text } from '@codemirror/state';
+import { SelectionRange, Prec } from "@codemirror/state";
 import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString, ConvertRule } from "./settings"
-import { EditorView, ViewUpdate } from '@codemirror/view';
+import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
 import { ArticleParser, LineFormater } from './core'
 import { syntaxTree } from "@codemirror/language";
@@ -64,6 +65,14 @@ export default class EasyTypingPlugin extends Plugin {
 			EditorState.transactionFilter.of(this.transactionFilterPlugin),
 			EditorView.updateListener.of(this.viewUpdatePlugin)
 		]);
+
+		this.registerEditorExtension(Prec.highest(keymap.of([{
+			key: "Tab",
+			run: (view: EditorView):boolean => {
+				const success = this.handleTabDown(view);
+				return success;
+			}
+		}])));
 
 		this.addCommand({
 			id: "easy-typing-format-article",
@@ -479,6 +488,55 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 		});	// iterchanges end
+	}
+
+	private readonly handleTabDown = (view: EditorView) => {
+		if(!this.settings.Tabout) return false;
+
+		let state = view.state;
+		let doc = state.doc
+		const tree = syntaxTree(state);
+		const s = view.state.selection;
+		if(s.ranges.length>1) return false;
+		const pos = s.main.to;
+		let line = doc.lineAt(pos)
+
+		// Debug info
+		// console.log(line.text)
+		// for (let p=line.from; p<=line.to; p+=1){
+		// 	const token = tree.resolve(p, 1).name
+		// 	console.log(p-line.from, token)
+		// }
+
+		// 当光标在行内代码内部
+		if (pos-line.from!=0 && tree.resolve(pos-1, 1).name.contains('inline-code')){
+			if(tree.resolve(pos, 1).name.contains('formatting-code_inline-code')){
+				view.dispatch({
+					selection: {anchor: pos+1, head: pos+1}
+				})
+				return true;
+			}
+
+			for (let p=pos+1;p<line.to && tree.resolve(p, 1).name.contains('inline-code'); p+=1){
+				// 如果找到 ` 则光标跳到其后
+				if(tree.resolve(p, 1).name.contains('formatting-code_inline-code')){
+					view.dispatch({
+						selection: {anchor: p, head: p}
+					})
+					return true;
+				}
+				// 如果没找到 ` 则直接跳到行尾
+				if(p==line.to-1 && tree.resolve(p, 1).name.contains('inline-code')){
+					view.dispatch({
+						selection: {anchor: p+1, head: p+1}
+					})
+					return true;
+				}
+			}
+			
+		}
+
+		return false;
 	}
 
 	formatArticle = (editor:Editor, view:MarkdownView): void => {

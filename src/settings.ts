@@ -17,6 +17,7 @@ export enum RuleType {delete= "Delete Rule", convert='Convert Rule'}
 export enum WorkMode { OnlyWhenTyping = "typing", Globally = "global" }
 
 export interface EasyTypingSettings {
+	Tabout: boolean;
 	SelectionEnhance: boolean;
 	IntrinsicSymbolPairs: boolean;
 	BaseObEditEnhance: boolean;
@@ -47,6 +48,7 @@ export interface EasyTypingSettings {
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
+	Tabout: true,
 	SelectionEnhance: true,
 	IntrinsicSymbolPairs: true,
 	BaseObEditEnhance: true,
@@ -141,6 +143,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.BaseObEditEnhance)
 					.onChange(async (value) => {
 						this.plugin.settings.BaseObEditEnhance = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName("Tabout")
+			.setDesc("Tabout inline code. Tab跳出行内代码块")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.Tabout)
+					.onChange(async (value) => {
+						this.plugin.settings.Tabout = value;
 						await this.plugin.saveSettings();
 					});
 			});
