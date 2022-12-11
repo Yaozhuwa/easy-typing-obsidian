@@ -26,10 +26,10 @@ export default class EasyTypingPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.selectionReplaceMapInitalData = [
-			["【", {left:"[", right:"]"}], ["￥", {left:"$", right:"$"}], ["·", {left:"`", right:"`"}],
-			["《", {left:"《", right:"》"}], ["“", {left:"“", right:"”"}], ["”", {left:"“", right:"”"}], ["（", {left:"（", right:"）"}],
-			["<", {left:"<", right:">"}]                         
-			];
+			["【", { left: "[", right: "]" }], ["￥", { left: "$", right: "$" }], ["·", { left: "`", right: "`" }],
+			["《", { left: "《", right: "》" }], ["“", { left: "“", right: "”" }], ["”", { left: "“", right: "”" }], ["（", { left: "（", right: "）" }],
+			["<", { left: "<", right: ">" }]
+		];
 		this.refreshSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
 		let SymbolPairs = ["【】", "（）", "《》", "“”", "‘’", "「」", "『』"]
@@ -48,13 +48,13 @@ export default class EasyTypingPlugin extends Plugin {
 
 		// let
 		let autoPairRulesPatchStrList: Array<[string, string]> = [["【】|】", "【】|"], ["（）|）", "（）|"],
-							 ["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"]
-							]; 
+		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"]
+		];
 		this.IntrinsicAutoPairRulesPatch = ruleStringList2RuleList(autoPairRulesPatchStrList);
 
 		this.refreshUserDeleteRule();
 		this.refreshUserConvertRule();
-		
+
 		this.CurActiveMarkdown = "";
 
 		this.Formater = new LineFormater();
@@ -66,7 +66,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.registerEditorExtension(Prec.highest(keymap.of([{
 			key: "Tab",
-			run: (view: EditorView):boolean => {
+			run: (view: EditorView): boolean => {
 				const success = this.handleTabDown(view);
 				return success;
 			}
@@ -75,7 +75,7 @@ export default class EasyTypingPlugin extends Plugin {
 		this.addCommand({
 			id: "easy-typing-format-article",
 			name: "format current article",
-			editorCallback: (editor: Editor, view: MarkdownView) =>{
+			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.formatArticle(editor, view);
 			},
 			hotkeys: [{
@@ -163,7 +163,7 @@ export default class EasyTypingPlugin extends Plugin {
 			// }
 			// ========== Selection Replace ============
 			if (this.settings.SelectionEnhance) {
-				if ((changeTypeStr == 'input.type'||changeTypeStr=="input.type.compose") && fromA != toA && fromB + 1 === toB) {
+				if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && fromB + 1 === toB) {
 					if (this.SelectionReplaceMap.has(insertedStr)) {
 						changes.push({ changes: { from: fromA, insert: this.SelectionReplaceMap.get(insertedStr)?.left }, userEvent: "EasyTyping.change" })
 						changes.push({ changes: { from: toA, insert: this.SelectionReplaceMap.get(insertedStr)?.right }, userEvent: "EasyTyping.change" })
@@ -174,9 +174,8 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			// UserDefined Delete Rule
-			if (changeTypeStr == "delete.backward"){
-				for (let rule of this.UserDeleteRules)
-				{
+			if (changeTypeStr == "delete.backward") {
+				for (let rule of this.UserDeleteRules) {
 					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
 					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
 					if (left === rule.before.left && right === rule.before.right) {
@@ -202,8 +201,7 @@ export default class EasyTypingPlugin extends Plugin {
 					tr = tr.startState.update(...changes);
 					return tr;
 				}
-				for (let rule of this.IntrinsicDeleteRules)
-				{
+				for (let rule of this.IntrinsicDeleteRules) {
 					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
 					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
 					if (left === rule.before.left && right === rule.before.right) {
@@ -223,7 +221,7 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			// 通常单字输入
-			if ((changeTypeStr == 'input.type'||changeTypeStr=="input.type.compose") && fromA === toA && fromB + 1 === toB) {
+			if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA === toA && fromB + 1 === toB) {
 				// if (this.settings.debug) console.log("Input.type => ", insertedStr)
 				// =========== basic convert rules ============
 				// not support undo and redo
@@ -293,8 +291,7 @@ export default class EasyTypingPlugin extends Plugin {
 				// ================ auto pair =================
 				// let PairValidSet = new Set(["", " ","\n"])
 				// let charAfterCursor = tr.startState.sliceDoc(toA, toA+1);
-				if (this.settings.IntrinsicSymbolPairs)
-				{
+				if (this.settings.IntrinsicSymbolPairs) {
 					for (let rule of this.IntrinsicAutoPairRulesPatch) {
 						if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
 						let left = tr.state.doc.sliceString(toB - rule.before.left.length, toB);
@@ -341,7 +338,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	viewUpdatePlugin = (update: ViewUpdate) => {
-		
+
 		// console.log(tree);
 
 		// if (this.settings.debug) console.log("-------ViewUpdate---------");
@@ -374,9 +371,9 @@ export default class EasyTypingPlugin extends Plugin {
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
 			let ChineseRegExp = /[\u4e00-\u9fa5【】·￥《》？：’‘”“「」、。，（）！——……0-9]/;
-			let chineseEndFlag = changeType=="input.type.compose" && 
-								cursor.anchor == cursor.head && cursor.anchor === toB && 
-								ChineseRegExp.test(insertedStr);
+			let chineseEndFlag = changeType == "input.type.compose" &&
+				cursor.anchor == cursor.head && cursor.anchor === toB &&
+				ChineseRegExp.test(insertedStr);
 
 			// 判断每次输入结束
 			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag || changeType == 'none') {
@@ -402,8 +399,8 @@ export default class EasyTypingPlugin extends Plugin {
 				// 判断格式化文本
 				// console.log("ready to format");
 				// console.log(this.settings.AutoFormat, formatLineFlag, this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line))
-				if (this.settings.AutoFormat && notSelected && !isExcludeFile && (changeType!='none'||insertedStr.contains("\n")) &&
-						getPosLineType(update.view.state, fromB)==LineType.text) {
+				if (this.settings.AutoFormat && notSelected && !isExcludeFile && (changeType != 'none' || insertedStr.contains("\n")) &&
+					getPosLineType(update.view.state, fromB) == LineType.text) {
 					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, cursor.anchor, insertedStr);
 					if (changes != null) {
 						update.view.dispatch(...changes[0]);
@@ -413,10 +410,10 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
-			if (this.settings.AutoFormat && !isExcludeFile && changeType == "input.paste"){
+			if (this.settings.AutoFormat && !isExcludeFile && changeType == "input.paste") {
 				let updateLineStart = update.state.doc.lineAt(fromB).number;
 				let updateLineEnd = update.state.doc.lineAt(toB).number;
-				if(updateLineStart==updateLineEnd && getPosLineType(update.view.state, toB)==LineType.text){
+				if (updateLineStart == updateLineEnd && getPosLineType(update.view.state, toB) == LineType.text) {
 					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, toB, toB, insertedStr);
 					if (changes != null) {
 						update.view.dispatch(...changes[0]);
@@ -424,8 +421,8 @@ export default class EasyTypingPlugin extends Plugin {
 						return;
 					}
 				}
-				else{
-					for(let i=updateLineStart;i<=updateLineEnd;i++){
+				else {
+					for (let i = updateLineStart; i <= updateLineEnd; i++) {
 						this.formatOneLine(this.getEditor(), i);
 					}
 				}
@@ -434,13 +431,13 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	private readonly handleTabDown = (view: EditorView) => {
-		if(!this.settings.Tabout) return false;
+		if (!this.settings.Tabout) return false;
 
 		let state = view.state;
 		let doc = state.doc
 		const tree = syntaxTree(state);
 		const s = view.state.selection;
-		if(s.ranges.length>1) return false;
+		if (s.ranges.length > 1) return false;
 		const pos = s.main.to;
 		let line = doc.lineAt(pos)
 
@@ -453,54 +450,52 @@ export default class EasyTypingPlugin extends Plugin {
 		// return true;
 
 		// 当光标在行内代码内部
-		if (pos-line.from!=0 && tree.resolve(pos-1, 1).name.contains('inline-code')){
-			if(tree.resolve(pos, 1).name.contains('formatting-code_inline-code')){
+		if (pos - line.from != 0 && tree.resolve(pos - 1, 1).name.contains('inline-code')) {
+			if (tree.resolve(pos, 1).name.contains('formatting-code_inline-code')) {
 				view.dispatch({
-					selection: {anchor: pos+1, head: pos+1}
+					selection: { anchor: pos + 1, head: pos + 1 }
 				})
 				return true;
 			}
 
-			for (let p=pos+1;p<line.to && tree.resolve(p, 1).name.contains('inline-code'); p+=1){
+			for (let p = pos + 1; p < line.to && tree.resolve(p, 1).name.contains('inline-code'); p += 1) {
 				// 如果找到 ` 则光标跳到其后
-				if(tree.resolve(p, 1).name.contains('formatting-code_inline-code')){
+				if (tree.resolve(p, 1).name.contains('formatting-code_inline-code')) {
 					view.dispatch({
-						selection: {anchor: p, head: p}
+						selection: { anchor: p, head: p }
 					})
 					return true;
 				}
 				// 如果没找到 ` 则直接跳到行尾
-				if(p==line.to-1 && tree.resolve(p, 1).name.contains('inline-code')){
+				if (p == line.to - 1 && tree.resolve(p, 1).name.contains('inline-code')) {
 					view.dispatch({
-						selection: {anchor: p+1, head: p+1}
+						selection: { anchor: p + 1, head: p + 1 }
 					})
 					return true;
 				}
 			}
-			
+
 		}
 
 		return false;
 	}
 
-	formatArticle = (editor:Editor, view:MarkdownView): void => {
-		if (this.ContentParser.ArticleStructure.length == 0) return;
+	formatArticle = (editor: Editor, view: MarkdownView): void => {
 		let lineCount = editor.lineCount();
 		for (let i = 0; i < lineCount; i++) {
-			this.formatOneLine(editor, i+1);
+			this.formatOneLine(editor, i + 1);
 		}
-		this.ContentParser.updateContent(editor.getValue());
 		new Notice("EasyTyping: Format Article Done!");
 	}
 
-	checkExclude(path:string):boolean{
+	checkExclude(path: string): boolean {
 		let excludePaths = this.settings.ExcludeFiles.split('\n');
-		for (let epath of excludePaths){
+		for (let epath of excludePaths) {
 			if (epath.charAt(0) == '/') epath = epath.substring(1);
-			if(path==epath) return true;
+			if (path == epath) return true;
 			let len = epath.length;
-			if (path.substring(0, len)==epath && (path.charAt(len)=='/' || path.charAt(len)=='\\' ||
-			epath.charAt(len-1)=="/" || epath.charAt(len-1)=="\\")){
+			if (path.substring(0, len) == epath && (path.charAt(len) == '/' || path.charAt(len) == '\\' ||
+				epath.charAt(len - 1) == "/" || epath.charAt(len - 1) == "\\")) {
 				return true;
 			}
 		}
@@ -510,7 +505,7 @@ export default class EasyTypingPlugin extends Plugin {
 	formatSelectionOrCurLine = (editor: Editor, view: MarkdownView): void => {
 		if (!editor.somethingSelected() || editor.getSelection() === '') {
 			let lineNumber = editor.getCursor().line;
-			this.formatOneLine(editor, lineNumber+1);
+			this.formatOneLine(editor, lineNumber + 1);
 			return;
 		}
 		let selection = editor.listSelections()[0];
@@ -522,31 +517,29 @@ export default class EasyTypingPlugin extends Plugin {
 			end = temp;
 		}
 		for (; begin <= end; begin++) {
-			this.formatOneLine(editor, begin+1);
+			this.formatOneLine(editor, begin + 1);
 		}
-		if(selection.anchor.line<selection.head.line){
-			editor.setSelection({line: selection.anchor.line, ch:0}, {line: selection.head.line, ch:editor.getLine(selection.head.line).length});
+		if (selection.anchor.line < selection.head.line) {
+			editor.setSelection({ line: selection.anchor.line, ch: 0 }, { line: selection.head.line, ch: editor.getLine(selection.head.line).length });
 		}
-		else{
-			editor.setSelection({line: selection.anchor.line, ch:editor.getLine(selection.anchor.line).length}, {line: selection.head.line, ch:0});
+		else {
+			editor.setSelection({ line: selection.anchor.line, ch: editor.getLine(selection.anchor.line).length }, { line: selection.head.line, ch: 0 });
 		}
-		
-		this.ContentParser.updateContent(editor.getValue());
 	}
 
 	// param: lineNumber is (1-based)
-	formatOneLine = (editor:Editor, lineNumber: number): void => {
+	formatOneLine = (editor: Editor, lineNumber: number): void => {
 		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
 		let line = state.doc.line(lineNumber)
 
-		if (getPosLineType(state, line.from)==LineType.text) {
+		if (getPosLineType(state, line.from) == LineType.text) {
 			let oldLine = line.text;
 			let newLine = this.Formater.formatLine(state, lineNumber, this.settings, oldLine.length)[0];
 			if (oldLine != newLine) {
-				editor.replaceRange(newLine, { line: lineNumber-1, ch: 0 }, { line: lineNumber-1, ch: oldLine.length });
-				editor.setCursor({ line: lineNumber-1, ch: editor.getLine(lineNumber-1).length });
+				editor.replaceRange(newLine, { line: lineNumber - 1, ch: 0 }, { line: lineNumber - 1, ch: oldLine.length });
+				editor.setCursor({ line: lineNumber - 1, ch: editor.getLine(lineNumber - 1).length });
 			}
 		}
 		return;
@@ -564,8 +557,8 @@ export default class EasyTypingPlugin extends Plugin {
 		let line_num = doc.lines
 		if (editor.somethingSelected() && editor.getSelection() != '') {
 			let selection = editor.listSelections()[0];
-			let begin = selection.anchor.line+1;
-			let end = selection.head.line+1;
+			let begin = selection.anchor.line + 1;
+			let end = selection.head.line + 1;
 			if (begin > end) {
 				let temp = begin;
 				begin = end;
@@ -578,52 +571,50 @@ export default class EasyTypingPlugin extends Plugin {
 		let delete_index: number[] = [];
 		let blank_reg = /^\s*$/;
 		let remain_next_blank = false;
-		
-		if(start_line!=1){
-			let node = tree.resolve(doc.line(start_line-1).from, 1);
-			if(node.name.contains('list') || node.name.contains('quote')){
+
+		if (start_line != 1) {
+			let node = tree.resolve(doc.line(start_line - 1).from, 1);
+			if (node.name.contains('list') || node.name.contains('quote')) {
 				remain_next_blank = true;
 			}
 		}
-		if(end_line!=line_num && !blank_reg.test(doc.line(end_line+1).text)){
+		if (end_line != line_num && !blank_reg.test(doc.line(end_line + 1).text)) {
 			end_line += 1;
 		}
 
-		for (let i=start_line; i<=end_line; i++){
+		for (let i = start_line; i <= end_line; i++) {
 			let line = doc.line(i);
 			let pos = line.from;
 			let node = tree.resolve(pos, 1);
-			
+
 			// 对于空白行
-			if(blank_reg.test(line.text) && !remain_next_blank)
-			{
+			if (blank_reg.test(line.text) && !remain_next_blank) {
 				delete_index.push(i);
 				continue;
 			}
-			else if(blank_reg.test(line.text) && remain_next_blank)
-			{
+			else if (blank_reg.test(line.text) && remain_next_blank) {
 				remain_next_blank = false;
 				continue;
 			}
 
-			if (node.name.contains('hr') && delete_index[delete_index.length-1]==i-1){
+			if (node.name.contains('hr') && delete_index[delete_index.length - 1] == i - 1) {
 				delete_index.pop()
 			}
-			else if(node.name.contains('list') || node.name.contains('quote')){
+			else if (node.name.contains('list') || node.name.contains('quote')) {
 				remain_next_blank = true;
 			}
-			else{
+			else {
 				remain_next_blank = false;
 			}
 		}
 		// console.log("delete_index",delete_index)
 		let newContent = "";
-		for (let i=1; i<line_num; i++){
-			if(!delete_index.contains(i)){
+		for (let i = 1; i < line_num; i++) {
+			if (!delete_index.contains(i)) {
 				newContent += doc.line(i).text + '\n';
 			}
 		}
-		if (!delete_index.contains(line_num)){
+		if (!delete_index.contains(line_num)) {
 			newContent += doc.line(line_num).text
 		}
 
@@ -631,139 +622,127 @@ export default class EasyTypingPlugin extends Plugin {
 		// this.ContentParser.reparse(editor.getValue(), 0);
 	}
 
-	switchAutoFormatting()
-    {
-        this.settings.AutoFormat = this.settings.AutoFormat? false:true;
-        let status = this.settings.AutoFormat?'on':'off';
-        new Notice('EasyTyping: Autoformat is '+ status +'!');
-    }
+	switchAutoFormatting() {
+		this.settings.AutoFormat = this.settings.AutoFormat ? false : true;
+		let status = this.settings.AutoFormat ? 'on' : 'off';
+		new Notice('EasyTyping: Autoformat is ' + status + '!');
+	}
 
-	convert2CodeBlock(editor: Editor)
-	{
+	convert2CodeBlock(editor: Editor) {
 		if (this.settings.debug) console.log("----- EasyTyping: insert code block-----");
-		if(editor.somethingSelected && editor.getSelection()!="")
-		{
+		if (editor.somethingSelected && editor.getSelection() != "") {
 			let selected = editor.getSelection();
 			let selectedRange = editor.listSelections()[0];
 			let anchor = selectedRange.anchor;
 			let head = selectedRange.head;
 
-			let replacement = "```\n"+selected+"\n```";
+			let replacement = "```\n" + selected + "\n```";
 			// make sure anchor < head
-			if (anchor.line > head.line || (anchor.line==head.line && anchor.ch>head.ch))
-			{
+			if (anchor.line > head.line || (anchor.line == head.line && anchor.ch > head.ch)) {
 				let temp = anchor;
 				anchor = head;
 				head = temp;
 			}
 			let dstLine = anchor.line;
-			if (anchor.ch!=0)
-			{
+			if (anchor.ch != 0) {
 				replacement = '\n' + replacement;
 				dstLine += 1;
 			}
-			if (head.ch!=editor.getLine(head.line).length)
-			{
+			if (head.ch != editor.getLine(head.line).length) {
 				replacement = replacement + '\n';
 			}
 			editor.replaceSelection(replacement);
-			editor.setCursor({line: dstLine, ch:3});
-			this.ContentParser.reparse(editor.getValue(), anchor.line);
+			editor.setCursor({ line: dstLine, ch: 3 });
 		}
-		else{
+		else {
 			let cs = editor.getCursor();
 			let replace = "```\n```";
 			let dstLine = cs.line;
-			if (cs.ch!=0){
-				replace = "\n"+replace;
+			if (cs.ch != 0) {
+				replace = "\n" + replace;
 				dstLine += 1;
 			}
-			if (cs.ch!=editor.getLine(cs.line).length)
-			{
+			if (cs.ch != editor.getLine(cs.line).length) {
 				replace = replace + '\n';
 			}
 			editor.replaceRange(replace, cs);
-			editor.setCursor({line: dstLine, ch:3});
-			this.ContentParser.reparse(editor.getValue(), cs.line);
+			editor.setCursor({ line: dstLine, ch: 3 });
 		}
-		
+
 	}
 
-	refreshSelectionReplaceRule(){
+	refreshSelectionReplaceRule() {
 		this.SelectionReplaceMap = new Map(this.selectionReplaceMapInitalData);
-		for (let i=0;i<this.settings.userSelRepRuleTrigger.length; i++)
-		{
+		for (let i = 0; i < this.settings.userSelRepRuleTrigger.length; i++) {
 			let trigger = this.settings.userSelRepRuleTrigger[i];
 			let lefts = this.settings.userSelRepRuleValue[i].left;
 			let rights = this.settings.userSelRepRuleValue[i].right;
-			
-			this.SelectionReplaceMap.set(trigger, {left: lefts, right:rights});
+
+			this.SelectionReplaceMap.set(trigger, { left: lefts, right: rights });
 		}
 	}
 
-	addUserSelectionRepRule(trigger:string, left:string, right:string):boolean{
-		if(this.settings.userSelRepRuleTrigger.includes(trigger)) return false;
+	addUserSelectionRepRule(trigger: string, left: string, right: string): boolean {
+		if (this.settings.userSelRepRuleTrigger.includes(trigger)) return false;
 		this.settings.userSelRepRuleTrigger.push(trigger)
-		this.settings.userSelRepRuleValue.push({left:left, right:right});
+		this.settings.userSelRepRuleValue.push({ left: left, right: right });
 		this.refreshSelectionReplaceRule();
 		return true;
 	}
 
-	deleteUserSelectionRepRule(idx:number):void{
-		if (idx <0 || idx>=this.settings.userSelRepRuleTrigger.length) return;
+	deleteUserSelectionRepRule(idx: number): void {
+		if (idx < 0 || idx >= this.settings.userSelRepRuleTrigger.length) return;
 		this.settings.userSelRepRuleTrigger.splice(idx, 1);
 		this.settings.userSelRepRuleValue.splice(idx, 1);
 		this.refreshSelectionReplaceRule();
 	}
 
-	updateUserSelectionRepRule(idx:number, left:string, right:string){
-		if (idx <0 || idx>=this.settings.userSelRepRuleTrigger.length) return;
+	updateUserSelectionRepRule(idx: number, left: string, right: string) {
+		if (idx < 0 || idx >= this.settings.userSelRepRuleTrigger.length) return;
 		this.settings.userSelRepRuleValue[idx].left = left;
 		this.settings.userSelRepRuleValue[idx].right = right;
 		this.refreshSelectionReplaceRule();
 	}
-	
-	refreshUserDeleteRule(){
+
+	refreshUserDeleteRule() {
 		this.UserDeleteRules = ruleStringList2RuleList(this.settings.userDeleteRulesStrList);
 	}
 
-	addUserDeleteRule(before:string, after:string)
-	{
+	addUserDeleteRule(before: string, after: string) {
 		this.settings.userDeleteRulesStrList.push([before, after]);
 		this.refreshUserDeleteRule();
 	}
 
-	deleteUserDeleteRule(idx:number){
-		if (idx>=this.settings.userDeleteRulesStrList.length || idx<0) return;
+	deleteUserDeleteRule(idx: number) {
+		if (idx >= this.settings.userDeleteRulesStrList.length || idx < 0) return;
 		this.settings.userDeleteRulesStrList.splice(idx, 1);
 		this.refreshUserDeleteRule();
 	}
 
-	updateUserDeleteRule(idx:number, before:string, after:string){
-		if (idx>=this.settings.userDeleteRulesStrList.length || idx<0) return;
+	updateUserDeleteRule(idx: number, before: string, after: string) {
+		if (idx >= this.settings.userDeleteRulesStrList.length || idx < 0) return;
 		this.settings.userDeleteRulesStrList[idx][0] = before;
 		this.settings.userDeleteRulesStrList[idx][1] = after;
 		this.refreshUserDeleteRule();
 	}
 
-	refreshUserConvertRule(){
+	refreshUserConvertRule() {
 		this.UserConvertRules = ruleStringList2RuleList(this.settings.userConvertRulesStrList);
 	}
 
-	addUserConvertRule(before:string, after:string)
-	{
+	addUserConvertRule(before: string, after: string) {
 		this.settings.userConvertRulesStrList.push([before, after]);
 		this.refreshUserConvertRule();
 	}
 
-	deleteUserConvertRule(idx:number){
-		if (idx>=this.settings.userConvertRulesStrList.length || idx<0) return;
+	deleteUserConvertRule(idx: number) {
+		if (idx >= this.settings.userConvertRulesStrList.length || idx < 0) return;
 		this.settings.userConvertRulesStrList.splice(idx, 1);
 		this.refreshUserConvertRule();
 	}
 
-	updateUserConvertRule(idx:number, before:string, after:string){
-		if (idx>=this.settings.userConvertRulesStrList.length || idx<0) return;
+	updateUserConvertRule(idx: number, before: string, after: string) {
+		if (idx >= this.settings.userConvertRulesStrList.length || idx < 0) return;
 		this.settings.userConvertRulesStrList[idx][0] = before;
 		this.settings.userConvertRulesStrList[idx][1] = after;
 		this.refreshUserConvertRule();
