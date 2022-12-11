@@ -1,4 +1,12 @@
 ## 更新日志 Changelog
+- v5.1.0
+  - New Feature
+    - 增加了Tabout功能，可以在光标在行内代码中时按Tab跳出行内代码。Tabout inline code.
+  - Improve
+    - 修复了公式块在不规范书写的时候可能会导致后续部分自动格式化失效的问题。Fixed an issue where the automatic formatting could fail when the formula blocks were not properly written.
+    - 用 syntaxTree 模块完全代替了自己的 ArticleParser 文章内容解析器。应该会带来性能的提升。The syntaxTree module completely replaces my own ArticleParser(article content parser). There should be a performance boost.
+  - Other
+    - 增加了 buymeacoffee 赞助链接. Add a fundingUrl of buymeacoffee.
 - v5.0.12 2022.12.07
   - Improvement
     - 增强了一键去除空格命令(Easy Typing: Delete blank lines of the selected area or whole article)的逻辑，不再去除列表、callout后面的第一个空白行，以及水平线前的第一个空白行。(enhance command:delete blank line. no longer delete first blank line after list, task, callout and blank line exact before hr)
