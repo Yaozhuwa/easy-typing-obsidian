@@ -6,5 +6,6 @@
 	"description": "Autoformat your note as typing.(Auto captalize, autospace)",
 	"author": "yaozhuwa",
 	"authorUrl": "https://github.com/Yaozhuwa",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"fundingUrl": "https://www.buymeacoffee.com/yaozhuwa"
 }
