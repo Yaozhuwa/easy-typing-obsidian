@@ -4,7 +4,7 @@ import { Annotation, EditorState, Extension, StateField, Transaction, Transactio
 import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined} from './utils'
 import { syntaxTree } from "@codemirror/language";
 
-export enum LineType { text = 'text', code = 'code', formula = 'formula', none = 'none', frontmatter="frontmatter" }
+export enum LineType { text = 'text', codeblock = 'codeblock', formula = 'formula', none = 'none', frontmatter="frontmatter" }
 
 export enum SpaceState {
     none,
@@ -30,230 +30,6 @@ export interface ArticlePart {
     begin: number;
     end: number
 }
-
-export class ArticleParser {
-    ArticleStructure: ArticlePart[];
-    ArticleContent: string;
-    HasFrontMatter: boolean;
-    constructor() {
-        this.ArticleStructure = [];
-        this.ArticleContent = "";
-        this.HasFrontMatter = false;
-    }
-
-    updateContent(newArticle: string) {
-        this.ArticleContent = newArticle;
-    }
-
-    parse(article: string, beginIndex: number = 0): ArticlePart[] {
-        let retArray: ArticlePart[] = [];
-        let lines = article.split('\n');
-        let regNullLine = /^\s*$/;
-        let regFormulaBegin = /^\s*(\- (\[[x ]\] )?)?\$\$/;
-        let regFormulaEnd = /\$\$$/;
-        let regCodeBegin = /^\s*```/;
-        let regCodeEnd = /^\s*```$/;
-        // let regFrontMatter = /^---\n.*?\n---$/m;
-        if(beginIndex==0){
-            this.HasFrontMatter = false;
-            for (let i = 0; i < lines.length; i++) {
-                if (regNullLine.test(lines[i])) {
-                    continue;
-                }
-                else if (lines[i] == "---") {
-                    for (let j=i+1;j<lines.length;j++)
-                    {
-                        if(lines[j]=='---')
-                        {
-                            retArray.push({
-                                type: LineType.frontmatter,
-                                begin: 0,
-                                end: j + 1
-                            })
-                            this.HasFrontMatter = true;
-                            beginIndex = j+1;
-                            break;
-                        }
-                    }
-                    break;
-                }
-                else{
-                    break;
-                }
-            }
-        }
-
-        let index = beginIndex;
-        while (index < lines.length) {
-            // 1. 检测 CodeBlock
-            if (regCodeBegin.test(lines[index])) {
-                let j = index + 1;
-                while (j < lines.length) {
-                    if (regCodeEnd.test(lines[j]))
-                        break;
-                    j++;
-                }
-                j = j === lines.length ? j - 1 : j;
-                retArray.push({
-                    type: LineType.code,
-                    begin: index,
-                    end: j + 1
-                });
-                index = j + 1;
-            }
-            // 2. 检测 FormulaBlock
-            else if (regFormulaBegin.test(lines[index])) {
-                let regFormulaOneLineReverse = /\$\$(?!\\)[^]*?\$\$(?!\\)/g;
-                let reversedLine = lines[index].split('').reverse().join('')
-                // let regFormulaOneLine = /(?<!\\)\$\$(?! )[^]*?(?<! )(?<!\\)\$\$/g;
-                if (regFormulaOneLineReverse.test(reversedLine)){
-                    retArray.push({
-                        type: LineType.formula,
-                        begin: index,
-                        end: index + 1
-                    });
-                    index += 1;
-                }
-                else {
-                    let j = index + 1;
-                    while (j < lines.length) {
-                        if (regFormulaEnd.test(lines[j]))
-                            break;
-                        j++;
-                    }
-                    j = j === lines.length ? j - 1 : j;
-                    retArray.push({
-                        type: LineType.formula,
-                        begin: index,
-                        end: j + 1
-                    });
-                    index = j + 1;
-                }
-            }
-            else {
-                let j = index + 1;
-                while (j < lines.length) {
-                    if (regCodeBegin.test(lines[j]) || regFormulaBegin.test(lines[j]))
-                        break;
-                    j++;
-                }
-                retArray.push({
-                    type: LineType.text,
-                    begin: index,
-                    end: j
-                });
-                index = j;
-            }
-        }
-        return retArray;
-    }
-
-    reparse(changedArticle: string, updateLineStart: number) {
-        this.ArticleContent = changedArticle;
-        let res: ArticlePart[] = [];
-        let newBeginIndex = 0;
-        let changeArticlePartIndex = 0;
-        for (let i = 0; i < this.ArticleStructure.length; i++) {
-            if (updateLineStart >= this.ArticleStructure[i].begin && updateLineStart < this.ArticleStructure[i].end) {
-                newBeginIndex = this.ArticleStructure[i].begin;
-                changeArticlePartIndex = i;
-                break;
-            }
-            else {
-                res.push(this.ArticleStructure[i]);
-            }
-        }
-
-        if (changeArticlePartIndex === 0) {
-            this.ArticleStructure = this.parse(changedArticle);
-            this.ArticleContent = changedArticle;
-        }
-
-        let newParts = this.parse(changedArticle, newBeginIndex);
-        for (let j = 0; j < newParts.length; j++) {
-            res.push(newParts[j]);
-        }
-        this.ArticleStructure = res;
-    }
-
-    getLineType(line: number): LineType {
-        for (let i = 0; i < this.ArticleStructure.length; i++) {
-            if (line >= this.ArticleStructure[i].begin && line < this.ArticleStructure[i].end) {
-                return this.ArticleStructure[i].type;
-            }
-        }
-        return LineType.none;
-    }
-
-    isBlockBeginOrEndLine(line: number, type: LineType):boolean {
-        for (let i = 0; i < this.ArticleStructure.length; i++) {
-            if (this.ArticleStructure[i].type==type && (line == this.ArticleStructure[i].begin || line == this.ArticleStructure[i].end)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    ArticleHasFrontmatter(text:string):boolean {
-        let lines = text.split('\n');
-        let regNullLine = /^\s*$/;
-        for (let i = 0; i < lines.length; i++) {
-            if (regNullLine.test(lines[i])) {
-                continue;
-            }
-            else if (lines[i] == "---") {
-                for (let j=i+1;j<lines.length;j++)
-                {
-                    if(lines[j]=='---')
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            else{
-                return false;
-            }
-        }
-        return false;
-    }
-
-    isChangePosNeedReparse(pos: {line:number, ch:number}):boolean{
-        if (this.isBlockBeginOrEndLine(pos.line, LineType.formula) && pos.ch<2){
-            return true;
-        }
-        else if(this.isBlockBeginOrEndLine(pos.line, LineType.code) && pos.ch<3){
-            return true;
-        }
-        // else if(this.getLineType(pos.line)==LineType.frontmatter){
-        //     return this.isFrontmatterChange(pos.line);
-        // }
-        return false;
-    }
-
-    isTextLine(line: number): boolean {
-        return this.getLineType(line) === LineType.text;
-    }
-
-    parseNewArticle(article: string) {
-        this.ArticleContent = article;
-        this.ArticleStructure = this.parse(article);
-    }
-
-    print() {
-        console.log("~~~~~~~~~~~ArticleParser~~~~~~~~~~~")
-        let lines = this.ArticleContent.split('\n');
-        for (let part of this.ArticleStructure) {
-            console.log("Article Part:", part.type, part.begin, part.end);
-            for (let j = part.begin; j < part.end; j++) {
-                console.log(lines[j]);
-            }
-        }
-        console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    }
-
-}
-
 
 export interface InlinePart {
     content: string;
@@ -347,6 +123,7 @@ export class LineFormater {
                 });
             }
         }
+        console.log(retArray)
         return retArray;
     }
 
@@ -1263,4 +1040,34 @@ export function string2SpaceState(s:string):SpaceState
     if(Number(s)==SpaceState.soft) return SpaceState.soft;
     if(Number(s)==SpaceState.strict) return SpaceState.strict;
     return SpaceState.none;
+}
+
+
+export function getPosLineType(state: EditorState, pos: number):LineType {
+    const line = state.doc.lineAt(pos)
+    const tree = syntaxTree(state);
+    const token = tree.resolve(line.from, 1).name
+    if (token.contains('hmd-frontmatter')){
+        return LineType.frontmatter
+    }
+
+    if(token.contains('math')){
+        for(let p=line.from+1;p<line.to;p+=1){
+            if(!tree.resolve(p, 1).name.contains('math')){
+                return LineType.text
+            }
+        }
+        console.log("formula")
+        return LineType.formula
+    }
+    else if(token.contains('code') && token.contains('block')){
+        for(let p=line.from+1;p<line.to;p+=1){
+            let t = tree.resolve(p, 1).name
+            if(!(t.contains('code') && t.contains('block'))){
+                return LineType.text
+            }
+        }
+        return LineType.codeblock
+    }
+    return LineType.text
 }

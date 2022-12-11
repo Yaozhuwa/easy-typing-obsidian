@@ -4,7 +4,7 @@ import { SelectionRange, Prec } from "@codemirror/state";
 import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString, ConvertRule } from "./settings"
 import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
-import { ArticleParser, LineFormater } from './core'
+import { LineFormater, getPosLineType, LineType } from './core'
 import { syntaxTree } from "@codemirror/language";
 
 export default class EasyTypingPlugin extends Plugin {
@@ -14,7 +14,6 @@ export default class EasyTypingPlugin extends Plugin {
 	SymbolPairsMap: Map<string, string>;
 	BasicConvRules: ConvertRule[];
 	FW2HWSymbolRules: ConvertRule[];
-	ContentParser: ArticleParser;
 	Formater: LineFormater;
 	IntrinsicDeleteRules: ConvertRule[];
 	IntrinsicAutoPairRulesPatch: ConvertRule[];
@@ -58,7 +57,6 @@ export default class EasyTypingPlugin extends Plugin {
 		
 		this.CurActiveMarkdown = "";
 
-		this.ContentParser = new ArticleParser()
 		this.Formater = new LineFormater();
 
 		this.registerEditorExtension([
@@ -135,12 +133,6 @@ export default class EasyTypingPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new EasyTypingSettingTab(this.app, this));
 
-		this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf: WorkspaceLeaf) => {
-			if (leaf.view.getViewType()=='markdown'){
-				this.parseFileIfNeeded();
-			}
-		}));
-
 		// this.registerEvent(this.app.workspace.on('file-open', (file: TFile | null) => {
 		// 	if (file != null) {
 		// 		let editor = this.getEditor();
@@ -155,19 +147,6 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	onunload() {
-	}
-
-	parseFileIfNeeded = ():void=>{
-		const editor = this.getEditor();
-		if (editor==null) return;
-		let file = this.app.workspace.getActiveFile();
-		if (file!=null && this.CurActiveMarkdown!=file.path)
-		{
-			this.CurActiveMarkdown = file.path;
-			if (this.checkExclude(this.CurActiveMarkdown)) return;
-			this.ContentParser.parseNewArticle(editor.getValue());
-			if (this.settings.debug) new Notice("EasyTyping: Parse New Article: "+file.path);
-		}
 	}
 
 	transactionFilterPlugin = (tr: Transaction): TransactionSpec | readonly TransactionSpec[] => {
@@ -379,7 +358,6 @@ export default class EasyTypingPlugin extends Plugin {
 		// }
 
 		if (!update.docChanged) return;
-		this.parseFileIfNeeded();
 
 		let isExcludeFile = this.checkExclude(this.CurActiveMarkdown);
 		// console.log(this.CurActiveMarkdown, isExcludeFile)
@@ -392,40 +370,6 @@ export default class EasyTypingPlugin extends Plugin {
 			let changedStr = tr.startState.doc.sliceString(fromA, toA);
 			if (this.settings.debug)
 				console.log("ViewUpdate Catch Change-> Type: " + changeType + ", ", fromA, toA, changedStr, fromB, toB, insertedStr);
-
-			// 每次改动都判断是否需要重新解析全文
-			if(!isExcludeFile){
-				let reparseRegEx = /[`\$\n]/gm;
-				let newArticle = update.view.state.doc.sliceString(0, update.view.state.doc.length);
-				// console.log(this.ContentParser.HasFrontMatter, this.ContentParser.ArticleHasFrontmatter(newArticle));
-				if (reparseRegEx.test(insertedStr) || reparseRegEx.test(changedStr)) {
-					let updateLineStart = offsetToPos(update.state.doc, fromB).line;
-					this.ContentParser.reparse(newArticle, updateLineStart);
-					if (this.settings.debug) {
-						new Notice("EasyTyping: Reparse At Line: " + String(updateLineStart));
-						// this.ContentParser.print();
-					}
-				}
-				// frontmatter 是否变化
-				else if (this.ContentParser.HasFrontMatter != this.ContentParser.ArticleHasFrontmatter(newArticle)) {
-					this.ContentParser.reparse(newArticle, 0);
-					if (this.settings.debug) {
-						new Notice("EasyTyping: Reparse At Line: " + String(0));
-						// this.ContentParser.print();
-					}
-				}
-				else {
-					let changedPosition = offsetToPos(tr.startState.doc, fromA);
-					if (this.ContentParser.isChangePosNeedReparse(changedPosition)) {
-						this.ContentParser.reparse(newArticle, changedPosition.line);
-						if (this.settings.debug) {
-							new Notice("EasyTyping: Reparse At Line: " + String(changedPosition.line));
-							// this.ContentParser.print();
-						}
-					}
-				}
-				this.ContentParser.updateContent(newArticle);
-			}
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
@@ -458,9 +402,8 @@ export default class EasyTypingPlugin extends Plugin {
 				// 判断格式化文本
 				// console.log("ready to format");
 				// console.log(this.settings.AutoFormat, formatLineFlag, this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line))
-				// this.ContentParser.print();
 				if (this.settings.AutoFormat && notSelected && !isExcludeFile && (changeType!='none'||insertedStr.contains("\n")) &&
-						this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line)) {
+						getPosLineType(update.view.state, fromB)==LineType.text) {
 					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, cursor.anchor, insertedStr);
 					if (changes != null) {
 						update.view.dispatch(...changes[0]);
@@ -473,7 +416,7 @@ export default class EasyTypingPlugin extends Plugin {
 			if (this.settings.AutoFormat && !isExcludeFile && changeType == "input.paste"){
 				let updateLineStart = update.state.doc.lineAt(fromB).number;
 				let updateLineEnd = update.state.doc.lineAt(toB).number;
-				if(updateLineStart==updateLineEnd && this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, toB).line)){
+				if(updateLineStart==updateLineEnd && getPosLineType(update.view.state, toB)==LineType.text){
 					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, toB, toB, insertedStr);
 					if (changes != null) {
 						update.view.dispatch(...changes[0]);
@@ -507,6 +450,7 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	const token = tree.resolve(p, 1).name
 		// 	console.log(p-line.from, token)
 		// }
+		// return true;
 
 		// 当光标在行内代码内部
 		if (pos-line.from!=0 && tree.resolve(pos-1, 1).name.contains('inline-code')){
@@ -595,9 +539,10 @@ export default class EasyTypingPlugin extends Plugin {
 		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
+		let line = state.doc.line(lineNumber)
 
-		if (this.ContentParser.isTextLine(lineNumber-1)) {
-			let oldLine = state.doc.line(lineNumber).text;
+		if (getPosLineType(state, line.from)==LineType.text) {
+			let oldLine = line.text;
 			let newLine = this.Formater.formatLine(state, lineNumber, this.settings, oldLine.length)[0];
 			if (oldLine != newLine) {
 				editor.replaceRange(newLine, { line: lineNumber-1, ch: 0 }, { line: lineNumber-1, ch: oldLine.length });
