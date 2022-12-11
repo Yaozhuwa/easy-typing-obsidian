@@ -225,21 +225,8 @@ Obsidian 的标签需要在标签左右都添加空格（中文标点符号也�
 
 输入时的自定义转换规则优先级比插件内置的转换规则（如符号自动配对、连续全角符号转半角）低。
 ## 更新记录
-FULL changelog see `./changelog.md`
+更新记录见 `./changelog.md`
 
-### EasyTyping 5.0.0 
-重构了代码框架，使用新的接口重新实现了之前的所有功能，大大提升了本插件的性能及可拓展性，并且添加了一些新的功能。
-- 新功能与改进
-	- **增加了对移动端的支持**！
-	- **取消了行模式**，得益于新接口的使用，现在本插件能更好地识别出中文输入法的结束，无需行模式也不再会有之前的输入错乱的 Bug。现在，插件在每次中文输入结束和英文字符输入的时候进行文本的格式化。
-	- **增强了符号自动配对及增加了配对符号的快速删除功能**，光标在配对的符号之间时，按删除键会将整个配对符号全部删除，如在《|》时按删除键，会直接将两个书名号全部删除。支持更多符号对如：`“”`、`$$`、`（）` 等。
-	- 细化了对符号输入增强的功能分类并分别设置了开关：1. 符号自动配对/删除；2. 选中文本的符号编辑增强；3. 连续全角符号转半角符号；4. Obsidian 语法相关的编辑增强。详见 readme 文档。
-	- **增加了自定义编辑转换规则**，支持自定义选中文本、退格键删除文本以及打字时三种情况下的文本转换规则。（参考了 [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian)）
-	- **增加了不同区块空格策略的设定**，三种空格策略：1. 无要求；2. 软空格；3. 严格空格。软空格指当前区块可以与其他区块以标点符号分割（如 `$formula-block$，文本区块` 中公式区块和文本区块以逗号分割，该逗号就算软空格），严格空格指该区块和其他区块之间必须有空格符号分割。
-	- 现在，**每个自定义区块左右两边的空格策略都可以单独设置**，大大增强了正则区块的实用性和可玩性。详见 readme 文档。
-	- 增加了一个插入代码块的命令: "insert code block w/wo selection"。可以在选中和未选中文本的情况下自适应地插入代码块语法（为了我自己方便）
-	- **提升了性能**。
-- 功能变化
-	- 由于使用 CodeMirror 6 API，**不再支持 Legacy Editor**。
-- 致谢
-	- 感谢插件 [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian) ，通过该插件了解了CodeMirror6 的相关 API 的使用。以及该插件通用转换规则的思路也对本插件有所启发。
+## 赞助
+
+<a href="https://www.buymeacoffee.com/yaozhuwa"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=yaozhuwa&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>

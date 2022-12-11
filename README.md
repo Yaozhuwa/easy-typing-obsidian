@@ -228,19 +228,7 @@ The priority of user-defined conversion rules during input is lower than that of
 ## Change log
 FULL changelog see `./changelog.md`
 
-### EasyTyping 5.0.0 Release!
-EasyTyping 5.0.0 reconstructs the code framework, re implements all previous functions with new interfaces, greatly improves the performance and scalability of the plugin, and introduce a lot of new features.
-- Improvement and new things
-	- **Now support for mobile device!**
-	- **The line mode has been canceled.** Now the plugin can better identify the end of Chinese input. There is no need for line mode and there will be no previous bug with incorrect input. Now, the plugin formats the text at the end of each Chinese input and at the end of each English character input.
-	- **Improve automatic pairing of symbols, add feature of quick deletion of paired symbols.** When the cursor is between paired symbols, pressing the Delete key will delete all the paired symbols. For example, pressing the Delete key when "《|》" will directly delete all the 《》. More symbol pairs are supported, such as ` "`, ` $$`, ` () `, etc.
-	- The feature classification of symbol input enhancement is refined and the switches are set respectively: 1. Automatic pairing/deletion of symbols; 2. Symbol editing enhancement of selected text; 3. Continuous full width symbol to half width symbol; 4. Obsidian syntax related editing enhancements. See the readme document for details.
-	- **A user-defined editing and conversion rule** has been added, which supports user-defined text conversion rules for selected text, backspace deletion, and typing situations. (Thanks to aptend's idea [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian))
-	- **Added the setting of different block space strategies, including three space strategies: 1. No requirements; 2. Soft space; 3. Strictly space.** Soft space means that the current block can be separated from other blocks by punctuation {for example, `$formula-block$, txet-block`, formula block (`$formula-block$`) and text block (`, txet-block`) are separated by commas (`,`), and this comma is a soft space}. Strict space means that there must be a space between this block and other blocks.
-	- **The feature of custom regular expression block adds the space policy settings on the both left and right sides of the custom block**, greatly enhancing the practicality and playability of the regular block. See the readme document for details.
-	- Add a new command "insert code block w/wo selection", code block syntax can be inserted adaptively with and without text selected (for myself convenience).
-	- **Improved performance**.
-- Changes
-	- **Legacy Editor is no longer supported** because CodeMirror 6 API is used.
-- Acknowledge
-	- Thanks to [aptend/typing-transformer-obsidian](https://github.com/aptend/typing-transformer-obsidian), I learned how to use related APIs of CodeMirror 6. 
+## Support
+Thank you very much for your support!
+
+<a href="https://www.buymeacoffee.com/yaozhuwa"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=yaozhuwa&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
