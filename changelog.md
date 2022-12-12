@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- v5.1.1 2022-12-12
+  - Bug Fix
+    - 修复了当前文件路径不更新导致的检查是否为排除文件总是返回真的问题。#105
 - v5.1.0
   - New Feature
     - 增加了Tabout功能，可以在光标在行内代码中时按Tab跳出行内代码。Tabout inline code.
