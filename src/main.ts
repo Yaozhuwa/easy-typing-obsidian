@@ -133,6 +133,18 @@ export default class EasyTypingPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new EasyTypingSettingTab(this.app, this));
 
+		this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf: WorkspaceLeaf) => {
+			if (leaf.view.getViewType()=='markdown'){
+				let file = this.app.workspace.getActiveFile();
+				if (file!=null && this.CurActiveMarkdown != file.path)
+				{
+					this.CurActiveMarkdown = file.path;
+					if (this.settings.debug)
+						new Notice('new md-file open: '+file.path)
+				}
+			}
+		}));
+
 		// this.registerEvent(this.app.workspace.on('file-open', (file: TFile | null) => {
 		// 	if (file != null) {
 		// 		let editor = this.getEditor();
@@ -398,7 +410,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 				// 判断格式化文本
 				// console.log("ready to format");
-				// console.log(this.settings.AutoFormat, formatLineFlag, this.ContentParser.isTextLine(offsetToPos(update.view.state.doc, fromB).line))
+				// console.log("check is exclue file:", isExcludeFile)
 				if (this.settings.AutoFormat && notSelected && !isExcludeFile && (changeType != 'none' || insertedStr.contains("\n")) &&
 					getPosLineType(update.view.state, fromB) == LineType.text) {
 					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, cursor.anchor, insertedStr);

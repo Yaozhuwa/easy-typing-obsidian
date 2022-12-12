@@ -123,7 +123,7 @@ export class LineFormater {
                 });
             }
         }
-        console.log(retArray)
+        // console.log(retArray)
         return retArray;
     }
 
@@ -1057,7 +1057,6 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
                 return LineType.text
             }
         }
-        console.log("formula")
         return LineType.formula
     }
     else if(token.contains('code') && token.contains('block')){
