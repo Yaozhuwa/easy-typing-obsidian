@@ -1,4 +1,10 @@
 ## 更新日志 Changelog
+- v5.1.2 2022-12-29
+  - Bug Fix
+    - Fix dummy+soft link space strategy not work as expected
+    - Improve timestamp recognize, now support 12:12:12, 1:22 ...
+  - Changes
+    - bad regexp notice now only appear when debug switch is on.
 - v5.1.1 2022-12-12
   - Bug Fix
     - 修复了当前文件路径不更新导致的检查是否为排除文件总是返回真的问题。#105
