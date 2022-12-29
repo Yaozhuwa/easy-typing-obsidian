@@ -603,7 +603,7 @@ export class LineFormater {
                                 resultLine += ' ';
                                 offset += 1;
                             }
-                            if (settings.InlineLinkSmartSpace && prevTextEndSpaceState==SpaceState.none)
+                            else if (settings.InlineLinkSmartSpace && prevTextEndSpaceState==SpaceState.none)
                             {
                                 let regNoNeedSpace = /[\u4e00-\u9fa5][\u4e00-\u9fa5]/g;
                                 let charAtTextEnd = lineParts[i-1].content.charAt(lineParts[i-1].content.length-1);
@@ -637,6 +637,11 @@ export class LineFormater {
                                     resultLine += ' ';
                                     offset += 1;
                                 }
+                            }
+                            else if(!settings.InlineLinkSmartSpace && settings.InlineLinkSpaceMode>prevTextEndSpaceState){
+                                lineParts[i-1].content += ' ';
+                                resultLine += ' ';
+                                offset += 1;
                             }
                             break;
                         case InlineType.code:
@@ -954,7 +959,9 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
             }
             catch (error) {
                 isValidReg = false;
-                new Notice("EasuTyping: Bad RegExp:\n" + regItem);
+                if(this.settings.debug){
+                    new Notice("EasuTyping: Bad RegExp:\n" + regItem);
+                }
             }
 
             if (isValidReg) {
@@ -973,7 +980,8 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
     // 4. 匹配纯链接
     // retArray = matchWithReg(text, regBareLink, InlineType.barelink, retArray, true);
 
-    retArray = matchWithReg(text, /\d{2}:\d{1,2}/g, InlineType.user, retArray, true);
+    // 匹配时间戳
+    retArray = matchWithReg(text, /\d{1,2}:\d{1,2}(:\d{0,2}){0,1}/g, InlineType.user, retArray, true, SpaceState.soft, SpaceState.soft);
 
     // 4. 匹配缩写如 a.m.
     retArray = matchWithAbbr(text, InlineType.user, retArray, true);
