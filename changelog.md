@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- v5.1.3 2023-01-10
+  - Bug fix
+    - Fix #107
 - v5.1.2 2022-12-29
   - Bug Fix
     - Fix dummy+soft link space strategy not work as expected

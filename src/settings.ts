@@ -68,6 +68,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	InlineLinkSmartSpace: true,
 	UserDefinedRegSwitch: true,
 	UserDefinedRegExp: "{{.*?}}|++\n"+
+		"<.*?>|--\n" +
 		"\\[\\!.*?\\][-+]{0,1}|-+\n"+
 		"(file:///|https?://|ftp://|obsidian://|zotero://|www.)[^\\s（）《》。,，！？;；：“”‘’\\)\\(\\[\\]\\{\\}']+|++\n"+
 		"\n[a-zA-Z0-9_\\-.]+@[a-zA-Z0-9_\\-.]+|++\n"+
