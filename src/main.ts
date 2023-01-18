@@ -368,7 +368,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		if (!update.docChanged) return;
 
-		let isExcludeFile = this.checkExclude(this.CurActiveMarkdown);
+		let isExcludeFile = this.isCurrentFileExclude();
 		// console.log(this.CurActiveMarkdown, isExcludeFile)
 
 		// if (this.settings.debug) console.log("-----ViewUpdateWChange-----");
@@ -382,7 +382,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
-			let ChineseRegExp = /[\u4e00-\u9fa5【】·￥《》？：’‘”“「」、。，（）！——……0-9]/;
+			let ChineseRegExp = /^[\u4e00-\u9fa5【】·￥《》？：’‘”“「」、。，（）！——……0-9]+$/;
 			let chineseEndFlag = changeType == "input.type.compose" &&
 				cursor.anchor == cursor.head && cursor.anchor === toB &&
 				ChineseRegExp.test(insertedStr);
@@ -500,13 +500,23 @@ export default class EasyTypingPlugin extends Plugin {
 		new Notice("EasyTyping: Format Article Done!");
 	}
 
-	checkExclude(path: string): boolean {
+	isCurrentFileExclude(): boolean {
+		if (this.CurActiveMarkdown == ""){
+			let file = this.app.workspace.getActiveFile();
+			if (file!=null && this.CurActiveMarkdown != file.path)
+			{
+				this.CurActiveMarkdown = file.path;
+			}
+			else{
+				return true;
+			}
+		}
 		let excludePaths = this.settings.ExcludeFiles.split('\n');
 		for (let epath of excludePaths) {
 			if (epath.charAt(0) == '/') epath = epath.substring(1);
-			if (path == epath) return true;
+			if (this.CurActiveMarkdown == epath) return true;
 			let len = epath.length;
-			if (path.substring(0, len) == epath && (path.charAt(len) == '/' || path.charAt(len) == '\\' ||
+			if (this.CurActiveMarkdown.substring(0, len) == epath && (this.CurActiveMarkdown.charAt(len) == '/' || this.CurActiveMarkdown.charAt(len) == '\\' ||
 				epath.charAt(len - 1) == "/" || epath.charAt(len - 1) == "\\")) {
 				return true;
 			}

@@ -1,5 +1,5 @@
 # Easy-Typing Plugin For Obsidian
-[中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English
+[[中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English]
 
 **Notice: The 5.0 configuration file is incompatible with the old version. It is recommended to uninstall the old version first and then reinstall it~**
 

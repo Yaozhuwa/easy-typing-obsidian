@@ -249,16 +249,17 @@ export class LineFormater {
                             let tempIndex = reg.lastIndex - 1;
                             // console.log("prevCh, curCh, offset, tempIndex")
                             // console.log(prevCh, curCh, offset, tempIndex)
-                            if (settings.AutoCapitalMode === WorkMode.Globally) {
+                            let isSpaceDot = tempIndex-2<0 || content.substring(tempIndex-2, tempIndex)==' .';
+                            if (settings.AutoCapitalMode == WorkMode.Globally && !isSpaceDot) {
                                 lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
                                 content = lineParts[i].content;
                             }
-                            else if (isParamDefined(prevCh) && cursorLinePartIndex === i && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
+                            else if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset && tempIndex < curCh - offset && !isSpaceDot) {
                                 lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
                                 content = lineParts[i].content;
                             }
                         }
-                    }
+                    }   
 
                     // Text.1 处理中英文之间空格
                     if (settings.ChineseEnglishSpace) {
@@ -287,10 +288,11 @@ export class LineFormater {
                                 let match = reg.exec(content);
                                 if (!match) break;
                                 let tempIndex = reg.lastIndex - 1;
-                                if (settings.PunctuationSpaceMode === WorkMode.Globally) {
+                                let isSpaceDot = tempIndex-2<0 || content.substring(tempIndex-2, tempIndex)==' .';
+                                if (settings.PunctuationSpaceMode == WorkMode.Globally && !isSpaceDot) {
                                     content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
                                 }
-                                else if (isParamDefined(prevCh) && cursorLinePartIndex === i && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
+                                else if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset && tempIndex < curCh - offset && !isSpaceDot) {
                                     content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
                                 }
                             }
@@ -298,7 +300,6 @@ export class LineFormater {
                             // 单独处理冒号后文本的自动空格，为了兼容 :emoji: 格式的输入
                             let reg2 = /(:)([A-Za-z0-9_]+[ ,\.\?\\\/;'"，。？；‘“”’、\[\]\-\{\}])/gi;
                             lineParts[i].content = content.replace(reg2, "$1 $2");
-                            // console.log(lineParts[i].content);
                             content = lineParts[i].content;
 
                             let reg3 = /(:)(["'])/g;

@@ -1,5 +1,5 @@
 # Easy-Typing Plugin For Obsidian
-中文 | [English](https://github.com/Yaozhuwa/easy-typing-obsidian)
+[中文 | [English](https://github.com/Yaozhuwa/easy-typing-obsidian)]
 
 **注意：5.0 版本的配置文件和旧版本不兼容，建议先卸载旧版本，再重新安装~**
 
