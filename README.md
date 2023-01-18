@@ -225,10 +225,13 @@ The user-defined conversion rules for input are similar to those for deletion, e
 As shown in the figure above, I added a custom conversion rule. When I enter `:)`, the plugin will convert it to 😀。 This conversion can be undone.
 
 The priority of user-defined conversion rules during input is lower than that of plugin's built-in conversion rules (such as automatic symbol pairing and conversion of continuous full width symbols to half width).
-## Change log
-FULL changelog see `./changelog.md`
+## Changelog
+FULL changelog see [./changelog.md](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/changelog.md)
 
+## Acknowledgements
+- https://github.com/artisticat1/obsidian-latex-suite
+- https://github.com/aptend/typing-transformer-obsidian
 ## Support
-Thank you very much for your support!
+If you like this plugin and want to say thanks, you can buy me a coffee here!
 
 <a href="https://www.buymeacoffee.com/yaozhuwa"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=yaozhuwa&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>

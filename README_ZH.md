@@ -225,8 +225,12 @@ Obsidian 的标签需要在标签左右都添加空格（中文标点符号也�
 
 输入时的自定义转换规则优先级比插件内置的转换规则（如符号自动配对、连续全角符号转半角）低。
 ## 更新记录
-更新记录见 `./changelog.md`
+更新记录见 [./changelog.md](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/changelog.md)
 
+## 致谢
+- https://github.com/artisticat1/obsidian-latex-suite
+- https://github.com/aptend/typing-transformer-obsidian
 ## 赞助
+如果你喜欢这个插件，并对我表示感谢，你可以在这里请我喝一杯奶茶！
 
 <a href="https://www.buymeacoffee.com/yaozhuwa"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=yaozhuwa&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>

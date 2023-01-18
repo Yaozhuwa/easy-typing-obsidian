@@ -1,4 +1,11 @@
 ## 更新日志 Changelog
+- v5.1.4 2023-01-18
+  - Bug fix
+    - Fix #114
+  - Improve
+    - 重新安装插件后无需重启软件即可生效。After reinstalling the plug-in, it will take effect without restarting the software.
+  - Changed
+    - 空格后面及句首的符号`.`不再被认为是句子的结束。（相当于不会错误地将文本中的拓展名如 `.txt` 自动格式化成 `. txt`，需要`.`前面有空格）The sign `.` after a space or at the beginning of a sentence is no longer considered the end of a sentence. (That is to say this plugin will not accidentally format the extension name in the text such as `.txt` to `. Txt` automatically, requiring `.` to be preceded by a space) 
 - v5.1.3 2023-01-10
   - Bug fix
     - Fix #107
