@@ -74,7 +74,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-format-article",
-			name: "format current article",
+			name: "格式化全文 (Format current article)",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.formatArticle(editor, view);
 			},
@@ -86,7 +86,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-format-selection",
-			name: "format selected text or current line",
+			name: "格式化选中部分/当前行 (Format selected text or current line)",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.formatSelectionOrCurLine(editor, view);
 			},
@@ -98,7 +98,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-delete-blank-line",
-			name: "Delete blank lines of the selected area or whole article",
+			name: "删除选中部分/全文的多余空白行 (Delete blank lines of the selected or whole article)",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.deleteBlankLines(editor);
 			},
@@ -110,7 +110,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-insert-codeblock",
-			name: "insert code block w/wo selection",
+			name: "插入代码块 (Insert code block w/wo selection)",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.convert2CodeBlock(editor);
 			},
@@ -122,7 +122,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-format-switch",
-			name: "switch autoformat",
+			name: "切换自动格式化开关 (Switch autoformat)",
 			callback: () => this.switchAutoFormatting(),
 			hotkeys: [{
 				modifiers: ['Ctrl'],
@@ -164,6 +164,7 @@ export default class EasyTypingPlugin extends Plugin {
 	transactionFilterPlugin = (tr: Transaction): TransactionSpec | readonly TransactionSpec[] => {
 		const changes: TransactionSpec[] = [];
 		if (!tr.docChanged) return tr;
+		let selected = tr.startState.selection.asSingle().main.anchor!=tr.startState.selection.asSingle().main.head;
 
 		let changeTypeStr = getTypeStrOfTransac(tr);
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
@@ -184,6 +185,8 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 				}
 			}
+
+			if (selected) return tr;
 
 			// UserDefined Delete Rule
 			if (changeTypeStr == "delete.backward") {
@@ -576,7 +579,7 @@ export default class EasyTypingPlugin extends Plugin {
 		const tree = syntaxTree(state);
 		let start_line = 1;
 		let end_line = doc.lines;
-		let line_num = doc.lines
+		let line_num = doc.lines;
 		if (editor.somethingSelected() && editor.getSelection() != '') {
 			let selection = editor.listSelections()[0];
 			let begin = selection.anchor.line + 1;
@@ -590,13 +593,25 @@ export default class EasyTypingPlugin extends Plugin {
 			end_line = end
 		}
 
+		// if(this.settings.debug){
+		// 	let line_index = editor.getCursor().line + 1;
+		// 	let content = editor.getLine(editor.getCursor().line);
+		// 	console.log(content);
+		// 	for (let i=0;i<content.length;i++){
+		// 		let node = tree.resolve(doc.line(line_index).from+i, 1);
+		// 		console.log(i, node.name)
+		// 	}
+		// 	return;
+		// }
+		
+		
 		let delete_index: number[] = [];
 		let blank_reg = /^\s*$/;
 		let remain_next_blank = false;
 
 		if (start_line != 1) {
 			let node = tree.resolve(doc.line(start_line - 1).from, 1);
-			if (node.name.contains('list') || node.name.contains('quote')) {
+			if (node.name.contains('list') || node.name.contains('quote') || node.name.contains('blockid')) {
 				remain_next_blank = true;
 			}
 		}
@@ -622,7 +637,7 @@ export default class EasyTypingPlugin extends Plugin {
 			if (node.name.contains('hr') && delete_index[delete_index.length - 1] == i - 1) {
 				delete_index.pop()
 			}
-			else if (node.name.contains('list') || node.name.contains('quote')) {
+			else if (node.name.contains('list') || node.name.contains('quote') || node.name.contains('blockid')) {
 				remain_next_blank = true;
 			}
 			else {
