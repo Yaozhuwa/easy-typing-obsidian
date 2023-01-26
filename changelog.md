@@ -1,4 +1,12 @@
 ## 更新日志 Changelog
+- v5.1.5 2023-01-27
+  - Bug fix
+    - fix #119。修复选中文本后输入两次$时的结果与期望不同
+  - Improvement
+    - add chinese command name. 插件命令添加中文描述
+    - improve delete blank line command for blockid 删除空白行不会删除blockid后的空白行了。
+  - changed
+    - no longger add soft space between timestamp and text. 自动格式化不再要求文本和识别的时间戳之间有软空格。
 - v5.1.4 2023-01-18
   - Bug fix
     - Fix #114
