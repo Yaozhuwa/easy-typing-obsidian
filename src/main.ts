@@ -21,6 +21,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 	UserDeleteRules: ConvertRule[];
 	UserConvertRules: ConvertRule[];
+	lang: string;
 
 
 	async onload() {
@@ -72,9 +73,12 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 		}])));
 
+		this.lang = window.localStorage.getItem('language');
+		let command_name_map = this.getCommandNameMap();
+
 		this.addCommand({
 			id: "easy-typing-format-article",
-			name: "格式化全文 (Format current article)",
+			name: command_name_map.get("format_article"),
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.formatArticle(editor, view);
 			},
@@ -86,7 +90,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-format-selection",
-			name: "格式化选中部分/当前行 (Format selected text or current line)",
+			name: command_name_map.get("format_selection"),
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.formatSelectionOrCurLine(editor, view);
 			},
@@ -98,7 +102,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-delete-blank-line",
-			name: "删除选中部分/全文的多余空白行 (Delete blank lines of the selected or whole article)",
+			name: command_name_map.get("delete_blank_line"),
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.deleteBlankLines(editor);
 			},
@@ -110,7 +114,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-insert-codeblock",
-			name: "插入代码块 (Insert code block w/wo selection)",
+			name: command_name_map.get("insert_codeblock"),
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.convert2CodeBlock(editor);
 			},
@@ -122,7 +126,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.addCommand({
 			id: "easy-typing-format-switch",
-			name: "切换自动格式化开关 (Switch autoformat)",
+			name: command_name_map.get("switch_autoformat"),
 			callback: () => this.switchAutoFormatting(),
 			hotkeys: [{
 				modifiers: ['Ctrl'],
@@ -489,7 +493,6 @@ export default class EasyTypingPlugin extends Plugin {
 					return true;
 				}
 			}
-
 		}
 
 		return false;
@@ -776,6 +779,45 @@ export default class EasyTypingPlugin extends Plugin {
 		if (idx >= this.settings.userConvertRulesStrList.length || idx < 0) return;
 		this.settings.userConvertRulesStrList.splice(idx, 1);
 		this.refreshUserConvertRule();
+	}
+
+	getCommandNameMap(): Map<string, string>
+	{
+		const lang = window.localStorage.getItem('language');
+
+		let command_name_map_en = new Map([
+			["format_article", "Format current article"],
+			["format_selection", "Format selected text or current line"],
+			["delete_blank_line", "Delete blank lines of the selected or whole article"],
+			["insert_codeblock", "Insert code block w/wo selection"],
+			["switch_autoformat", "Switch autoformat"]
+		]);
+
+		let command_name_map_zh_TW = new Map([
+			["format_article", "格式化全文"],
+			["format_selection", "格式化選中部分/當前行"],
+			["delete_blank_line", "刪除選中部分/全文的多餘空白行"],
+			["insert_codeblock", "插入代碼塊"],
+			["switch_autoformat", "切換自動格式化開關"]
+		]);
+
+		let command_name_map_zh = new Map([
+			["format_article", "格式化全文"],
+			["format_selection", "格式化选中部分/当前行"],
+			["delete_blank_line", "刪除选中部分/全文的多余空白行"],
+			["insert_codeblock", "插入代码块"],
+			["switch_autoformat", "切换自动格式化开关"]
+		]);
+
+		let command_name_map = command_name_map_en;
+		if (lang == 'zh'){
+			command_name_map = command_name_map_zh;
+		}
+		else if(lang == 'zh-TW'){
+			command_name_map = command_name_map_zh_TW;
+		}
+
+		return command_name_map;
 	}
 
 	updateUserConvertRule(idx: number, before: string, after: string) {
