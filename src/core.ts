@@ -280,19 +280,24 @@ export class LineFormater {
 
                     // 标点与文本空格
                     if (settings.PunctuationSpace) {
-                        // Text.3 处理英文字母与标点间空格
+                        // Text.3 处理标点与文本空格
                         // if(settings.EnglishSpace)
                         {
-                            let reg = /([,\.;\?\!])([A-Za-z\u0401\u0451\u0410-\u044f])/gi;
+                            let reg = /([,\.;\?\!\)])([0-9A-Za-z\u0401\u0451\u0410-\u044f])|([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()/gi;
                             while (true) {
                                 let match = reg.exec(content);
                                 if (!match) break;
                                 let tempIndex = reg.lastIndex - 1;
-                                let isSpaceDot = tempIndex-2<0 || content.substring(tempIndex-2, tempIndex)==' .';
-                                if (settings.PunctuationSpaceMode == WorkMode.Globally && !isSpaceDot) {
+                                let isSpaceDot = '!.?;,'.contains(content.charAt(tempIndex-1)) && (tempIndex-2<0 || content.charAt(tempIndex-2)==' ');
+                                let isNumPuncNum = /[,.]\d/.test(content.substring(tempIndex-1, tempIndex+1)) && 
+                                                    (tempIndex-2<0 || /\d/.test(content.charAt(tempIndex-2)))
+
+                                if (settings.PunctuationSpaceMode == WorkMode.Globally && !isSpaceDot && !isNumPuncNum) {
                                     content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
                                 }
-                                else if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset && tempIndex < curCh - offset && !isSpaceDot) {
+                                else if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
+                                                                && tempIndex < curCh - offset 
+                                                                && !isSpaceDot && !isNumPuncNum) {
                                     content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
                                 }
                             }
@@ -304,24 +309,6 @@ export class LineFormater {
 
                             let reg3 = /(:)(["'])/g;
                             lineParts[i].content = content.replace(reg3, "$1 $2");
-                            content = lineParts[i].content;
-                        }
-
-                        // Text.5 处理英文括号与外部文本空格
-                        // if(settings.BraceSpace)
-                        {
-                            let reg1 = /(\))([A-Za-z0-9\u4e00-\u9fa5]+)/gi;
-                            let reg2 = /([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()/gi;
-                            lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
-                            content = lineParts[i].content;
-                        }
-
-                        // Text.6 处理数字与标点的空格
-                        // if(settings.NumberSpace)
-                        {
-                            let reg1 = /([,;\?\!\]\}])([0-9])/g;
-                            let reg2 = /([0-9])([\[\{])/g;
-                            lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                             content = lineParts[i].content;
                         }
                     }

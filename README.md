@@ -1,7 +1,12 @@
-# Easy-Typing Plugin For Obsidian
-[[中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English]
 
-**Notice: The 5.0 configuration file is incompatible with the old version. It is recommended to uninstall the old version first and then reinstall it~**
+<h1 align="center">Obsidian Easy Typing</h1>
+<div align="center">
+
+![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22easy-typing-obsidian%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json) ![latest download](https://img.shields.io/github/downloads/Yaozhuwa/easy-typing-obsidian/latest/total?style=plastic)
+
+[[中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English]
+</div>
+
 
 This plugin is designed for better typing experience in [Obsidian](https://obsidian.md). The plugin's features includes automatic formatting of text and symbol editing enhancement during editing. Auto format text standardizes the format of the document and beautifies the appearance of the document. Editing enhancement optimizes the user's editing experience.
 
@@ -9,9 +14,7 @@ This plugin is designed for better typing experience in [Obsidian](https://obsid
 
 **Automatic text formatting takes effect immediately during editing by default**. You can also turn off the option of automatic text formatting during editing in settings. You can also use the plugin command to format the full text of the current article, the current line, or the currently selected area.
 
-**Edit Enhance**. For example, entering two '￥' consecutively will become `$$`, and positioning the cursor in the middle, entering two `【` will become `[[|]]`. In many cases, Chinese users do not need to switch input methods to get a smooth writing experience in OBSIDIAN! The Edit Enhance features including 1. Automatic pairing/deletion of symbols; 2. Symbol editing enhancement of selected text; 3. Continuous full width symbol to half width symbol; 4. Obsidian syntax related editing enhancements. This plugin also supports user-defined conversion rules, which is highly playable.
-
-This plugin also supports customizable conversion rules, which is highly playable.
+**Edit Enhance**. For example, entering two '￥' consecutively will become `$$`, and positioning the cursor in the middle, entering two `【` will become `[[|]]`. In many cases, Chinese users do not need to switch input methods to get a smooth writing experience in OBSIDIAN! The Edit Enhance features including 1. Automatic pairing/deletion of symbols; 2. Symbol editing enhancement of selected text; 3. Continuous full width symbol to half width symbol; 4. Obsidian syntax related editing enhancements. **This plugin also supports customizable conversion rules, which is highly playable.**
 
 Note: This plugin is designed for the mixed input of Chinese and English in OBSIDIAN, and may not be effective for other languages.
 
@@ -231,6 +234,7 @@ FULL changelog see [./changelog.md](https://github.com/Yaozhuwa/easy-typing-obsi
 ## Acknowledgements
 - https://github.com/artisticat1/obsidian-latex-suite
 - https://github.com/aptend/typing-transformer-obsidian
+- https://marcus.se.net/obsidian-plugin-docs/
 ## Support
 If you like this plugin and want to say thanks, you can buy me a coffee here!
 

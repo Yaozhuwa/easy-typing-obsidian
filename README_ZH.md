@@ -1,7 +1,13 @@
-# Easy-Typing Plugin For Obsidian
+
+<h1 align="center">Obsidian Easy Typing</h1>
+<div align="center">
+
+![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=插件下载量&query=%24%5B%22easy-typing-obsidian%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json) ![latest download](https://img.shields.io/github/downloads/Yaozhuwa/easy-typing-obsidian/latest/total?style=plastic)
+
 [中文 | [English](https://github.com/Yaozhuwa/easy-typing-obsidian)]
 
-**注意：5.0 版本的配置文件和旧版本不兼容，建议先卸载旧版本，再重新安装~**
+</div>
+
 
 EasyTyping 是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插件，功能包含编辑时自动格式化文本和符号编辑增强。自动格式化文本对文档的格式进行规范化，并且美化文档的观感。编辑增强优化用户的编辑体验。
 
@@ -9,9 +15,7 @@ EasyTyping 是一个 [Obsidian](https://obsidian.md/) 的书写体验增强插�
 
 **文本自动格式化默认在编辑过程中即时生效**，也可以在设置中关闭编辑时自动格式化的选项。也可以通过插件命令（command）来格式化当前文章全文、当前行或者当前选中区域。
 
-**文本编辑增强功能**，比如连续输入两个 `￥` 会变成 `$$`，并将光标定位到中间，输入两个 `【` 会变成 `[[]]`。让中文用户在很多情况下无需切换输入法，在 Obsidian 得到流畅的书写体验！完整的编辑增强功能，包括 1. 符号自动配对/删除；2. 选中文本的符号编辑增强；3. 连续全角符号转半角符号；4. Obsidian 语法相关的编辑增强。本插件还支持自定义转换规则，具有很高的可玩性。
-
-本插件还支持自定义转换规则，具有很高的可玩性。
+**文本编辑增强功能**，比如连续输入两个 `￥` 会变成 `$$`，并将光标定位到中间，输入两个 `【` 会变成 `[[]]`。让中文用户在很多情况下无需切换输入法，在 Obsidian 得到流畅的书写体验！完整的编辑增强功能，包括 1. 符号自动配对/删除；2. 选中文本的符号编辑增强；3. 连续全角符号转半角符号；4. Obsidian 语法相关的编辑增强。**本插件还支持自定义转换规则，具有很高的可玩性。**
 
 注意：本插件专为 Obsidian 中的中英文混合输入设计，对其他语言不一定有效。
 
