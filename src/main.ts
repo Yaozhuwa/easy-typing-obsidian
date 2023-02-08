@@ -501,9 +501,12 @@ export default class EasyTypingPlugin extends Plugin {
 
 	formatArticle = (editor: Editor, view: MarkdownView): void => {
 		let lineCount = editor.lineCount();
+		let new_article = "";
 		for (let i = 0; i < lineCount; i++) {
-			this.formatOneLine(editor, i + 1);
+			if(i!=0) new_article+='\n';
+			new_article += this.preFormatOneLine(editor, i + 1);
 		}
+		editor.setValue(new_article);
 		new Notice("EasyTyping: Format Article Done!");
 	}
 
@@ -545,9 +548,14 @@ export default class EasyTypingPlugin extends Plugin {
 			begin = end;
 			end = temp;
 		}
-		for (; begin <= end; begin++) {
-			this.formatOneLine(editor, begin + 1);
+		console.log(begin, end)
+		let new_lines = "";
+		for (let i=begin; i <= end; i++) {
+			if(i!=begin) new_lines+='\n';
+			console.log('i+1', i+1)
+			new_lines+=this.preFormatOneLine(editor, i + 1);
 		}
+		editor.replaceRange(new_lines, {line: begin, ch:0}, {line:end, ch:editor.getLine(end).length});
 		if (selection.anchor.line < selection.head.line) {
 			editor.setSelection({ line: selection.anchor.line, ch: 0 }, { line: selection.head.line, ch: editor.getLine(selection.head.line).length });
 		}
@@ -565,13 +573,27 @@ export default class EasyTypingPlugin extends Plugin {
 
 		if (getPosLineType(state, line.from) == LineType.text) {
 			let oldLine = line.text;
-			let newLine = this.Formater.formatLine(state, lineNumber, this.settings, oldLine.length)[0];
+			let newLine = this.Formater.formatLine(state, lineNumber, this.settings, oldLine.length, 0)[0];
 			if (oldLine != newLine) {
 				editor.replaceRange(newLine, { line: lineNumber - 1, ch: 0 }, { line: lineNumber - 1, ch: oldLine.length });
 				editor.setCursor({ line: lineNumber - 1, ch: editor.getLine(lineNumber - 1).length });
 			}
 		}
 		return;
+	}
+
+	// param: lineNumber is (1-based)
+	preFormatOneLine = (editor: Editor, lineNumber: number): string => {
+		// @ts-expect-error, not typed
+		const editorView = editor.cm as EditorView;
+		let state = editorView.state;
+		let line = state.doc.line(lineNumber)
+
+		let newLine = line.text;
+		if (getPosLineType(state, line.from) == LineType.text) {
+			newLine = this.Formater.formatLine(state, lineNumber, this.settings, newLine.length, 0)[0];
+		}
+		return newLine;
 	}
 
 	deleteBlankLines = (editor: Editor): void => {

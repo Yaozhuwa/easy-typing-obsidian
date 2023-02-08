@@ -270,17 +270,52 @@ export class LineFormater {
                     }
 
                     if (settings.ChineseNumberSpace){
-                        let reg1 = /([0-9])([\u4e00-\u9fa5])/gi;
-                        let reg2 = /([\u4e00-\u9fa5])([0-9])/gi;
-                        lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
-                        content = lineParts[i].content;
+                        let reg = /([0-9])([\u4e00-\u9fa5])/g;
+                        while (true) {
+                            let match = reg.exec(content);
+                            if (!match) break;
+                            let tempIndex = reg.lastIndex - 1;
+                            console.log(prevCh, curCh, tempIndex, offset)
+                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
+                                                            && tempIndex < curCh - offset) {
+                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                            }
+                        }
+                        reg = /([\u4e00-\u9fa5])([0-9])/g;
+                        while (true) {
+                            let match = reg.exec(content);
+                            if (!match) break;
+                            let tempIndex = reg.lastIndex - 1;
+                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
+                                                            && tempIndex < curCh - offset) {
+                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                            }
+                        }
                     }
 
                     if (settings.EnglishNumberSpace){
-                        let reg1 = /([A-Za-z])(\d)/gi;
-                        let reg2 = /(\d)([A-Za-z])/gi;
-                        lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
-                        content = lineParts[i].content;
+                        let reg = /([A-Za-z])(\d)/g;
+                        while (true) {
+                            let match = reg.exec(content);
+                            if (!match) break;
+                            let tempIndex = reg.lastIndex - 1;
+                            console.log(prevCh, curCh, tempIndex, offset)
+                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
+                                                            && tempIndex < curCh - offset) {
+                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                            }
+                        }
+                        reg = /(\d)([A-Za-z])/g;
+                        while (true) {
+                            let match = reg.exec(content);
+                            if (!match) break;
+                            let tempIndex = reg.lastIndex - 1;
+                            console.log(prevCh, curCh, tempIndex, offset)
+                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
+                                                            && tempIndex < curCh - offset) {
+                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                            }
+                        }
                     }
 
                     // Text.2 处理中文间无空格
