@@ -7,6 +7,7 @@ import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac 
 import { LineFormater, getPosLineType, LineType } from './core'
 import { syntaxTree } from "@codemirror/language";
 import { Platform } from "obsidian";
+import fs from 'fs';
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
@@ -597,6 +598,18 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	deleteBlankLines = (editor: Editor): void => {
+		const basePath = (this.app.vault.adapter as any).basePath
+		let config_path = basePath + "/"+ this.app.vault.configDir+"/app.json";
+		if(this.settings.debug){
+			console.log(config_path);
+			let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
+			console.log(config);
+			// return;
+		}
+		// let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
+		// let strictLineBreaks = config.strictLineBreaks;
+		// return ;
+
 		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;

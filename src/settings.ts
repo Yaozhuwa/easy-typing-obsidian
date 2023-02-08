@@ -65,7 +65,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	PunctuationSpace: true,
 	AutoCapital: true,
 	AutoCapitalMode: WorkMode.OnlyWhenTyping,
-	PunctuationSpaceMode: WorkMode.Globally,
+	PunctuationSpaceMode: WorkMode.OnlyWhenTyping,
 	InlineCodeSpaceMode: SpaceState.soft,
 	InlineFormulaSpaceMode: SpaceState.soft,
 	InlineLinkSpaceMode: SpaceState.soft,
