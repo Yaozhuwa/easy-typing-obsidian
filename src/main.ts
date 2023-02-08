@@ -6,6 +6,7 @@ import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
 import { LineFormater, getPosLineType, LineType } from './core'
 import { syntaxTree } from "@codemirror/language";
+import { Platform } from "obsidian";
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
@@ -429,7 +430,7 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
-			if (this.settings.AutoFormat && !isExcludeFile && changeType == "input.paste") {
+			if (this.settings.AutoFormat && !isExcludeFile && changeType == "input.paste" && !Platform.isIosApp) {
 				let updateLineStart = update.state.doc.lineAt(fromB).number;
 				let updateLineEnd = update.state.doc.lineAt(toB).number;
 				if (updateLineStart == updateLineEnd && getPosLineType(update.view.state, toB) == LineType.text) {
@@ -572,7 +573,6 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 		return;
 	}
-
 
 	deleteBlankLines = (editor: Editor): void => {
 		// @ts-expect-error, not typed

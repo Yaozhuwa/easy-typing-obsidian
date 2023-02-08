@@ -27,7 +27,9 @@ export interface EasyTypingSettings {
 	AutoCapital: boolean;
 	AutoCapitalMode: WorkMode;
 	ChineseEnglishSpace: boolean;
+	EnglishNumberSpace: boolean;
 	ChineseNoSpace: boolean;
+	ChineseNumberSpace: boolean;
 	PunctuationSpace: boolean;
 	PunctuationSpaceMode: WorkMode;
 	InlineCodeSpaceMode: SpaceState;
@@ -57,6 +59,8 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	AutoFormat: true,
 	ExcludeFiles: "",
 	ChineseEnglishSpace: true,
+	ChineseNumberSpace: true,
+	EnglishNumberSpace: true,
 	ChineseNoSpace: true,
 	PunctuationSpace: true,
 	AutoCapital: true,
@@ -197,11 +201,31 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		containerEl.createEl('p', { text: 'Detailed Setting Below' });
 
 		new Setting(containerEl)
-			.setName("Space between Chinese and English/number")
-			.setDesc("在中文和英文/数字间空格")
+			.setName("Space between Chinese and English")
+			.setDesc("在中文和英文间空格")
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.ChineseEnglishSpace).onChange(async (value) => {
 					this.plugin.settings.ChineseEnglishSpace = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Space between Chinese and Number")
+			.setDesc("在中文和数字间空格")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.ChineseNumberSpace).onChange(async (value) => {
+					this.plugin.settings.ChineseNumberSpace = value;
+					await this.plugin.saveSettings();
+				});
+			});
+		
+		new Setting(containerEl)
+			.setName("Space between Engilsh and Number")
+			.setDesc("在英文和数字间空格")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.ChineseNumberSpace).onChange(async (value) => {
+					this.plugin.settings.ChineseNumberSpace = value;
 					await this.plugin.saveSettings();
 				});
 			});

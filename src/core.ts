@@ -263,8 +263,22 @@ export class LineFormater {
 
                     // Text.1 处理中英文之间空格
                     if (settings.ChineseEnglishSpace) {
-                        let reg1 = /([A-Za-z0-9,\.;\?:!])([\u4e00-\u9fa5]+)/gi;
-                        let reg2 = /([\u4e00-\u9fa5]+)([A-Za-z0-9])/gi;
+                        let reg1 = /([A-Za-z])([\u4e00-\u9fa5])/gi;
+                        let reg2 = /([\u4e00-\u9fa5])([A-Za-z])/gi;
+                        lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
+                        content = lineParts[i].content;
+                    }
+
+                    if (settings.ChineseNumberSpace){
+                        let reg1 = /([0-9])([\u4e00-\u9fa5])/gi;
+                        let reg2 = /([\u4e00-\u9fa5])([0-9])/gi;
+                        lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
+                        content = lineParts[i].content;
+                    }
+
+                    if (settings.EnglishNumberSpace){
+                        let reg1 = /([A-Za-z])(\d)/gi;
+                        let reg2 = /(\d)([A-Za-z])/gi;
                         lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
                         content = lineParts[i].content;
                     }
@@ -283,7 +297,7 @@ export class LineFormater {
                         // Text.3 处理标点与文本空格
                         // if(settings.EnglishSpace)
                         {
-                            let reg = /([,\.;\?\!\)])([0-9A-Za-z\u0401\u0451\u0410-\u044f])|([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()/gi;
+                            let reg = /([,\.;\?\!\)])([0-9A-Za-z\u0401\u0451\u0410-\u044f])|([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()|[,\.;\?:!][\u4e00-\u9fa5]/gi;
                             while (true) {
                                 let match = reg.exec(content);
                                 if (!match) break;
