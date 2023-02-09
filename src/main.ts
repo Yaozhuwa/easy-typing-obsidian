@@ -4,7 +4,7 @@ import { SelectionRange, Prec } from "@codemirror/state";
 import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString, ConvertRule } from "./settings"
 import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
-import { LineFormater, getPosLineType, LineType } from './core'
+import { LineFormater, getPosLineType, getPosLineType2, LineType } from './core'
 import { syntaxTree } from "@codemirror/language";
 import { Platform } from "obsidian";
 import fs from 'fs';
@@ -24,6 +24,10 @@ export default class EasyTypingPlugin extends Plugin {
 	UserDeleteRules: ConvertRule[];
 	UserConvertRules: ConvertRule[];
 	lang: string;
+
+	compose_begin_pos: number;
+	compose_end_pos: number;
+	compose_need_handle: boolean;
 
 
 	async onload() {
@@ -60,20 +64,35 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.CurActiveMarkdown = "";
 
+		this.compose_need_handle = false;
+
 		this.Formater = new LineFormater();
 
 		this.registerEditorExtension([
 			EditorState.transactionFilter.of(this.transactionFilterPlugin),
-			EditorView.updateListener.of(this.viewUpdatePlugin)
+			EditorView.updateListener.of(this.viewUpdatePlugin),
+			Prec.highest(EditorView.domEventHandlers({
+				"keyup": this.onKeyup
+			}))
 		]);
+		
 
-		this.registerEditorExtension(Prec.highest(keymap.of([{
-			key: "Tab",
-			run: (view: EditorView): boolean => {
-				const success = this.handleTabDown(view);
-				return success;
+		this.registerEditorExtension(Prec.highest(keymap.of([
+			{
+				key: "Tab",
+				run: (view: EditorView): boolean => {
+					const success = this.handleTabDown(view);
+					return success;
+				}
+			},
+			{
+				key: "Enter",
+				run: (view: EditorView): boolean => {
+					const success = this.handleEnter(view);
+					return success;
+				}
 			}
-		}])));
+		])));
 
 		this.lang = window.localStorage.getItem('language');
 		let command_name_map = this.getCommandNameMap();
@@ -396,6 +415,27 @@ export default class EasyTypingPlugin extends Plugin {
 				cursor.anchor == cursor.head && cursor.anchor === toB &&
 				ChineseRegExp.test(insertedStr);
 
+			if (changeType != "input.type.compose") this.compose_need_handle=false;
+			if (this.settings.AutoFormat && notSelected && !isExcludeFile &&
+				getPosLineType(update.view.state, fromB) == LineType.text){
+				if (changeType == "input.type.compose"){
+					if (this.compose_need_handle==false){
+						this.compose_begin_pos = fromB;
+						this.compose_end_pos = toB;
+						this.compose_need_handle = true;
+					}
+					else{
+						this.compose_end_pos = toB;
+						if(this.compose_begin_pos==this.compose_end_pos){
+							this.compose_need_handle = false;
+						}
+					}
+				}
+				if (chineseEndFlag) this.compose_need_handle=false;
+				// console.log("Compose", chineseEndFlag, this.compose_need_handle);
+			}
+			
+
 			// 判断每次输入结束
 			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag || changeType == 'none') {
 				// 用户自定义转化规则
@@ -498,6 +538,74 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 
 		return false;
+	}
+
+	private readonly handleEnter = (view: EditorView) => {
+		// console.log("this.settings.EnterTwice", this.settings.EnterTwice)
+		if (!this.settings.EnterTwice) return false;
+
+		const basePath = (this.app.vault.adapter as any).basePath
+		let config_path = basePath + "/"+ this.app.vault.configDir+"/app.json";
+		let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
+		let strictLineBreaks = config.strictLineBreaks || false;
+		if(!strictLineBreaks) return false;
+
+		let state = view.state;
+		let doc = state.doc
+		const tree = syntaxTree(state);
+		const s = view.state.selection;
+		if (s.ranges.length > 1) return false;
+		const pos = s.main.to;
+		let line = doc.lineAt(pos)
+
+		// console.log(line.text, getPosLineType2(state, pos))
+		// for (let p=line.from; p<=line.to; p+=1){
+		// 	const token = tree.resolve(p, 1).name
+		// 	console.log(p-line.from, token)
+		// }
+		if (/^\s*$/.test(line.text)) return false;
+		else if(getPosLineType2(state, pos)==LineType.text){
+			view.dispatch({
+				changes: {
+					from: pos,
+					to: pos,
+					insert: '\n\n'
+				},
+				selection: { anchor: pos+2 },
+				userEvent: "EasyTyping.change"
+			})
+			return true;
+		}
+
+		return false;
+	}
+
+	private readonly onKeyup = (event: KeyboardEvent, view: EditorView) => {
+		if(this.settings.debug){
+			// console.log("Keyup:", event.key, event.shiftKey, event.ctrlKey||event.metaKey);
+		}
+		this.handleEndComposeTypeKey(event, view);
+		
+	}
+
+	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
+		if (!this.settings.TryFixChineseIM) return;
+		if(['Enter'].contains(event.key) && this.settings.AutoFormat && 
+			this.compose_need_handle && !this.isCurrentFileExclude()){
+				let cursor = view.state.selection.asSingle().main;
+				if(getPosLineType(view.state, cursor.anchor) != LineType.text) return;
+				if (cursor.head != cursor.anchor) return;
+				let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
+				// console.log("inserted str", insertedStr);
+				let changes = this.Formater.formatLineOfDoc(view.state, this.settings, 
+				this.compose_begin_pos, cursor.anchor, insertedStr);
+				this.compose_need_handle = false;
+				if (changes != null) {
+					view.dispatch(...changes[0]);
+					view.dispatch(changes[1]);
+					return;
+				}
+		}
 	}
 
 	formatArticle = (editor: Editor, view: MarkdownView): void => {
@@ -618,7 +726,8 @@ export default class EasyTypingPlugin extends Plugin {
 		let start_line = 1;
 		let end_line = doc.lines;
 		let line_num = doc.lines;
-		if (editor.somethingSelected() && editor.getSelection() != '') {
+		const selected = editor.somethingSelected() && editor.getSelection() != '';
+		if (selected) {
 			let selection = editor.listSelections()[0];
 			let begin = selection.anchor.line + 1;
 			let end = selection.head.line + 1;

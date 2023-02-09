@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- v5.1.7 2023-02-09
+  - New Feature
+    - Add Experimental Feature: Strict Line breaks Mode Enter Twice (when you turn on the strict line breaks in editor settings, one enter will produce two `\n`) 增加了实验性功能：在编辑器设置了严格换行的情况下，在普通文本行使用回车键会产生两个换行符。
+    - Add Experimental Feature: Enhance Chinese Input Method （Which is designed to fix the issue #125）增加了实验性功能：中文输入法下输入英文，回车让英文上屏时自动格式化。
+    - The experimental functionality needs to be updated and turned on in the plug-in settings, with the default off. 实验性功能需要更新后在插件设置中打开，默认为关闭。
 - v5.1.6 2023-02-08
   - 插件命令正式支持中文，会根据数字OB设置的语言变化。 #116
   - 数字间的逗号和点号不再触发添加空格。 #121

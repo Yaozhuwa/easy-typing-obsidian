@@ -47,6 +47,9 @@ export interface EasyTypingSettings {
 	userSelRuleSettingsOpen: boolean;
 	userDelRuleSettingsOpen: boolean;
 	userCvtRuleSettingsOpen: boolean;
+
+	EnterTwice: boolean;
+	TryFixChineseIM: boolean;
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
@@ -85,6 +88,9 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	userSelRuleSettingsOpen: true,
 	userDelRuleSettingsOpen: true,
 	userCvtRuleSettingsOpen: true,
+
+	EnterTwice: false,
+	TryFixChineseIM: false,
 }
 
 export class EasyTypingSettingTab extends PluginSettingTab {
@@ -396,7 +402,27 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl('h2', { text: 'Debug' });
+		containerEl.createEl('h2', { text: 'Experimental Features' });
+		new Setting(containerEl)
+			.setName("Enhance Chinese Input Method")
+			.setDesc("中文输入法下，回车输入英文时自动格式化")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.TryFixChineseIM).onChange(async (value) => {
+					this.plugin.settings.TryFixChineseIM = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Strict Line breaks Mode Enter Twice")
+			.setDesc("严格换行的设置下，在普通文本行进行一次回车会产生两个换行符")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.EnterTwice).onChange(async (value) => {
+					this.plugin.settings.EnterTwice = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
 		new Setting(containerEl)
 			.setName("Print debug info in console")
 			.setDesc("在控制台输出调试信息")

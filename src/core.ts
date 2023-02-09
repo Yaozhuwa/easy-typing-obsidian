@@ -4,7 +4,9 @@ import { Annotation, EditorState, Extension, StateField, Transaction, Transactio
 import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined} from './utils'
 import { syntaxTree } from "@codemirror/language";
 
-export enum LineType { text = 'text', codeblock = 'codeblock', formula = 'formula', none = 'none', frontmatter="frontmatter" }
+export enum LineType { text = 'text', codeblock = 'codeblock', formula = 'formula', 
+                        none = 'none', frontmatter="frontmatter",
+                        quote='quote', callout_title='callout_title', list='list' }
 
 export enum SpaceState {
     none,
@@ -874,6 +876,11 @@ export class LineFormater {
 }
 
 
+export class MarkdownParser{
+    constructor(){}
+
+}
+
 function matchWithReg(text: string, regExp: RegExp, type: InlineType, inlineTypeArray: InlinePart[],
     checkArray = false, leftSpaceRe: SpaceState = SpaceState.none, rightSpaceRe: SpaceState = SpaceState.none): InlinePart[] {
     let retArray = inlineTypeArray;
@@ -1110,5 +1117,48 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
         }
         return LineType.codeblock
     }
+    return LineType.text
+}
+
+
+export function getPosLineType2(state: EditorState, pos: number):LineType {
+    const line = state.doc.lineAt(pos)
+    const tree = syntaxTree(state);
+    const token = tree.resolve(line.from, 1).name
+    if (token.contains('hmd-frontmatter')){
+        return LineType.frontmatter
+    }
+
+    if(token.contains('math')){
+        for(let p=line.from+1;p<line.to;p+=1){
+            if(!tree.resolve(p, 1).name.contains('math')){
+                return LineType.text
+            }
+        }
+        return LineType.formula
+    }
+    else if(token.contains('code') && token.contains('block')){
+        for(let p=line.from+1;p<line.to;p+=1){
+            let t = tree.resolve(p, 1).name
+            if(!(t.contains('code') && t.contains('block'))){
+                return LineType.text
+            }
+        }
+        return LineType.codeblock
+    }
+
+    for(let p=line.from;p<line.to;p+=1){
+        if(tree.resolve(p, 1).name.contains('list')){
+            return LineType.list
+        }
+        else if(tree.resolve(p, 1).name.contains('callout')){
+            return LineType.callout_title;
+        }
+    }
+
+    if(token.contains('quote')){
+        return LineType.quote;
+    }
+    
     return LineType.text
 }
