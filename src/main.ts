@@ -583,9 +583,9 @@ export default class EasyTypingPlugin extends Plugin {
 	private readonly onKeyup = (event: KeyboardEvent, view: EditorView) => {
 		if(this.settings.debug){
 			// console.log("Keyup:", event.key, event.shiftKey, event.ctrlKey||event.metaKey);
+			console.log("Keyup:", event.key);
 		}
 		this.handleEndComposeTypeKey(event, view);
-		
 	}
 
 	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
@@ -596,7 +596,7 @@ export default class EasyTypingPlugin extends Plugin {
 				if(getPosLineType(view.state, cursor.anchor) != LineType.text) return;
 				if (cursor.head != cursor.anchor) return;
 				let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
-				// console.log("inserted str", insertedStr);
+				console.log("inserted str", insertedStr);
 				let changes = this.Formater.formatLineOfDoc(view.state, this.settings, 
 				this.compose_begin_pos, cursor.anchor, insertedStr);
 				this.compose_need_handle = false;
@@ -611,11 +611,21 @@ export default class EasyTypingPlugin extends Plugin {
 	formatArticle = (editor: Editor, view: MarkdownView): void => {
 		let lineCount = editor.lineCount();
 		let new_article = "";
+		let cs = editor.getCursor();
+		let ch = 0;
 		for (let i = 0; i < lineCount; i++) {
 			if(i!=0) new_article+='\n';
-			new_article += this.preFormatOneLine(editor, i + 1);
+			if(i!=cs.line){
+				new_article += this.preFormatOneLine(editor, i + 1)[0];
+			}
+			else{
+				let newData = this.preFormatOneLine(editor, i + 1, cs.ch);
+				new_article += newData[0];
+				ch = newData[1];
+			}
 		}
 		editor.setValue(new_article);
+		editor.setCursor({line:cs.line, ch:ch});
 		new Notice("EasyTyping: Format Article Done!");
 	}
 
@@ -646,7 +656,9 @@ export default class EasyTypingPlugin extends Plugin {
 	formatSelectionOrCurLine = (editor: Editor, view: MarkdownView): void => {
 		if (!editor.somethingSelected() || editor.getSelection() === '') {
 			let lineNumber = editor.getCursor().line;
-			this.formatOneLine(editor, lineNumber + 1);
+			let newLineData = this.preFormatOneLine(editor, lineNumber + 1, editor.getCursor().ch);
+			editor.replaceRange(newLineData[0], {line: lineNumber, ch:0}, {line:lineNumber, ch:editor.getLine(lineNumber).length});
+			editor.setSelection({line:lineNumber, ch:newLineData[1]});
 			return;
 		}
 		let selection = editor.listSelections()[0];
@@ -657,12 +669,12 @@ export default class EasyTypingPlugin extends Plugin {
 			begin = end;
 			end = temp;
 		}
-		console.log(begin, end)
+		// console.log(begin, end)
 		let new_lines = "";
 		for (let i=begin; i <= end; i++) {
 			if(i!=begin) new_lines+='\n';
 			console.log('i+1', i+1)
-			new_lines+=this.preFormatOneLine(editor, i + 1);
+			new_lines+=this.preFormatOneLine(editor, i + 1)[0];
 		}
 		editor.replaceRange(new_lines, {line: begin, ch:0}, {line:end, ch:editor.getLine(end).length});
 		if (selection.anchor.line < selection.head.line) {
@@ -692,17 +704,25 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	// param: lineNumber is (1-based)
-	preFormatOneLine = (editor: Editor, lineNumber: number): string => {
+	preFormatOneLine = (editor: Editor, lineNumber: number, ch:number=-1): [string, number] => {
 		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
 		let line = state.doc.line(lineNumber)
 
 		let newLine = line.text;
-		if (getPosLineType(state, line.from) == LineType.text) {
-			newLine = this.Formater.formatLine(state, lineNumber, this.settings, newLine.length, 0)[0];
+		let newCh = 0;
+		let curCh = line.text.length;
+		if (ch!=-1){
+			curCh = ch;
 		}
-		return newLine;
+		if (getPosLineType(state, line.from) == LineType.text) {
+			let newLineData = this.Formater.formatLine(state, lineNumber, this.settings, curCh, 0);
+			newLine = newLineData[0];
+			newCh = newLineData[1];
+		}
+
+		return [newLine, newCh];
 	}
 
 	deleteBlankLines = (editor: Editor): void => {

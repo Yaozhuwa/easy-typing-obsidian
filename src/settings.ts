@@ -230,8 +230,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.setName("Space between Engilsh and Number")
 			.setDesc("在英文和数字间空格")
 			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.ChineseNumberSpace).onChange(async (value) => {
-					this.plugin.settings.ChineseNumberSpace = value;
+				toggle.setValue(this.plugin.settings.EnglishNumberSpace).onChange(async (value) => {
+					this.plugin.settings.EnglishNumberSpace = value;
 					await this.plugin.saveSettings();
 				});
 			});

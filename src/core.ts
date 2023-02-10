@@ -256,7 +256,7 @@ export class LineFormater {
                                 lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
                                 content = lineParts[i].content;
                             }
-                            else if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset && tempIndex < curCh - offset && !isSpaceDot) {
+                            else if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset && !isSpaceDot) {
                                 lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
                                 content = lineParts[i].content;
                             }
@@ -277,20 +277,19 @@ export class LineFormater {
                             let match = reg.exec(content);
                             if (!match) break;
                             let tempIndex = reg.lastIndex - 1;
-                            console.log(prevCh, curCh, tempIndex, offset)
-                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
-                                                            && tempIndex < curCh - offset) {
+                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
                                 content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                                curCh += 1;
                             }
                         }
-                        reg = /([\u4e00-\u9fa5])([0-9])/g;
+                        let reg1 = /([\u4e00-\u9fa5])([0-9])/g;
                         while (true) {
-                            let match = reg.exec(content);
+                            let match = reg1.exec(content);
                             if (!match) break;
-                            let tempIndex = reg.lastIndex - 1;
-                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
-                                                            && tempIndex < curCh - offset) {
+                            let tempIndex = reg1.lastIndex - 1;
+                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
                                 content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                                curCh += 1;
                             }
                         }
                     }
@@ -301,21 +300,19 @@ export class LineFormater {
                             let match = reg.exec(content);
                             if (!match) break;
                             let tempIndex = reg.lastIndex - 1;
-                            console.log(prevCh, curCh, tempIndex, offset)
-                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
-                                                            && tempIndex < curCh - offset) {
+                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
                                 content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                                curCh += 1;
                             }
                         }
-                        reg = /(\d)([A-Za-z])/g;
+                        let reg1 = /(\d)([A-Za-z])/g;
                         while (true) {
-                            let match = reg.exec(content);
+                            let match = reg1.exec(content);
                             if (!match) break;
-                            let tempIndex = reg.lastIndex - 1;
-                            console.log(prevCh, curCh, tempIndex, offset)
-                            if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
-                                                            && tempIndex < curCh - offset) {
+                            let tempIndex = reg1.lastIndex - 1;
+                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
                                 content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                                curCh += 1;
                             }
                         }
                     }
@@ -346,10 +343,11 @@ export class LineFormater {
                                 if (settings.PunctuationSpaceMode == WorkMode.Globally && !isSpaceDot && !isNumPuncNum) {
                                     content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
                                 }
-                                else if (isParamDefined(prevCh) && cursorLinePartIndex == i && tempIndex >= prevCh - offset 
+                                else if (isParamDefined(prevCh) && tempIndex >= prevCh - offset 
                                                                 && tempIndex < curCh - offset 
                                                                 && !isSpaceDot && !isNumPuncNum) {
                                     content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
+                                    curCh += 1;
                                 }
                             }
 
