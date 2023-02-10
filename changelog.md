@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- v5.1.8 2023-02-11
+  -  Bug fix
+     -  fix cursor move when use command to format article. #126
+     -  fix english number space settings not work.
+     -  fix english number space and chinese number space sometimes not work.
 - v5.1.7 2023-02-09
   - New Feature
     - Add Experimental Feature: Strict Line breaks Mode Enter Twice (when you turn on the strict line breaks in editor settings, one enter will produce two `\n`) 增加了实验性功能：在编辑器设置了严格换行的情况下，在普通文本行使用回车键会产生两个换行符。
