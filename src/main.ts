@@ -14,6 +14,7 @@ export default class EasyTypingPlugin extends Plugin {
 	selectionReplaceMapInitalData: [string, PairString][];
 	SelectionReplaceMap: Map<string, PairString>;
 	SymbolPairsMap: Map<string, string>;
+	halfToFullSymbolMap: Map<string, string>;
 	BasicConvRules: ConvertRule[];
 	FW2HWSymbolRules: ConvertRule[];
 	Formater: LineFormater;
@@ -41,12 +42,20 @@ export default class EasyTypingPlugin extends Plugin {
 		this.SymbolPairsMap = new Map<string, string>();
 		let SymbolPairs = ["【】", "（）", "《》", "“”", "‘’", "「」", "『』"]
 		for (let pairStr of SymbolPairs) this.SymbolPairsMap.set(pairStr.charAt(0), pairStr.charAt(1));
+
+		this.halfToFullSymbolMap = new Map([
+			[".", "。"],
+			[",", "，"],
+			['?', '？'],
+			['!', '！']
+		]); 
+
 		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"], ["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
-		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"], [' 、|', " /|"]];
+		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
-		["：：|", ":|"], ['？？|', '?|'], ['、、|', '/|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""],
+		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""],
 		["》》|", ">|"], ["《《|》", "<|"], ['《《|', "<|"]];
 		this.FW2HWSymbolRules = ruleStringList2RuleList(FW2HWSymbolRulesStrList);
 
@@ -451,6 +460,25 @@ export default class EasyTypingPlugin extends Plugin {
 								insert: rule.after.left + rule.after.right
 							},
 							selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
+							userEvent: "EasyTyping.change"
+						})
+						return;
+					}
+				}
+
+				if (this.settings.PuncRectify && chineseEndFlag && this.compose_begin_pos>1 && 
+					/[,.?!]/.test(update.view.state.doc.sliceString(this.compose_begin_pos-1, this.compose_begin_pos))){
+					let punc = update.view.state.doc.sliceString(this.compose_begin_pos-1, this.compose_begin_pos)
+					if (this.compose_begin_pos>2 && 
+						/[\s\n\w]/.test(update.view.state.doc.sliceString(this.compose_begin_pos-2, this.compose_begin_pos-1))){}
+					else{
+						update.view.dispatch({
+							changes: {
+								from: this.compose_begin_pos-1,
+								to: this.compose_begin_pos,
+								insert: this.halfToFullSymbolMap.get(punc)
+							},
+							// selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
 							userEvent: "EasyTyping.change"
 						})
 						return;

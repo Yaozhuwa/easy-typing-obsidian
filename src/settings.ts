@@ -49,6 +49,7 @@ export interface EasyTypingSettings {
 	userCvtRuleSettingsOpen: boolean;
 
 	EnterTwice: boolean;
+	PuncRectify: boolean;
 	TryFixChineseIM: boolean;
 }
 
@@ -91,6 +92,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 
 	EnterTwice: false,
 	TryFixChineseIM: false,
+	PuncRectify: false,
 }
 
 export class EasyTypingSettingTab extends PluginSettingTab {
@@ -419,6 +421,16 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.EnterTwice).onChange(async (value) => {
 					this.plugin.settings.EnterTwice = value;
+					await this.plugin.saveSettings();
+				});
+			});
+		
+		new Setting(containerEl)
+			.setName("Punc rectify")
+			.setDesc("仅在输入过程中，中文间的英文标点（,.?!）自动转换为全角（可撤销）")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.PuncRectify).onChange(async (value) => {
+					this.plugin.settings.PuncRectify = value;
 					await this.plugin.saveSettings();
 				});
 			});

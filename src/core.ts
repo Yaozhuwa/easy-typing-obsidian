@@ -967,8 +967,8 @@ function matchWithAbbr(text: string, type: InlineType, inlineTypeArray: InlinePa
  */
 function splitTextWithLinkAndUserDefined(text: string, regExps?: string): InlinePart[] {
     let retArray: InlinePart[] = [];
-    let regWikiLink = /\!?\[\[[^\[\]]*?\]\]/g;
-    let regMdLink = /\!?\[[^\[\]]*?\]\([^\s\)\(\[\]\{\}']*\)/g;
+    let regWikiLink = /\!{0,2}\[\[[^\[\]]*?\]\]/g;
+    let regMdLink = /\!{0,2}\[[^\[\]]*?\]\([^\s\)\(\[\]\{\}']*\)/g;
     // let regBareLink = /(https?:\/\/|ftp:\/\/|obsidian:\/\/|zotero:\/\/|www.)[^\s（）《》。，！？；：“”‘’\)\(\[\]\{\}']+/g;
 
     // 1. 匹配wikilink
