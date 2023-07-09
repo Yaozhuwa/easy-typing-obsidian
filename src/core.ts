@@ -135,7 +135,7 @@ export class LineFormater {
         let res = null
         if (insertedStr.contains("\n"))
         {
-            res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, fromB).ch);
+            res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, toB-1).ch);
         }
         else
         {
@@ -1094,6 +1094,11 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
     const line = state.doc.lineAt(pos)
     const tree = syntaxTree(state);
     const token = tree.resolve(line.from, 1).name
+
+    // for (let p=line.from; p<line.to; p+=1){
+    //     console.log(p-line.from, tree.resolve(p, 1).name)
+    // }
+
     if (token.contains('hmd-frontmatter')){
         return LineType.frontmatter
     }

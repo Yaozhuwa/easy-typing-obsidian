@@ -48,7 +48,7 @@ export default class EasyTypingPlugin extends Plugin {
 			[",", "，"],
 			['?', '？'],
 			['!', '！']
-		]); 
+		]);
 
 		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"], ["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
@@ -84,7 +84,7 @@ export default class EasyTypingPlugin extends Plugin {
 				"keyup": this.onKeyup
 			}))
 		]);
-		
+
 
 		this.registerEditorExtension(Prec.highest(keymap.of([
 			{
@@ -164,17 +164,28 @@ export default class EasyTypingPlugin extends Plugin {
 			}],
 		});
 
+		this.addCommand({
+			id: "easy-typing-paste-without-format",
+			name: command_name_map.get("paste_wo_format"),
+			editorCallback: (editor) => this.normalPaste(editor),
+			hotkeys: [
+			  {
+				modifiers: ["Mod", "Shift"],
+				key: "v",
+			  },
+			],
+		  });
+
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new EasyTypingSettingTab(this.app, this));
 
 		this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf: WorkspaceLeaf) => {
-			if (leaf.view.getViewType()=='markdown'){
+			if (leaf.view.getViewType() == 'markdown') {
 				let file = this.app.workspace.getActiveFile();
-				if (file!=null && this.CurActiveMarkdown != file.path)
-				{
+				if (file != null && this.CurActiveMarkdown != file.path) {
 					this.CurActiveMarkdown = file.path;
 					if (this.settings.debug)
-						new Notice('new md-file open: '+file.path)
+						new Notice('new md-file open: ' + file.path)
 				}
 			}
 		}));
@@ -198,7 +209,7 @@ export default class EasyTypingPlugin extends Plugin {
 	transactionFilterPlugin = (tr: Transaction): TransactionSpec | readonly TransactionSpec[] => {
 		const changes: TransactionSpec[] = [];
 		if (!tr.docChanged) return tr;
-		let selected = tr.startState.selection.asSingle().main.anchor!=tr.startState.selection.asSingle().main.head;
+		let selected = tr.startState.selection.asSingle().main.anchor != tr.startState.selection.asSingle().main.head;
 
 		let changeTypeStr = getTypeStrOfTransac(tr);
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
@@ -386,6 +397,13 @@ export default class EasyTypingPlugin extends Plugin {
 		return tr;
 	}
 
+	async normalPaste(editor: Editor): Promise<void> {
+		let clipboardText = await navigator.clipboard.readText();
+		if (clipboardText === null || clipboardText === "") return;
+
+		editor.replaceSelection(clipboardText);
+	}
+
 	viewUpdatePlugin = (update: ViewUpdate) => {
 
 		// console.log(tree);
@@ -424,26 +442,26 @@ export default class EasyTypingPlugin extends Plugin {
 				cursor.anchor == cursor.head && cursor.anchor === toB &&
 				ChineseRegExp.test(insertedStr);
 
-			if (changeType != "input.type.compose") this.compose_need_handle=false;
+			if (changeType != "input.type.compose") this.compose_need_handle = false;
 			if (this.settings.AutoFormat && notSelected && !isExcludeFile &&
-				getPosLineType(update.view.state, fromB) == LineType.text){
-				if (changeType == "input.type.compose"){
-					if (this.compose_need_handle==false){
+				getPosLineType(update.view.state, fromB) == LineType.text) {
+				if (changeType == "input.type.compose") {
+					if (this.compose_need_handle == false) {
 						this.compose_begin_pos = fromB;
 						this.compose_end_pos = toB;
 						this.compose_need_handle = true;
 					}
-					else{
+					else {
 						this.compose_end_pos = toB;
-						if(this.compose_begin_pos==this.compose_end_pos){
+						if (this.compose_begin_pos == this.compose_end_pos) {
 							this.compose_need_handle = false;
 						}
 					}
 				}
-				if (chineseEndFlag) this.compose_need_handle=false;
+				if (chineseEndFlag) this.compose_need_handle = false;
 				// console.log("Compose", chineseEndFlag, this.compose_need_handle);
 			}
-			
+
 
 			// 判断每次输入结束
 			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag || changeType == 'none') {
@@ -466,15 +484,15 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 				}
 
-				if (this.settings.PuncRectify && chineseEndFlag && this.compose_begin_pos>1 && 
-					/[,.?!]/.test(update.view.state.doc.sliceString(this.compose_begin_pos-1, this.compose_begin_pos))){
-					let punc = update.view.state.doc.sliceString(this.compose_begin_pos-1, this.compose_begin_pos)
-					if (this.compose_begin_pos>2 && 
-						/[\s\n\w]/.test(update.view.state.doc.sliceString(this.compose_begin_pos-2, this.compose_begin_pos-1))){}
-					else{
+				if (this.settings.PuncRectify && chineseEndFlag && this.compose_begin_pos > 1 &&
+					/[,.?!]/.test(update.view.state.doc.sliceString(this.compose_begin_pos - 1, this.compose_begin_pos))) {
+					let punc = update.view.state.doc.sliceString(this.compose_begin_pos - 1, this.compose_begin_pos)
+					if (this.compose_begin_pos > 2 &&
+						/[\s\n\w]/.test(update.view.state.doc.sliceString(this.compose_begin_pos - 2, this.compose_begin_pos - 1))) { }
+					else {
 						update.view.dispatch({
 							changes: {
-								from: this.compose_begin_pos-1,
+								from: this.compose_begin_pos - 1,
 								to: this.compose_begin_pos,
 								insert: this.halfToFullSymbolMap.get(punc)
 							},
@@ -503,16 +521,31 @@ export default class EasyTypingPlugin extends Plugin {
 				let updateLineStart = update.state.doc.lineAt(fromB).number;
 				let updateLineEnd = update.state.doc.lineAt(toB).number;
 				if (updateLineStart == updateLineEnd && getPosLineType(update.view.state, toB) == LineType.text) {
-					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, toB, toB, insertedStr);
+					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, toB, insertedStr);
 					if (changes != null) {
 						update.view.dispatch(...changes[0]);
-						update.view.dispatch(changes[1]);
+						// update.view.dispatch(changes[1]);
 						return;
 					}
 				}
 				else {
+					let all_changes: TransactionSpec[] = [];
+					let inserted_array = insertedStr.split("\n");
+					let update_start = fromB
 					for (let i = updateLineStart; i <= updateLineEnd; i++) {
-						this.formatOneLine(this.getEditor(), i);
+						let real_inserted = inserted_array[i - updateLineStart];
+						// console.log('real_inserted', real_inserted.replace(/\n/g, '\\n'))
+						// console.log('update_doc_text', update.state.doc.sliceString(update_start, update_start + real_inserted.length).replace(/\n/g, '\\n'))
+						let changes = this.Formater.formatLineOfDoc(update.state, this.settings, update_start, update_start + real_inserted.length, real_inserted);
+						// console.log('changes', changes)
+						if (changes != null) {
+							all_changes.push(...changes[0]);
+						}
+						update_start += real_inserted.length + 1;
+					}
+					if (all_changes.length > 0) {
+						update.view.dispatch(...all_changes);
+						return;
 					}
 				}
 			}
@@ -573,10 +606,10 @@ export default class EasyTypingPlugin extends Plugin {
 		if (!this.settings.EnterTwice) return false;
 
 		const basePath = (this.app.vault.adapter as any).basePath
-		let config_path = basePath + "/"+ this.app.vault.configDir+"/app.json";
+		let config_path = basePath + "/" + this.app.vault.configDir + "/app.json";
 		let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
 		let strictLineBreaks = config.strictLineBreaks || false;
-		if(!strictLineBreaks) return false;
+		if (!strictLineBreaks) return false;
 
 		let state = view.state;
 		let doc = state.doc
@@ -592,14 +625,14 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	console.log(p-line.from, token)
 		// }
 		if (/^\s*$/.test(line.text)) return false;
-		else if(getPosLineType2(state, pos)==LineType.text){
+		else if (getPosLineType2(state, pos) == LineType.text) {
 			view.dispatch({
 				changes: {
 					from: pos,
 					to: pos,
 					insert: '\n\n'
 				},
-				selection: { anchor: pos+2 },
+				selection: { anchor: pos + 2 },
 				userEvent: "EasyTyping.change"
 			})
 			return true;
@@ -609,7 +642,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	private readonly onKeyup = (event: KeyboardEvent, view: EditorView) => {
-		if(this.settings.debug){
+		if (this.settings.debug) {
 			// console.log("Keyup:", event.key, event.shiftKey, event.ctrlKey||event.metaKey);
 			console.log("Keyup:", event.key);
 		}
@@ -618,21 +651,21 @@ export default class EasyTypingPlugin extends Plugin {
 
 	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
 		if (!this.settings.TryFixChineseIM) return;
-		if(['Enter'].contains(event.key) && this.settings.AutoFormat && 
-			this.compose_need_handle && !this.isCurrentFileExclude()){
-				let cursor = view.state.selection.asSingle().main;
-				if(getPosLineType(view.state, cursor.anchor) != LineType.text) return;
-				if (cursor.head != cursor.anchor) return;
-				let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
-				console.log("inserted str", insertedStr);
-				let changes = this.Formater.formatLineOfDoc(view.state, this.settings, 
+		if (['Enter'].contains(event.key) && this.settings.AutoFormat &&
+			this.compose_need_handle && !this.isCurrentFileExclude()) {
+			let cursor = view.state.selection.asSingle().main;
+			if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
+			if (cursor.head != cursor.anchor) return;
+			let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
+			console.log("inserted str", insertedStr);
+			let changes = this.Formater.formatLineOfDoc(view.state, this.settings,
 				this.compose_begin_pos, cursor.anchor, insertedStr);
-				this.compose_need_handle = false;
-				if (changes != null) {
-					view.dispatch(...changes[0]);
-					view.dispatch(changes[1]);
-					return;
-				}
+			this.compose_need_handle = false;
+			if (changes != null) {
+				view.dispatch(...changes[0]);
+				view.dispatch(changes[1]);
+				return;
+			}
 		}
 	}
 
@@ -642,29 +675,28 @@ export default class EasyTypingPlugin extends Plugin {
 		let cs = editor.getCursor();
 		let ch = 0;
 		for (let i = 0; i < lineCount; i++) {
-			if(i!=0) new_article+='\n';
-			if(i!=cs.line){
+			if (i != 0) new_article += '\n';
+			if (i != cs.line) {
 				new_article += this.preFormatOneLine(editor, i + 1)[0];
 			}
-			else{
+			else {
 				let newData = this.preFormatOneLine(editor, i + 1, cs.ch);
 				new_article += newData[0];
 				ch = newData[1];
 			}
 		}
 		editor.setValue(new_article);
-		editor.setCursor({line:cs.line, ch:ch});
+		editor.setCursor({ line: cs.line, ch: ch });
 		new Notice("EasyTyping: Format Article Done!");
 	}
 
 	isCurrentFileExclude(): boolean {
-		if (this.CurActiveMarkdown == ""){
+		if (this.CurActiveMarkdown == "") {
 			let file = this.app.workspace.getActiveFile();
-			if (file!=null && this.CurActiveMarkdown != file.path)
-			{
+			if (file != null && this.CurActiveMarkdown != file.path) {
 				this.CurActiveMarkdown = file.path;
 			}
-			else{
+			else {
 				return true;
 			}
 		}
@@ -685,8 +717,8 @@ export default class EasyTypingPlugin extends Plugin {
 		if (!editor.somethingSelected() || editor.getSelection() === '') {
 			let lineNumber = editor.getCursor().line;
 			let newLineData = this.preFormatOneLine(editor, lineNumber + 1, editor.getCursor().ch);
-			editor.replaceRange(newLineData[0], {line: lineNumber, ch:0}, {line:lineNumber, ch:editor.getLine(lineNumber).length});
-			editor.setSelection({line:lineNumber, ch:newLineData[1]});
+			editor.replaceRange(newLineData[0], { line: lineNumber, ch: 0 }, { line: lineNumber, ch: editor.getLine(lineNumber).length });
+			editor.setSelection({ line: lineNumber, ch: newLineData[1] });
 			return;
 		}
 		let selection = editor.listSelections()[0];
@@ -699,12 +731,12 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 		// console.log(begin, end)
 		let new_lines = "";
-		for (let i=begin; i <= end; i++) {
-			if(i!=begin) new_lines+='\n';
-			console.log('i+1', i+1)
-			new_lines+=this.preFormatOneLine(editor, i + 1)[0];
+		for (let i = begin; i <= end; i++) {
+			if (i != begin) new_lines += '\n';
+			console.log('i+1', i + 1)
+			new_lines += this.preFormatOneLine(editor, i + 1)[0];
 		}
-		editor.replaceRange(new_lines, {line: begin, ch:0}, {line:end, ch:editor.getLine(end).length});
+		editor.replaceRange(new_lines, { line: begin, ch: 0 }, { line: end, ch: editor.getLine(end).length });
 		if (selection.anchor.line < selection.head.line) {
 			editor.setSelection({ line: selection.anchor.line, ch: 0 }, { line: selection.head.line, ch: editor.getLine(selection.head.line).length });
 		}
@@ -732,7 +764,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	// param: lineNumber is (1-based)
-	preFormatOneLine = (editor: Editor, lineNumber: number, ch:number=-1): [string, number] => {
+	preFormatOneLine = (editor: Editor, lineNumber: number, ch: number = -1): [string, number] => {
 		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
@@ -741,7 +773,7 @@ export default class EasyTypingPlugin extends Plugin {
 		let newLine = line.text;
 		let newCh = 0;
 		let curCh = line.text.length;
-		if (ch!=-1){
+		if (ch != -1) {
 			curCh = ch;
 		}
 		if (getPosLineType(state, line.from) == LineType.text) {
@@ -755,8 +787,8 @@ export default class EasyTypingPlugin extends Plugin {
 
 	deleteBlankLines = (editor: Editor): void => {
 		const basePath = (this.app.vault.adapter as any).basePath
-		let config_path = basePath + "/"+ this.app.vault.configDir+"/app.json";
-		if(this.settings.debug){
+		let config_path = basePath + "/" + this.app.vault.configDir + "/app.json";
+		if (this.settings.debug) {
 			console.log(config_path);
 			let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
 			console.log(config);
@@ -798,8 +830,8 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	}
 		// 	return;
 		// }
-		
-		
+
+
 		let delete_index: number[] = [];
 		let blank_reg = /^\s*$/;
 		let remain_next_blank = false;
@@ -973,8 +1005,7 @@ export default class EasyTypingPlugin extends Plugin {
 		this.refreshUserConvertRule();
 	}
 
-	getCommandNameMap(): Map<string, string>
-	{
+	getCommandNameMap(): Map<string, string> {
 		const lang = window.localStorage.getItem('language');
 
 		let command_name_map_en = new Map([
@@ -982,7 +1013,8 @@ export default class EasyTypingPlugin extends Plugin {
 			["format_selection", "Format selected text or current line"],
 			["delete_blank_line", "Delete blank lines of the selected or whole article"],
 			["insert_codeblock", "Insert code block w/wo selection"],
-			["switch_autoformat", "Switch autoformat"]
+			["switch_autoformat", "Switch autoformat"],
+			["paste_wo_format", "Paste without format"],
 		]);
 
 		let command_name_map_zh_TW = new Map([
@@ -990,7 +1022,8 @@ export default class EasyTypingPlugin extends Plugin {
 			["format_selection", "格式化選中部分/當前行"],
 			["delete_blank_line", "刪除選中部分/全文的多餘空白行"],
 			["insert_codeblock", "插入代碼塊"],
-			["switch_autoformat", "切換自動格式化開關"]
+			["switch_autoformat", "切換自動格式化開關"],
+			["paste_wo_format", "無格式化粘貼"],
 		]);
 
 		let command_name_map_zh = new Map([
@@ -998,14 +1031,15 @@ export default class EasyTypingPlugin extends Plugin {
 			["format_selection", "格式化选中部分/当前行"],
 			["delete_blank_line", "刪除选中部分/全文的多余空白行"],
 			["insert_codeblock", "插入代码块"],
-			["switch_autoformat", "切换自动格式化开关"]
+			["switch_autoformat", "切换自动格式化开关"],
+			["paste_wo_format", "无格式化粘贴"],
 		]);
 
 		let command_name_map = command_name_map_en;
-		if (lang == 'zh'){
+		if (lang == 'zh') {
 			command_name_map = command_name_map_zh;
 		}
-		else if(lang == 'zh-TW'){
+		else if (lang == 'zh-TW') {
 			command_name_map = command_name_map_zh_TW;
 		}
 

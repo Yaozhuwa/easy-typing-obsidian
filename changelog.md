@@ -1,4 +1,13 @@
 ## 更新日志 Changelog
+- v5.1.10 2023-07-09
+  - 增加了命令：无格式化粘贴，默认快捷键 Ctrl(CMD)+Shift+V，在粘贴的时候不会触发自动格式化文本。
+  - 优化了粘贴文本时自动格式化的功能
+    - 修复了在白板中，粘贴多行文本会重复粘贴的 Bug.
+    - 修复了粘贴时格式化数字和中文间空格的设置不生效的 Bug。
+  - Added command: "Paste without formatting" with the default shortcut Ctrl(CMD)+Shift+V, which allows pasting text without triggering automatic text formatting.
+  - Optimized automatic text formatting when pasting:
+    - Fixed a bug where pasting multiple lines of text in the whiteboard would result in duplicate pasting.
+    - Fixed a bug where the setting to format spaces between numbers and Chinese characters was not applied when pasting.
 - v5.1.9 2023-02-23
   - 增加了实验性功能
     - 仅在输入过程中，中文间的英文标点（,.?!）自动转换为全角（可撤销）。该功能默认关闭，需要到设置中打开。
