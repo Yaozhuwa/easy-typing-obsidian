@@ -237,4 +237,4 @@ Obsidian 的标签需要在标签左右都添加空格（中文标点符号也�
 ## 赞助
 如果你喜欢这个插件，并对我表示感谢，你可以在这里请我喝一杯奶茶！
 
-<a href="https://www.buymeacoffee.com/yaozhuwa"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=yaozhuwa&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+![donate](assets/donate.png)
