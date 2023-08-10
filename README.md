@@ -238,6 +238,6 @@ FULL changelog see [./changelog.md](https://github.com/Yaozhuwa/easy-typing-obsi
 ## Support
 If you like this plugin and want to say thanks, you can buy me a coffee here!
 
-![donate](assets/donate.png)
+<img src="assets/donate.png" width="400">
 
 <a href="https://www.buymeacoffee.com/yaozhuwa"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=yaozhuwa&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
