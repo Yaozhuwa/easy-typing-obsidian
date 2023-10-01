@@ -30,6 +30,8 @@ export default class EasyTypingPlugin extends Plugin {
 	compose_end_pos: number;
 	compose_need_handle: boolean;
 
+	onFormatArticle: boolean;
+
 
 	async onload() {
 		await this.loadSettings();
@@ -76,6 +78,8 @@ export default class EasyTypingPlugin extends Plugin {
 		this.compose_need_handle = false;
 
 		this.Formater = new LineFormater();
+
+		this.onFormatArticle = false;
 
 		this.registerEditorExtension([
 			EditorState.transactionFilter.of(this.transactionFilterPlugin),
@@ -405,6 +409,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	viewUpdatePlugin = (update: ViewUpdate) => {
+		if (this.onFormatArticle === true) return;
 
 		// console.log(tree);
 
@@ -670,6 +675,9 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	formatArticle = (editor: Editor, view: MarkdownView): void => {
+		
+		this.onFormatArticle = true;
+		
 		let lineCount = editor.lineCount();
 		let new_article = "";
 		let cs = editor.getCursor();
@@ -687,6 +695,9 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 		editor.setValue(new_article);
 		editor.setCursor({ line: cs.line, ch: ch });
+
+		this.onFormatArticle = false;
+
 		new Notice("EasyTyping: Format Article Done!");
 	}
 
