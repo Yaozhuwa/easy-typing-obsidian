@@ -365,8 +365,8 @@ export class LineFormater {
                     // Text.7 得到文本部分是否以空白符开始或结束，用来判断后续文本前后是否需要添加空格
                     let regStrictSpaceStart = /^\0?\s/;
                     let regStrictSpaceEnd = /\s\0?$/;
-                    let regStartWithSpace = /^\0?[\s,\.;\?\!，。；》？：:！~\*、（）"”\]\)\}]/;
-                    let regEndWithSpace = /[\s，。、：；？！（）~\*"《“\[\(\{]\0?$/;
+                    let regStartWithSpace = /^\0?[\s,\.;\?\!，。；》？：:！~\*、（）"”\[\]\)\{\}]/;
+                    let regEndWithSpace = /[\s，。、：；？！（）~\*"《“\[\]\(\{\}]\0?$/;
                     let txtStartSpaceSate = SpaceState.none;
                     let txtEndSpaceState = SpaceState.none;
                     if (regStartWithSpace.test(content)) {

@@ -7,7 +7,23 @@ import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac 
 import { LineFormater, getPosLineType, getPosLineType2, LineType } from './core'
 import { syntaxTree } from "@codemirror/language";
 import { Platform } from "obsidian";
-import fs from 'fs';
+declare module "obsidian" {
+	// add type safety for the undocumented methods, 
+	// COPY FROM https://github.com/chrisgrieser/obsidian-smarter-md-hotkeys/tree/master
+	// interface Editor {
+	// 	cm: {
+	// 		findWordAt?: (pos: EditorPosition) => EditorSelection;
+	// 		state?: { wordAt: (offset: number) => { from: number, to: number} };
+	// 	};
+	// }
+	// interface App {
+	// 	commands: { executeCommandById: (commandID: string) => void };
+	// }
+	interface Vault {
+		setConfig: (config: string, newValue: boolean) => void;
+		getConfig: (config: string) => boolean;
+	}
+}
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
@@ -605,10 +621,11 @@ export default class EasyTypingPlugin extends Plugin {
 		// console.log("this.settings.EnterTwice", this.settings.EnterTwice)
 		if (!this.settings.EnterTwice) return false;
 
-		const basePath = (this.app.vault.adapter as any).basePath
-		let config_path = basePath + "/" + this.app.vault.configDir + "/app.json";
-		let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
-		let strictLineBreaks = config.strictLineBreaks || false;
+		// const basePath = (this.app.vault.adapter as any).basePath
+		// let config_path = basePath + "/" + this.app.vault.configDir + "/app.json";
+		// let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
+		// let strictLineBreaks = config.strictLineBreaks || false;
+		let strictLineBreaks = this.app.vault.getConfig("strictLineBreaks");
 		if (!strictLineBreaks) return false;
 
 		let state = view.state;
@@ -789,14 +806,10 @@ export default class EasyTypingPlugin extends Plugin {
 		const basePath = (this.app.vault.adapter as any).basePath
 		let config_path = basePath + "/" + this.app.vault.configDir + "/app.json";
 		if (this.settings.debug) {
-			console.log(config_path);
-			let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
-			console.log(config);
+			console.log(this.app.vault.getConfig("strictLineBreaks"));
 			// return;
 		}
-		// let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
-		// let strictLineBreaks = config.strictLineBreaks;
-		// return ;
+		let strictLineBreaks = this.app.vault.getConfig("strictLineBreaks");
 
 		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
