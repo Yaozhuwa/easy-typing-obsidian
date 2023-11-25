@@ -652,10 +652,15 @@ export class LineFormater {
                                     // console.log("charOfAliasBegin",charOfAliasBegin)
                                     let beginIndex = 2;
                                     if(lineParts[i].content.charAt(0)==='!') beginIndex=3;
+
                                     if (charOfAliasBegin!=-1)
                                     {
                                         beginIndex = charOfAliasBegin+1;
                                     }
+                                    else if(lineParts[i].content.charAt(beginIndex)=='#'){
+                                        beginIndex += 1;
+                                    }
+                                    
                                     charAtLinkBegin = lineParts[i].content.charAt(beginIndex);
                                     // console.log("beginIndex", beginIndex);
                                     if(charAtLinkBegin==']') break;      
