@@ -76,6 +76,8 @@ export default class EasyTypingPlugin extends Plugin {
 		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""],
 		["》》|", ">|"], ["《《|》", "<|"], ['《《|', "<|"]];
 		this.FW2HWSymbolRules = ruleStringList2RuleList(FW2HWSymbolRulesStrList);
+		let fw2hw_rule_0: ConvertRule = {before:{left:'｜｜', right:''}, after:{left:'|', right:''}};
+		this.FW2HWSymbolRules.push(fw2hw_rule_0)
 
 		let DeleteRulesStrList: Array<[string, string]> = [["$|$", "|"], ['```|\n```', '|'], ['==|==', '|'], ['$$\n|\n$$', "|"]];
 		this.IntrinsicDeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
