@@ -68,7 +68,7 @@ export default class EasyTypingPlugin extends Plugin {
 			['!', '！']
 		]);
 
-		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
+		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],['``|','`|`'],["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"], ["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
