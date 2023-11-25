@@ -179,7 +179,7 @@ export class LineFormater {
             // lineParts = this.parseLine(line);
             lineParts = this.parseLineWithSyntaxTree(state, lineNum);
         }
-        // if (settings.debug) console.log("line parts\n", lineParts);
+        if (settings.debug) console.log("line parts\n", lineParts);
 
         // 备份原来的lineParts, 深拷贝
         let linePartsOrigin = JSON.parse(JSON.stringify(lineParts));
@@ -336,7 +336,7 @@ export class LineFormater {
                                 let match = reg.exec(content);
                                 if (!match) break;
                                 let tempIndex = reg.lastIndex - 1;
-                                let isSpaceDot = '!.?;,'.contains(content.charAt(tempIndex-1)) && (tempIndex-2<0 || content.charAt(tempIndex-2)==' ');
+                                let isSpaceDot = '!.?;,'.contains(content.charAt(tempIndex-1)) && ((tempIndex-2<0 && i==0) || content.charAt(tempIndex-2)==' ');
                                 let isNumPuncNum = /[,.]\d/.test(content.substring(tempIndex-1, tempIndex+1)) && 
                                                     (tempIndex-2<0 || /\d/.test(content.charAt(tempIndex-2)))
 
