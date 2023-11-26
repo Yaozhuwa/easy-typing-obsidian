@@ -18,6 +18,8 @@ This plugin is designed for better typing experience in [Obsidian](https://obsid
 
 Note: This plugin is designed for the mixed input of Chinese and English in OBSIDIAN, and may not be effective for other languages.
 
+- My Tutorial Video: [Obsidian 插件 Easy Typing：极大地提升中文用户在OB中的编辑体验](https://www.bilibili.com/video/BV1jg411n7A4/?vd_source=4bcadf0e511a56e11226e9608517ac91)
+
 # Core Features
 ## 1. Text Autoformatting
 Automatic text formatting provides the ability to capitalize the first letter. In addition, automatic text formatting can automatically add spaces to specific parts of each line during the input process according to the rules set by the user, such as spaces between Chinese and English, spaces between text and English punctuation, spaces between text and inline formula/inline code/wiki link, spaces between text blocks and user-defined regular matching blocks, etc.

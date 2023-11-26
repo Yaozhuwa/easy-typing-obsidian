@@ -1,4 +1,11 @@
 ## 更新日志 Changelog
+- v5.1.11 2023-11-26
+  - 连续全角转半角的功能：增加了连续输入两个全角竖线转半角竖线的规则 （#145， #113）
+  - 基础输入增强：增加`！【【|`转`![[|]]`，修复了某些`¥¥|`不能转`$|$`的问题（win和Mac符号不同）。(#172,#170)
+  - 现在以更好的方式读取obsidian的`strict line`设置，应该可以在移动端也可以识别~ （#133）
+  - 修复了句子中某些分段后面的半角标点与后面的文本不空格的问题
+  - 修复无别名当前页面链接的智能空格bug（#142）
+  - merge pull request to fix formatArticle method fail because of hooking viewUpdate (#175, thanks to [eventlOwOp](https://github.com/eventlOwOp))
 - v5.1.10 2023-07-09
   - 增加了命令：无格式化粘贴，默认快捷键 Ctrl(CMD)+Shift+V，在粘贴的时候不会触发自动格式化文本。
   - 优化了粘贴文本时自动格式化的功能
