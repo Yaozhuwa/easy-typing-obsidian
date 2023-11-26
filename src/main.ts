@@ -69,7 +69,7 @@ export default class EasyTypingPlugin extends Plugin {
 		]);
 
 		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],['``|','`|`'],["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
-		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"], ["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
+		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
