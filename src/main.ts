@@ -68,12 +68,12 @@ export default class EasyTypingPlugin extends Plugin {
 			['!', '！']
 		]);
 
-		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],['``|','`|`'],["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
+		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
-		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""],
+		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""], ["‘‘|’", "'|'"], ["‘’|’", "'|'"],
 		["》》|", ">|"], ["《《|》", "<|"], ['《《|', "<|"]];
 		this.FW2HWSymbolRules = ruleStringList2RuleList(FW2HWSymbolRulesStrList);
 		let fw2hw_rule_0: ConvertRule = {before:{left:'｜｜', right:''}, after:{left:'|', right:''}};
@@ -82,7 +82,7 @@ export default class EasyTypingPlugin extends Plugin {
 		let DeleteRulesStrList: Array<[string, string]> = [["$|$", "|"], ['```|\n```', '|'], ['==|==', '|'], ['$$\n|\n$$', "|"]];
 		this.IntrinsicDeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
 
-		// let
+		// let 
 		let autoPairRulesPatchStrList: Array<[string, string]> = [["【】|】", "【】|"], ["（）|）", "（）|"],
 		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"]
 		];
@@ -460,7 +460,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
-			let ChineseRegExp = /^[\u4e00-\u9fa5【】·￥《》？：’‘”“「」、。，（）！——……0-9]+$/;
+			let ChineseRegExp = /^[\u4e00-\u9fa5【】·￥《》？：；’‘”“「」、。，（）！——……0-9]+$/;
 			let chineseEndFlag = changeType == "input.type.compose" &&
 				cursor.anchor == cursor.head && cursor.anchor === toB &&
 				ChineseRegExp.test(insertedStr);
