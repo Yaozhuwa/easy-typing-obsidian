@@ -162,7 +162,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Tabout")
-			.setDesc("Tabout inline code. Tab跳出行内代码块")
+			.setDesc("Tabout inline code or paired symbols(when selected). Tab 跳出行内代码块或配对符号块(选中时)")
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.Tabout)
 					.onChange(async (value) => {

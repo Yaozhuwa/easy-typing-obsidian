@@ -657,7 +657,7 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 			}
 		}
-		
+
 
 		return false;
 	}
