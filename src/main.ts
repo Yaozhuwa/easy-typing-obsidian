@@ -308,6 +308,20 @@ export default class EasyTypingPlugin extends Plugin {
 				// =========== basic convert rules ============
 				// not support undo and redo
 				if (this.settings.BaseObEditEnhance) {
+					// 处理英文标点下``|的情况，光标自动跳转到中间
+					console.log('testttt', toA-tr.startState.doc.lineAt(toA).from)
+					if (insertedStr === '`' && 
+						toA-tr.startState.doc.lineAt(toA).from>2 && 
+						tr.startState.sliceDoc(toA-1, toA) === '`'
+						&& tr.startState.sliceDoc(toA-2, toA-1) != '`'){
+						changes.push({
+							changes: {from:toA, insert:'`'},
+							selection: { anchor: toA }, userEvent: "EasyTyping.change" 
+						});
+						tr = tr.startState.update(...changes);
+						return tr;
+					}
+					
 					for (let rule of this.BasicConvRules) {
 						if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
 						// 处理文档第 0 行
