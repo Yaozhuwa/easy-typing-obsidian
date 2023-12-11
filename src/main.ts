@@ -3,7 +3,7 @@ import { EditorState, Extension, StateField, Transaction, TransactionSpec, Text 
 import { SelectionRange, Prec } from "@codemirror/state";
 import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString, ConvertRule } from "./settings"
 import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
-import { posToOffset, offsetToPos, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
+import { posToOffset, offsetToPos, string2pairstring, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
 import { LineFormater, getPosLineType, getPosLineType2, LineType } from './core'
 import { syntaxTree } from "@codemirror/language";
 import { Platform } from "obsidian";
@@ -47,7 +47,7 @@ export default class EasyTypingPlugin extends Plugin {
 	compose_need_handle: boolean;
 
 	onFormatArticle: boolean;
-
+	TaboutPairStrs: PairString[];
 
 	async onload() {
 		await this.loadSettings();
@@ -87,6 +87,11 @@ export default class EasyTypingPlugin extends Plugin {
 		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"]
 		];
 		this.IntrinsicAutoPairRulesPatch = ruleStringList2RuleList(autoPairRulesPatchStrList);
+
+		let TaboutPairStrs = ["【|】", "（|）", "《|》", "“|”", "‘|’", 
+						   "「|」", "『|』", "'|'", "\"|\"", "$$|$$", '$|$', '__|__', '_|_',
+							"==|==", "~~|~~", "**|**", '*|*', "[[|]]", '[|]',"{|}", "(|)", "<|>"];
+		this.TaboutPairStrs = TaboutPairStrs.map((s:string)=>string2pairstring(s));
 
 		this.refreshUserDeleteRule();
 		this.refreshUserConvertRule();
@@ -309,7 +314,6 @@ export default class EasyTypingPlugin extends Plugin {
 				// not support undo and redo
 				if (this.settings.BaseObEditEnhance) {
 					// 处理英文标点下``|的情况，光标自动跳转到中间
-					console.log('testttt', toA-tr.startState.doc.lineAt(toA).from)
 					if (insertedStr === '`' && 
 						toA-tr.startState.doc.lineAt(toA).from>2 && 
 						tr.startState.sliceDoc(toA-1, toA) === '`'
@@ -321,7 +325,7 @@ export default class EasyTypingPlugin extends Plugin {
 						tr = tr.startState.update(...changes);
 						return tr;
 					}
-					
+
 					for (let rule of this.BasicConvRules) {
 						if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
 						// 处理文档第 0 行
@@ -634,6 +638,26 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 		}
+
+		// 当光标在行内代码外部，并在选中文本的情况下，tab将会跳出到pairstring的外部
+		let selection = view.state.selection.asSingle().main;
+		let selected = selection.anchor != selection.head;
+		if (selected){
+			let new_anchor = selection.anchor<selection.head?selection.anchor:selection.head;
+			let new_head = selection.anchor>selection.head?selection.anchor:selection.head;
+			console.log("selection", selection.anchor, selection.head)
+
+			for (let pstr of this.TaboutPairStrs){
+				if (doc.sliceString(new_anchor-pstr.left.length, new_anchor) == pstr.left &&
+					doc.sliceString(new_head, new_head+pstr.right.length) == pstr.right){
+						view.dispatch({
+							selection: { anchor: new_head+pstr.right.length, head: new_head+pstr.right.length }
+						})
+						return true;
+					}
+			}
+		}
+		
 
 		return false;
 	}

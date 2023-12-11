@@ -25,7 +25,7 @@ export function getTypeStrOfTransac(tr: Transaction): string {
 	return "none"
 }
 
-function string2pairstring(s: string):PairString{
+export function string2pairstring(s: string):PairString{
 	let cursorIdx = s.indexOf("|");
 	let left = s.substring(0, cursorIdx);
 	let right = s.substring(cursorIdx+1);
