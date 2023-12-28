@@ -1145,14 +1145,14 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
         
         // 然后判断是否为代码块
         let is_code_block:boolean = false;
+        let reg_code_begin = /^>+ ```/;
+        let reg_code_end = /^>+ ```$/;
         for (let l=callout_start_line+1; l<=line_number; l+=1){
             let l_line = state.doc.line(l)
-            let reg_code_begin = /^>+ ```/;
-            let reg_code_end = /^>+ ```$/;
             if(is_code_block && reg_code_end.test(l_line.text)){
                 is_code_block = false;
             }
-            if(!is_code_block && reg_code_begin.test(l_line.text)){
+            else if(!is_code_block && reg_code_begin.test(l_line.text)){
                 is_code_block = true;
             }
         }
