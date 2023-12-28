@@ -51,6 +51,7 @@ export interface EasyTypingSettings {
 	EnterTwice: boolean;
 	PuncRectify: boolean;
 	TryFixChineseIM: boolean;
+	FixMacOSContextMenu: boolean;
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
@@ -93,6 +94,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	EnterTwice: false,
 	TryFixChineseIM: false,
 	PuncRectify: false,
+	FixMacOSContextMenu: false,
 }
 
 export class EasyTypingSettingTab extends PluginSettingTab {
@@ -403,8 +405,18 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					})
 			);
-
+		
 		containerEl.createEl('h2', { text: 'Experimental Features' });
+		new Setting(containerEl)
+			.setName("Fix MacOS context-menu cursor position(Need to restart Obsidian)")
+			.setDesc("修复 MacOS 鼠标右键呼出菜单时光标跳到下一行的问题(需要重启Obsidian生效)")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.FixMacOSContextMenu).onChange(async (value) => {
+					this.plugin.settings.FixMacOSContextMenu = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
 		new Setting(containerEl)
 			.setName("Enhance Chinese Input Method")
 			.setDesc("中文输入法下，回车输入英文时自动格式化")

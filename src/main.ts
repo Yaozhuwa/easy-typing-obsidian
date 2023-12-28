@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TFile } from 'obsidian';
+import { App, Editor, Menu, EditorSelection, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TFile } from 'obsidian';
 import { EditorState, Extension, StateField, Transaction, TransactionSpec, Text } from '@codemirror/state';
 import { SelectionRange, Prec } from "@codemirror/state";
 import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString, ConvertRule } from "./settings"
@@ -216,6 +216,23 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 		}));
+
+		//判断当前是否为MAC系统
+		if (Platform.isMacOS && this.settings.FixMacOSContextMenu) {
+			// 检测鼠标右键呼出菜单的事件
+			this.registerEvent(this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
+				// console.log('editor-menu', menu, editor, view);
+				if (editor.listSelections().length != 1) return;
+				let selection = editor.listSelections()[0];
+				let selected = editor.getSelection();
+				// console.log('selected', selected, selected=='\n');
+				// console.log('selection', selection);
+				if (selected=='\n')
+				{
+					editor.setSelection(selection.anchor, selection.anchor);
+				}
+			}));
+		}
 
 		// this.registerEvent(this.app.workspace.on('file-open', (file: TFile | null) => {
 		// 	if (file != null) {
