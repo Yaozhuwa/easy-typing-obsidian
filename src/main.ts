@@ -48,6 +48,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 	onFormatArticle: boolean;
 	TaboutPairStrs: PairString[];
+	saved_table_viewupdate: ViewUpdate;
 
 	async onload() {
 		await this.loadSettings();
@@ -103,6 +104,8 @@ export default class EasyTypingPlugin extends Plugin {
 		this.Formater = new LineFormater();
 
 		this.onFormatArticle = false;
+
+		this.saved_table_viewupdate = null;
 
 		this.registerEditorExtension([
 			EditorState.transactionFilter.of(this.transactionFilterPlugin),
@@ -462,6 +465,54 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	viewUpdatePlugin = (update: ViewUpdate) => {
+		
+		if (this.onFormatArticle === true) return;
+
+		// console.log(tree);
+		// if (this.settings.debug) console.log("-------ViewUpdate---------");
+		let notSelected = true;
+		let mainSelection = update.view.state.selection.asSingle().main;
+		if (mainSelection.anchor != mainSelection.head) notSelected = false;
+		// ------ Debug ------------
+		// if (notSelected){
+		// 	// this.Formater.parseLineWithSyntaxTree(update.state, update.state.doc.lineAt(mainSelection.anchor).number);
+		// 	const tree = syntaxTree(update.state);
+		// 	let pos = mainSelection.anchor;
+		// 	let node = tree.resolve(pos, 1);
+		// 	console.log(node.name, node.from, node.to, update.state.doc.sliceString(node.from, node.to));
+		// }
+
+		if (!update.docChanged) return;
+		// console.log('------------- viewUpdatePlugin -------------')
+		let isExcludeFile = this.isCurrentFileExclude();
+		// console.log(this.CurActiveMarkdown, isExcludeFile)
+
+		// if (this.settings.debug) console.log("-----ViewUpdateWChange-----");
+		let tr = update.transactions[0]
+		let changeType = getTypeStrOfTransac(tr);
+
+		let need_update:boolean = true;
+		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
+			let insertedStr = inserted.sliceString(0);
+			let changedStr = tr.startState.doc.sliceString(fromA, toA);
+			if (this.settings.debug)
+				console.log("ViewUpdate Catch Change-> Type: " + changeType + ", ", 'fromA-toA-changedStr:', fromA, toA, changedStr, "fromB-toB-insertedStr:", fromB, toB, insertedStr);
+			if (changeType!='none' && getPosLineType(update.view.state, fromB) == LineType.table){
+				this.saved_table_viewupdate = update;
+				if (this.settings.debug) console.log('save table viewupdate, and skip viewUpdatePlugin');
+				need_update = false;
+			}
+		});
+
+		if (!need_update) return;
+		if (this.saved_table_viewupdate != null && changeType == 'none'){
+			this.viewUpdateFn(this.saved_table_viewupdate);
+			this.saved_table_viewupdate = null;
+		}
+		this.viewUpdateFn(update);
+	}
+
+	viewUpdateFn = (update: ViewUpdate) => {
 		if (this.onFormatArticle === true) return;
 
 		// console.log(tree);
@@ -487,11 +538,12 @@ export default class EasyTypingPlugin extends Plugin {
 		// if (this.settings.debug) console.log("-----ViewUpdateWChange-----");
 		let tr = update.transactions[0]
 		let changeType = getTypeStrOfTransac(tr);
+
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
 			let insertedStr = inserted.sliceString(0);
 			let changedStr = tr.startState.doc.sliceString(fromA, toA);
-			if (this.settings.debug)
-				console.log("ViewUpdate Catch Change-> Type: " + changeType + ", ", fromA, toA, changedStr, fromB, toB, insertedStr);
+			// if (this.settings.debug)
+			// 	console.log("ViewUpdate Catch Change-> Type: " + changeType + ", ", 'fromA-toA-changedStr:', fromA, toA, changedStr, "fromB-toB-insertedStr:", fromB, toB, insertedStr);
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
@@ -502,7 +554,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			if (changeType != "input.type.compose") this.compose_need_handle = false;
 			if (this.settings.AutoFormat && notSelected && !isExcludeFile &&
-				getPosLineType(update.view.state, fromB) == LineType.text) {
+				(getPosLineType(update.view.state, fromB) == LineType.text || getPosLineType(update.view.state, fromB) == LineType.table)) {
 				if (changeType == "input.type.compose") {
 					if (this.compose_need_handle == false) {
 						this.compose_begin_pos = fromB;
@@ -564,14 +616,18 @@ export default class EasyTypingPlugin extends Plugin {
 				// 判断格式化文本
 				// console.log("ready to format");
 				// console.log("check is exclue file:", isExcludeFile)
-				if (this.settings.AutoFormat && notSelected && !isExcludeFile && (changeType != 'none' || insertedStr.contains("\n")) &&
-					getPosLineType(update.view.state, fromB) == LineType.text) {
-					let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, cursor.anchor, insertedStr);
-					if (changes != null) {
-						update.view.dispatch(...changes[0]);
-						update.view.dispatch(changes[1]);
-						return;
+				if (this.settings.AutoFormat && notSelected && !isExcludeFile &&
+					 (changeType != 'none' || insertedStr.contains("\n"))) {
+					
+					if (getPosLineType(update.view.state, fromB) == LineType.text || getPosLineType(update.view.state, fromB) == LineType.table){
+						let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, cursor.anchor, insertedStr);
+						if (changes != null) {
+							update.view.dispatch(...changes[0]);
+							update.view.dispatch(changes[1]);
+							return;
+						}
 					}
+					
 				}
 			}
 
@@ -837,7 +893,7 @@ export default class EasyTypingPlugin extends Plugin {
 		let state = editorView.state;
 		let line = state.doc.line(lineNumber)
 
-		if (getPosLineType(state, line.from) == LineType.text) {
+		if (getPosLineType(state, line.from) == LineType.text || getPosLineType(state, line.from) == LineType.table) {
 			let oldLine = line.text;
 			let newLine = this.Formater.formatLine(state, lineNumber, this.settings, oldLine.length, 0)[0];
 			if (oldLine != newLine) {
@@ -861,7 +917,7 @@ export default class EasyTypingPlugin extends Plugin {
 		if (ch != -1) {
 			curCh = ch;
 		}
-		if (getPosLineType(state, line.from) == LineType.text) {
+		if (getPosLineType(state, line.from) == LineType.text || getPosLineType(state, line.from) == LineType.table) {
 			let newLineData = this.Formater.formatLine(state, lineNumber, this.settings, curCh, 0);
 			newLine = newLineData[0];
 			newCh = newLineData[1];

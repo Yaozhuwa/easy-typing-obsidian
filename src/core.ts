@@ -6,7 +6,7 @@ import { syntaxTree } from "@codemirror/language";
 
 export enum LineType { text = 'text', codeblock = 'codeblock', formula = 'formula', 
                         none = 'none', frontmatter="frontmatter",
-                        quote='quote', callout_title='callout_title', list='list' }
+                        quote='quote', callout_title='callout_title', list='list', table= 'table' }
 
 export enum SpaceState {
     none,
@@ -1105,14 +1105,18 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
     //     console.log(p-line.from, tree.resolve(p, 1).name)
     // }
 
+    if (token.contains('table')){
+        return LineType.table;
+    }
+
     if (token.contains('hmd-frontmatter')){
-        return LineType.frontmatter
+        return LineType.frontmatter;
     }
 
     if(token.contains('math')){
         for(let p=line.from+1;p<line.to;p+=1){
             if(!tree.resolve(p, 1).name.contains('math')){
-                return LineType.text
+                return LineType.text;
             }
         }
         return LineType.formula
