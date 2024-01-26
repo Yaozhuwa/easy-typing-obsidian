@@ -268,7 +268,7 @@ export default class EasyTypingPlugin extends Plugin {
 			// }
 			// ========== Selection Replace ============
 			if (this.settings.SelectionEnhance) {
-				if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && fromB + 1 === toB) {
+				if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB)||insertedStr=='——'||insertedStr=='……')) {
 					if (this.SelectionReplaceMap.has(insertedStr)) {
 						changes.push({ changes: { from: fromA, insert: this.SelectionReplaceMap.get(insertedStr)?.left }, userEvent: "EasyTyping.change" })
 						changes.push({ changes: { from: toA, insert: this.SelectionReplaceMap.get(insertedStr)?.right }, userEvent: "EasyTyping.change" })

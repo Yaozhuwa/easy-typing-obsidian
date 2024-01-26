@@ -493,8 +493,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						let left = replaceLeftString.inputEl.value;
 						let right = replaceRightString.inputEl.value;
 						if (trigger && (left || right)) {
-							if(trigger.length>1){
-								new Notice("Inlvalid trigger, trigger must be a symbol of length 1");
+							if(trigger.length!=1 && trigger!="——" && trigger!="……"){
+								new Notice("Inlvalid trigger, trigger must be a symbol of length 1 or symbol ——, ……");
 								return;
 							}
 							if (this.plugin.addUserSelectionRepRule(trigger, left, right)){
