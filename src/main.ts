@@ -968,7 +968,6 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	return;
 		// }
 
-
 		let delete_index: number[] = [];
 		let blank_reg = /^\s*$/;
 		let remain_next_blank = false;
