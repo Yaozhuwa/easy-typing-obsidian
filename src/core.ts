@@ -171,15 +171,11 @@ export class LineFormater {
         let regNull = /^\s*$/g;
         if (regNull.test(line)) return [line, curCh, []];
         // 1. 划分一行文字的内部不同模块区域
-        let lineParts: InlinePart[];
-        if (settings.UserDefinedRegSwitch) {
-            // lineParts = this.parseLine(line, settings.UserDefinedRegExp);
-            lineParts = this.parseLineWithSyntaxTree(state, lineNum, settings.UserDefinedRegExp);
-        }
-        else {
-            // lineParts = this.parseLine(line);
-            lineParts = this.parseLineWithSyntaxTree(state, lineNum);
-        }
+
+        let lineParts = settings.UserDefinedRegSwitch
+        ? this.parseLineWithSyntaxTree(state, lineNum, settings.UserDefinedRegExp)
+        : this.parseLineWithSyntaxTree(state, lineNum);
+        
         if (settings.debug) console.log("line parts\n", lineParts);
 
         // 备份原来的lineParts, 深拷贝
@@ -272,8 +268,7 @@ export class LineFormater {
                         content = lineParts[i].content;
                     }
 
-                    if (settings.ChineseNumberSpace){
-                        let reg = /([0-9])([\u4e00-\u9fa5])/g;
+                    function insertSpace(content: string, reg: RegExp, prevCh: number, curCh: number, offset: number): [string, number] {
                         while (true) {
                             let match = reg.exec(content);
                             if (!match) break;
@@ -283,39 +278,21 @@ export class LineFormater {
                                 curCh += 1;
                             }
                         }
+                        return [content, curCh];
+                    }
+
+                    if (settings.ChineseNumberSpace){
+                        let reg = /([0-9])([\u4e00-\u9fa5])/g;
                         let reg1 = /([\u4e00-\u9fa5])([0-9])/g;
-                        while (true) {
-                            let match = reg1.exec(content);
-                            if (!match) break;
-                            let tempIndex = reg1.lastIndex - 1;
-                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
-                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
-                                curCh += 1;
-                            }
-                        }
+                        [content, curCh] = insertSpace(content, reg, prevCh, curCh, offset);
+                        [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
                     }
 
                     if (settings.EnglishNumberSpace){
                         let reg = /([A-Za-z])(\d)/g;
-                        while (true) {
-                            let match = reg.exec(content);
-                            if (!match) break;
-                            let tempIndex = reg.lastIndex - 1;
-                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
-                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
-                                curCh += 1;
-                            }
-                        }
                         let reg1 = /(\d)([A-Za-z])/g;
-                        while (true) {
-                            let match = reg1.exec(content);
-                            if (!match) break;
-                            let tempIndex = reg1.lastIndex - 1;
-                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
-                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
-                                curCh += 1;
-                            }
-                        }
+                        [content, curCh] = insertSpace(content, reg, prevCh, curCh, offset);
+                        [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
                     }
 
                     // Text.2 处理中文间无空格
