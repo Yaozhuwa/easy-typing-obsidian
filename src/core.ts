@@ -3,6 +3,7 @@ import { EasyTypingSettings, WorkMode } from './settings'
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text, Line } from '@codemirror/state';
 import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined} from './utils'
 import { syntaxTree } from "@codemirror/language";
+import {print} from "./utils"
 
 export enum LineType { text = 'text', codeblock = 'codeblock', formula = 'formula', 
                         none = 'none', frontmatter="frontmatter",
@@ -369,14 +370,14 @@ export class LineFormater {
                     let regEndWithSpace = /[\s，。、：；？！（）~\*"《“\[\]\(\{\}]\0?$/;
                     let txtStartSpaceSate = SpaceState.none;
                     let txtEndSpaceState = SpaceState.none;
-                    if (regStartWithSpace.test(content)) {
+                    if (regStartWithSpace.test(content)||content.startsWith("<br>")) {
                         if (regStrictSpaceStart.test(content))
                             txtStartSpaceSate = SpaceState.strict
                         else
                             txtStartSpaceSate = SpaceState.soft
                     }
 
-                    if (regEndWithSpace.test(content)) {
+                    if (regEndWithSpace.test(content) || content.endsWith("<br>")) {
                         if (regStrictSpaceEnd.test(content))
                             txtEndSpaceState = SpaceState.strict;
                         else
@@ -506,7 +507,7 @@ export class LineFormater {
                             }
                             break;
                         case InlineType.user:
-                            if (settings.InlineCodeSpaceMode>SpaceState.none ||
+                            if (settings.InlineCodeSpaceMode>SpaceState.none &&
                                 lineParts[i-1].rightSpaceRequire>SpaceState.none)
                             {
                                 inlineChangeList.push(
@@ -536,6 +537,11 @@ export class LineFormater {
                 
                 // 3.2.3 处理行内公式的部分
                 case InlineType.formula:
+                    if (lineParts[i].content == "$\\qquad$") {
+                        prevPartType = InlineType.text;
+                        prevTextEndSpaceState = SpaceState.strict;
+                        break;
+                    }
                     // Formula.1 根据前一区块类型和settings添加空格
                     switch(prevPartType)
                     {
@@ -598,7 +604,7 @@ export class LineFormater {
                             }
                             break;
                         case InlineType.user:
-                            if (settings.InlineFormulaSpaceMode>SpaceState.none ||
+                            if (settings.InlineFormulaSpaceMode>SpaceState.none &&
                                 lineParts[i-1].rightSpaceRequire>SpaceState.none)
                             {
                                 inlineChangeList.push(
@@ -735,7 +741,7 @@ export class LineFormater {
                             }
                             break;
                         case InlineType.user:
-                            if (lineParts[i-1].rightSpaceRequire>SpaceState.none||
+                            if (lineParts[i-1].rightSpaceRequire>SpaceState.none &&
                                 settings.InlineLinkSpaceMode>SpaceState.none)
                             {
                                 inlineChangeList.push(
@@ -778,7 +784,7 @@ export class LineFormater {
                             }
                             break;
                         case InlineType.code:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none||
+                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
                                 settings.InlineCodeSpaceMode>SpaceState.none)
                             {
                                 inlineChangeList.push(
@@ -794,7 +800,7 @@ export class LineFormater {
                             }
                             break;
                         case InlineType.formula:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none||
+                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
                                 settings.InlineFormulaSpaceMode>SpaceState.none)
                             {
                                 inlineChangeList.push(
@@ -811,7 +817,7 @@ export class LineFormater {
                             break;
                         case InlineType.mdlink:
                         case InlineType.wikilink:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none||
+                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
                                 settings.InlineLinkSpaceMode>SpaceState.none)
                             {
                                 inlineChangeList.push(
@@ -827,7 +833,7 @@ export class LineFormater {
                             }
                             break;
                         case InlineType.user:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none||
+                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
                                 lineParts[i-1].rightSpaceRequire>SpaceState.none)
                             {
                                 inlineChangeList.push(

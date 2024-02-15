@@ -1,6 +1,13 @@
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text} from '@codemirror/state';
 import { EasyTypingSettingTab, EasyTypingSettings, PairString, ConvertRule} from "./settings"
 
+let DEBUG = true;
+
+export const print=(message?: any, ...optionalParams: any[]) =>{
+    if (DEBUG) {
+        console.log(message, ...optionalParams);
+    }
+}
 
 export function posToOffset(doc:Text, pos:{line:number, ch:number}) {
 	return doc.line(pos.line + 1).from + pos.ch
