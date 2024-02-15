@@ -69,7 +69,7 @@ export default class EasyTypingPlugin extends Plugin {
 			['!', '！']
 		]);
 
-		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["`·|`", "```|\n```"],["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
+		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
@@ -80,10 +80,9 @@ export default class EasyTypingPlugin extends Plugin {
 		let fw2hw_rule_0: ConvertRule = {before:{left:'｜｜', right:''}, after:{left:'|', right:''}};
 		this.FW2HWSymbolRules.push(fw2hw_rule_0)
 
-		let DeleteRulesStrList: Array<[string, string]> = [["$|$", "|"], ['```|\n```', '|'], ['==|==', '|'], ['$$\n|\n$$', "|"]];
+		let DeleteRulesStrList: Array<[string, string]> = [["$|$", "|"], ['==|==', '|'], ['$$\n|\n$$', "|"]];
 		this.IntrinsicDeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
 
-		// let 
 		let autoPairRulesPatchStrList: Array<[string, string]> = [["【】|】", "【】|"], ["（）|）", "（）|"],
 		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"]
 		];
@@ -308,6 +307,24 @@ export default class EasyTypingPlugin extends Plugin {
 					tr = tr.startState.update(...changes);
 					return tr;
 				}
+
+				// 处理删除代码块
+				let line_content = tr.startState.doc.lineAt(fromA).text;
+				let next_line_content = tr.startState.doc.sliceString(toA, toA + line_content.length+1);
+				if (/^\s*```$/.test(line_content) && '\n'+line_content==next_line_content) {
+					changes.push({
+						changes:{
+							from: toA-3, 
+							to: toA+line_content.length+1, 
+							insert: ''
+						},
+						selection: { anchor: toA - 3 },
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
+				}
+
 				for (let rule of this.IntrinsicDeleteRules) {
 					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
 					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
@@ -327,6 +344,20 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
+			// 处理英文输入法下输入代码块
+			if (changeTypeStr == 'input.type' && insertedStr =='`\n```' && this.settings.BaseObEditEnhance){
+				const line_content = tr.startState.doc.lineAt(fromA).text;
+				if (/^\s*``$/.test(line_content)){
+					changes.push({
+						changes: {from: fromA, to: toA, insert: '`\n'+line_content+'`'},
+						selection: { anchor: fromA + 1 },
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
+				}
+			}
+			
 			// 通常单字输入
 			if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA === toA && fromB + 1 === toB) {
 				// if (this.settings.debug) console.log("Input.type => ", insertedStr)
@@ -344,6 +375,21 @@ export default class EasyTypingPlugin extends Plugin {
 						});
 						tr = tr.startState.update(...changes);
 						return tr;
+					}
+
+					// 处理中文输入法下输入代码块
+					if (insertedStr == '·'){
+						let line_content = tr.startState.doc.lineAt(fromA).text;
+						let ch_pos = fromA - tr.startState.doc.lineAt(fromA).from;
+						if (/^\s*``$/.test(line_content) && ch_pos==line_content.length-1){
+							changes.push({
+								changes: {from: fromA+1, to: toA+1, insert: '`\n'+line_content+'`'},
+								selection: { anchor: fromA + 2 },
+								userEvent: "EasyTyping.change"
+							});
+							tr = tr.startState.update(...changes);
+							return tr;
+						}
 					}
 
 					for (let rule of this.BasicConvRules) {
