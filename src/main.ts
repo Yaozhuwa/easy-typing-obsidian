@@ -7,6 +7,8 @@ import { posToOffset, offsetToPos, string2pairstring, ruleStringList2RuleList, g
 import { LineFormater, getPosLineType, getPosLineType2, LineType } from './core'
 import { syntaxTree } from "@codemirror/language";
 import { Platform } from "obsidian";
+import { print } from './utils';
+
 declare module "obsidian" {
 	// add type safety for the undocumented methods, 
 	// COPY FROM https://github.com/chrisgrieser/obsidian-smarter-md-hotkeys/tree/master
@@ -278,6 +280,13 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			if (selected) return tr;
+
+			// 尝试解决微软旧版输入法的问题~
+			if (changeTypeStr == "input.type.compose" && changedStr == '' && /^[\u4e00-\u9fa5]+$/.test(insertedStr)){
+				print("MS-IME Compose detected:", insertedStr);
+				tr = tr.startState.update(...changes);
+				return tr;
+			}
 
 			// UserDefined Delete Rule
 			if (changeTypeStr == "delete.backward") {
@@ -567,15 +576,6 @@ export default class EasyTypingPlugin extends Plugin {
 		let notSelected = true;
 		let mainSelection = update.view.state.selection.asSingle().main;
 		if (mainSelection.anchor != mainSelection.head) notSelected = false;
-		// ------ Debug ------------
-		// if (notSelected){
-		// 	// this.Formater.parseLineWithSyntaxTree(update.state, update.state.doc.lineAt(mainSelection.anchor).number);
-		// 	const tree = syntaxTree(update.state);
-		// 	let pos = mainSelection.anchor;
-		// 	let node = tree.resolve(pos, 1);
-		// 	console.log(node.name, node.from, node.to, update.state.doc.sliceString(node.from, node.to));
-		// }
-
 		if (!update.docChanged) return;
 
 		let isExcludeFile = this.isCurrentFileExclude();
@@ -593,7 +593,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
-			let ChineseRegExp = /^[\u4e00-\u9fa5【】·￥《》？：；’‘”“「」、。，（）！——……]+$/;
+			let ChineseRegExp = /^[\u4e00-\u9fa5【】·￥《》？：；’‘”“「」、。，（）！——……\d]+$/;
 			let chineseEndFlag = changeType == "input.type.compose" &&
 				cursor.anchor == cursor.head && cursor.anchor === toB &&
 				ChineseRegExp.test(insertedStr);
@@ -602,17 +602,30 @@ export default class EasyTypingPlugin extends Plugin {
 			if (this.settings.AutoFormat && notSelected && !isExcludeFile &&
 				(getPosLineType(update.view.state, fromB) == LineType.text || getPosLineType(update.view.state, fromB) == LineType.table)) {
 				if (changeType == "input.type.compose") {
-					if (this.compose_need_handle == false) {
-						this.compose_begin_pos = fromB;
-						this.compose_end_pos = toB;
-						this.compose_need_handle = true;
+					if (!/^\d$/.test(insertedStr)){
+						if (this.compose_need_handle == false) {
+							this.compose_begin_pos = fromB;
+							this.compose_end_pos = toB;
+							this.compose_need_handle = true;
+						}
+						else {
+							this.compose_end_pos = toB;
+							if (this.compose_begin_pos == this.compose_end_pos) {
+								this.compose_need_handle = false;
+							}
+						}
+						if (chineseEndFlag) this.compose_need_handle = false;
 					}
-					else {
-						this.compose_end_pos = toB;
-						if (this.compose_begin_pos == this.compose_end_pos) {
-							this.compose_need_handle = false;
+					else{
+						if (this.compose_need_handle) {
+							this.compose_end_pos = toB;
+							if (this.compose_begin_pos == this.compose_end_pos) {
+								this.compose_need_handle = false;
+							}
+							chineseEndFlag = this.compose_need_handle?false:chineseEndFlag;
 						}
 					}
+					
 				}
 				if (chineseEndFlag) this.compose_need_handle = false;
 				// console.log("Compose", chineseEndFlag, this.compose_need_handle);
@@ -832,13 +845,13 @@ export default class EasyTypingPlugin extends Plugin {
 
 	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
 		if (!this.settings.TryFixChineseIM) return;
-		if (['Enter'].contains(event.key) && this.settings.AutoFormat &&
+		if (['Enter', 'Process', ' ', 'Shift'].contains(event.key) && this.settings.AutoFormat &&
 			this.compose_need_handle && !this.isCurrentFileExclude()) {
 			let cursor = view.state.selection.asSingle().main;
 			if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
 			if (cursor.head != cursor.anchor) return;
 			let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
-			console.log("inserted str", insertedStr);
+			// console.log("inserted str", insertedStr);
 			let changes = this.Formater.formatLineOfDoc(view.state, this.settings,
 				this.compose_begin_pos, cursor.anchor, insertedStr);
 			this.compose_need_handle = false;

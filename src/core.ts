@@ -1008,7 +1008,7 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
     }
 
     // 匹配时间戳
-    retArray = matchWithReg(text, /\d{1,2}:\d{1,2}(:\d{0,2}){0,1}/g, InlineType.user, retArray, true, SpaceState.none, SpaceState.none);
+    retArray = matchWithReg(text, /\d{1,2}:\d{1,2}(:\d{0,2}){0,1}/g, InlineType.user, retArray, true, SpaceState.soft, SpaceState.none);
 
     // 4. 匹配缩写如 a.m.
     retArray = matchWithAbbr(text, InlineType.user, retArray, true);
