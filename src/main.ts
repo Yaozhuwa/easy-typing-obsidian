@@ -262,11 +262,16 @@ export default class EasyTypingPlugin extends Plugin {
 		let changeTypeStr = getTypeStrOfTransac(tr);
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
+			let changestr_ = changedStr.replace(/\s/g, '0')
 			let insertedStr = inserted.sliceString(0);
 			// if (this.settings.debug)
 			// {
-			// 	console.log("TransactionFilter catch change:",changeTypeStr, fromA, toA, fromB, toB, insertedStr);
+			// 	console.log("TransactionFilter catch change:",changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr);
 			// }
+
+			// 表格编辑时直接返回，解决表格内容编辑有时候会跳出聚焦状态的 Bug
+			if (getPosLineType(tr.startState, fromA)==LineType.table) return tr;
+
 			// ========== Selection Replace ============
 			if (this.settings.SelectionEnhance) {
 				if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB)||insertedStr=='——'||insertedStr=='……')) {
