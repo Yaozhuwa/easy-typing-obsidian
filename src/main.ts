@@ -61,7 +61,7 @@ export default class EasyTypingPlugin extends Plugin {
 		];
 		this.refreshSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
-		let SymbolPairs = ["【】", "（）", "《》", "“”", "‘’", "「」", "『』", '[]', '()', '{}']
+		let SymbolPairs = ["【】", "（）", "《》", "“”", "‘’", "「」", "『』", '[]', '()', '{}', '""', "''"]
 		for (let pairStr of SymbolPairs) this.SymbolPairsMap.set(pairStr.charAt(0), pairStr.charAt(1));
 
 		this.halfToFullSymbolMap = new Map([
