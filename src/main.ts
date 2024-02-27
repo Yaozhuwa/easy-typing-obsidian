@@ -86,7 +86,8 @@ export default class EasyTypingPlugin extends Plugin {
 		this.IntrinsicDeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
 
 		let autoPairRulesPatchStrList: Array<[string, string]> = [["【】|】", "【】|"], ["（）|）", "（）|"],
-		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"], ["()|)", "()|"], ['[]|]', '[]|']
+		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"], ["()|)", "()|"], ['[]|]', '[]|']，
+		["{}|}", "{}|"]
 		];
 		this.IntrinsicAutoPairRulesPatch = ruleStringList2RuleList(autoPairRulesPatchStrList);
 
