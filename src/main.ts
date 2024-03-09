@@ -87,7 +87,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		let autoPairRulesPatchStrList: Array<[string, string]> = [["【】|】", "【】|"], ["（）|）", "（）|"],
 		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"], ["()|)", "()|"], ['[]|]', '[]|'],
-		["{}|}", "{}|"]
+		["{}|}", "{}|"], ["''|'", "''|"], ['""|"', '""|'],
 		];
 		this.IntrinsicAutoPairRulesPatch = ruleStringList2RuleList(autoPairRulesPatchStrList);
 
@@ -494,7 +494,7 @@ export default class EasyTypingPlugin extends Plugin {
 						}
 					}
 
-					if (this.SymbolPairsMap.has(insertedStr)) {
+					if (this.SymbolPairsMap.has(insertedStr) && insertedStr!="'") {
 						changes.push({
 							changes: { from: fromA, to: toA, insert: insertedStr + this.SymbolPairsMap.get(insertedStr) },
 							selection: { anchor: fromA + 1 },
@@ -503,6 +503,19 @@ export default class EasyTypingPlugin extends Plugin {
 						tr = tr.startState.update(...changes);
 						return tr;
 					}
+					else if (insertedStr === "'") {
+						let charBeforeCursor = tr.startState.sliceDoc(fromA - 1, fromA);
+						if (['', ' ', '\n'].includes(charBeforeCursor)) {
+							changes.push({
+								changes: { from: fromA, to: toA, insert: "''" },
+								selection: { anchor: fromA + 1 },
+								userEvent: "EasyTyping.change"
+							});
+							tr = tr.startState.update(...changes);
+							return tr;
+						}
+					}
+
 					// handle autopair for "”" and "’"
 					if (insertedStr === '”' || insertedStr === '’') {
 						let tempStr = insertedStr === "”" ? "“”" : "‘’";
