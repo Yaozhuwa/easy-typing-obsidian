@@ -288,7 +288,9 @@ export default class EasyTypingPlugin extends Plugin {
 			if (selected) return tr;
 
 			// 尝试解决微软旧版输入法的问题~
-			if (changeTypeStr == "input.type.compose" && changedStr == '' && /^[\u4e00-\u9fa5]+$/.test(insertedStr)){
+			if (this.settings.TryFixMSIME && 
+				changeTypeStr == "input.type.compose" && 
+				changedStr == '' && /^[\u4e00-\u9fa5]+$/.test(insertedStr)){
 				print("MS-IME Compose detected:", insertedStr);
 				tr = tr.startState.update(...changes);
 				return tr;
