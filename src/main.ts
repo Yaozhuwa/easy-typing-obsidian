@@ -660,14 +660,25 @@ export default class EasyTypingPlugin extends Plugin {
 					// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
 					let left = update.view.state.doc.sliceString(toB - rule.before.left.length, toB);
 					let right = update.view.state.doc.sliceString(toB, toB + rule.before.right.length);
+					let inserted = rule.after.left + rule.after.right;
+					let anchor = toB - rule.before.left.length + rule.after.left.length;
+					let from = toB - rule.before.left.length;
+					let to = toB + rule.before.right.length;
+					// 对文档首行规则做特殊处理
+					if (rule.before.left.charAt(0) === '\n' && rule.after.left.charAt(0) === '\n' &&
+						toB - rule.before.left.length+1==0) {
+						left = '\n' + left;
+						inserted = inserted.substring(1);
+						from = 0;
+					}
 					if (left === rule.before.left && right === rule.before.right) {
 						update.view.dispatch({
 							changes: {
-								from: toB - rule.before.left.length,
-								to: toB + rule.before.right.length,
-								insert: rule.after.left + rule.after.right
+								from: from,
+								to: to,
+								insert: inserted
 							},
-							selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
+							selection: { anchor: anchor },
 							userEvent: "EasyTyping.change"
 						})
 						return;
