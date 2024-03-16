@@ -5,7 +5,7 @@ import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString,
 import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { posToOffset, offsetToPos, string2pairstring, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
 import { LineFormater, getPosLineType, getPosLineType2, LineType } from './core'
-import { syntaxTree } from "@codemirror/language";
+import { syntaxTree, forceParsing, ensureSyntaxTree } from "@codemirror/language";
 import { Platform } from "obsidian";
 import { print } from './utils';
 
@@ -885,7 +885,14 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	formatArticle = (editor: Editor, view: MarkdownView): void => {
-		
+		// @ts-expect-error, not typed
+		const editorView = editor.cm as EditorView;
+		const tree = ensureSyntaxTree(editorView.state, editorView.state.doc.length);
+		if (!tree){
+			new Notice('EasyTyping: Syntax tree is not ready yet, please wait a moment and try again later!', 5000);
+			return;
+		}
+
 		this.onFormatArticle = true;
 		
 		let lineCount = editor.lineCount();
@@ -1007,8 +1014,6 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	deleteBlankLines = (editor: Editor): void => {
-		const basePath = (this.app.vault.adapter as any).basePath
-		let config_path = basePath + "/" + this.app.vault.configDir + "/app.json";
 		if (this.settings.debug) {
 			console.log(this.app.vault.getConfig("strictLineBreaks"));
 			// return;
@@ -1019,7 +1024,13 @@ export default class EasyTypingPlugin extends Plugin {
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
 		let doc = state.doc
-		const tree = syntaxTree(state);
+		
+		const tree = ensureSyntaxTree(state, doc.length);
+		if (!tree){
+			new Notice('EasyTyping: Syntax tree is not ready yet, please wait a moment and try again later!', 5000);
+			return;
+		}
+		
 		let start_line = 1;
 		let end_line = doc.lines;
 		let line_num = doc.lines;
