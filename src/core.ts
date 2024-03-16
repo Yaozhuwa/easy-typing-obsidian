@@ -165,6 +165,8 @@ export class LineFormater {
 
     // 返回值： [最终的行，最终光标位置，内容改变]
     // param lineNum: 1-based line number
+    // curCh: 光标在当前行的位置
+    // prevCh: 光标在前一时刻在当前行的位置
     formatLine(state: EditorState, lineNum:number, settings: EasyTypingSettings, curCh: number, prevCh?: number): [string, number, InlineChange[]] | null {
         // new Notice("format-now");
         let line = state.doc.line(lineNum).text;
@@ -260,14 +262,6 @@ export class LineFormater {
                         }
                     }   
 
-                    // Text.1 处理中英文之间空格
-                    if (settings.ChineseEnglishSpace) {
-                        let reg1 = /([A-Za-z])([\u4e00-\u9fa5])/gi;
-                        let reg2 = /([\u4e00-\u9fa5])([A-Za-z])/gi;
-                        lineParts[i].content = content.replace(reg1, "$1 $2").replace(reg2, "$1 $2");
-                        content = lineParts[i].content;
-                    }
-
                     function insertSpace(content: string, reg: RegExp, prevCh: number, curCh: number, offset: number): [string, number] {
                         while (true) {
                             let match = reg.exec(content);
@@ -279,6 +273,14 @@ export class LineFormater {
                             }
                         }
                         return [content, curCh];
+                    }
+
+                    // Text.1 处理中英文之间空格
+                    if (settings.ChineseEnglishSpace) {
+                        let reg1 = /([A-Za-z])([\u4e00-\u9fa5])/gi;
+                        let reg2 = /([\u4e00-\u9fa5])([A-Za-z])/gi;
+                        [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
+                        [content, curCh] = insertSpace(content, reg2, prevCh, curCh, offset);
                     }
 
                     if (settings.ChineseNumberSpace){
@@ -297,7 +299,7 @@ export class LineFormater {
 
                     // Text.2 处理中文间无空格
                     if (settings.ChineseNoSpace) {
-                        let reg = /([\u4e00-\u9fa5，。、；‘’《》]+)(\s+)([\u4e00-\u9fa5，。、；‘’《》]+)/g;
+                        let reg = /([\u4e00-\u9fa5，。、！；‘’《》]+)(\s+)([\u4e00-\u9fa5，。、！；‘’《》]+)/g;
                         while (reg.exec(content)) {
                             lineParts[i].content = content.replace(reg, "$1$3");
                             content = lineParts[i].content;
@@ -309,7 +311,7 @@ export class LineFormater {
                         // Text.3 处理标点与文本空格
                         // if(settings.EnglishSpace)
                         {
-                            let reg = /([,\.;\?\!\)])([0-9A-Za-z\u0401\u0451\u0410-\u044f])|([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()|[,\.;\?:!][\u4e00-\u9fa5]/gi;
+                            let reg = /([,\.;\?\!\)])([0-9A-Za-z\u0401\u0451\u0410-\u044f\u4e00-\u9fa5])|([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()|[,\.;\?:!][\u4e00-\u9fa5]/gi;
                             while (true) {
                                 let match = reg.exec(content);
                                 if (!match) break;

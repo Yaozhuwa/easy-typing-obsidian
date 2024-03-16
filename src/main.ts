@@ -961,7 +961,6 @@ export default class EasyTypingPlugin extends Plugin {
 		let new_lines = "";
 		for (let i = begin; i <= end; i++) {
 			if (i != begin) new_lines += '\n';
-			console.log('i+1', i + 1)
 			new_lines += this.preFormatOneLine(editor, i + 1)[0];
 		}
 		editor.replaceRange(new_lines, { line: begin, ch: 0 }, { line: end, ch: editor.getLine(end).length });
@@ -973,7 +972,7 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 	}
 
-	// param: lineNumber is (1-based)
+	// param: lineNumber is (1-based), 废弃函数
 	formatOneLine = (editor: Editor, lineNumber: number): void => {
 		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
