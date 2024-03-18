@@ -267,7 +267,8 @@ export default class EasyTypingPlugin extends Plugin {
 			let insertedStr = inserted.sliceString(0);
 			// if (this.settings.debug)
 			// {
-			// 	console.log("TransactionFilter catch change:",changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr);
+			// 	console.log("TransactionFilter catch change: changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr");
+			// 	console.log(changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr);
 			// }
 
 			// 表格编辑时直接返回，解决表格内容编辑有时候会跳出聚焦状态的 Bug
@@ -326,13 +327,13 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 
 				// 处理删除代码块
-				let line_content = tr.startState.doc.lineAt(fromA).text;
+				let line_content = tr.startState.doc.lineAt(toA).text;
 				let next_line_content = tr.startState.doc.sliceString(toA, toA + line_content.length+1);
 				if (/^\s*```$/.test(line_content) && '\n'+line_content==next_line_content) {
 					changes.push({
 						changes:{
 							from: toA-3, 
-							to: toA+line_content.length+1, 
+							to: toA+line_content.length+1,
 							insert: ''
 						},
 						selection: { anchor: toA - 3 },
