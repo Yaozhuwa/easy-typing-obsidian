@@ -136,7 +136,8 @@ export class LineFormater {
         let res = null
         if (insertedStr.contains("\n"))
         {
-            res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, toB-1).ch);
+            // console.log('FromB, ToB', fromB, toB)
+            res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, fromB).ch);
         }
         else
         {
