@@ -530,6 +530,38 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 				}
 			}
+
+			// 在代码块中粘贴时智能添加缩进
+			if (changeTypeStr=="input.paste" && fromA==toA && fromA==fromB && 
+					getPosLineType(tr.startState, fromB) == LineType.codeblock){
+				const editor_indent_sapce = 4;
+				let line = tr.startState.doc.lineAt(fromB).text;
+				let indent_space = line.match(/^\s*/)[0].length;
+				let inserted_lines = insertedStr.split('\n');
+				if(inserted_lines.length>1){
+					let first_line = inserted_lines[0].trimStart();
+					let rest_lines = inserted_lines.slice(1);
+					// find the minimum indent space in rest lines
+					let min_indent_space = Infinity;
+					for (let line of rest_lines){
+						let indent = line.match(/^\s*/)[0].length;
+						if (indent<min_indent_space) min_indent_space = indent;
+					}
+					// remove this min_indent_space from rest lines
+					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
+					new_rest_lines = new_rest_lines.map((line:string)=>line.replace(/[\t]/g, ' '.repeat(editor_indent_sapce)));
+					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+line);
+					let new_insertedStr = first_line+'\n'+final_rest_lines.join('\n');
+					changes.push({
+						changes: {from: fromA, to: toA, insert: new_insertedStr},
+						selection: {anchor: fromA+new_insertedStr.length},
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
+				}				
+			}
+
 		})
 		return tr;
 	}
@@ -538,7 +570,14 @@ export default class EasyTypingPlugin extends Plugin {
 		let clipboardText = await navigator.clipboard.readText();
 		if (clipboardText === null || clipboardText === "") return;
 
-		editor.replaceSelection(clipboardText);
+		if (this.settings.debug) console.log("Normal Paste!!")
+		// @ts-expect-error, not typed
+		const editorView = editor.cm as EditorView;
+		let mainSelection = editorView.state.selection.asSingle().main;
+		editorView.dispatch({
+			changes: { from: mainSelection.from, to: mainSelection.to, insert: clipboardText },
+			userEvent: "input.paste"
+		});
 	}
 
 	viewUpdatePlugin = (update: ViewUpdate) => {
@@ -723,6 +762,7 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
+			// 粘贴时自动格式化
 			if (this.settings.AutoFormat && !isExcludeFile && changeType == "input.paste" && !Platform.isIosApp) {
 				let updateLineStart = update.state.doc.lineAt(fromB).number;
 				let updateLineEnd = update.state.doc.lineAt(toB).number;
