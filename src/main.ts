@@ -1,13 +1,18 @@
-import { App, Editor, Menu, EditorSelection, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TFile } from 'obsidian';
-import { EditorState, Extension, StateField, Transaction, TransactionSpec, Text } from '@codemirror/state';
-import { SelectionRange, Prec } from "@codemirror/state";
-import { EasyTypingSettingTab, EasyTypingSettings, DEFAULT_SETTINGS, PairString, ConvertRule } from "./settings"
-import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
-import { posToOffset, offsetToPos, string2pairstring, ruleStringList2RuleList, getTypeStrOfTransac } from './utils'
-import { LineFormater, getPosLineType, getPosLineType2, LineType } from './core'
-import { syntaxTree, forceParsing, ensureSyntaxTree } from "@codemirror/language";
-import { Platform } from "obsidian";
-import { print } from './utils';
+import {Editor, MarkdownView, Menu, Notice, Platform, Plugin, WorkspaceLeaf} from 'obsidian';
+import {EditorSelection, EditorState, Prec, Transaction, TransactionSpec} from '@codemirror/state';
+import {ConvertRule, DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString} from "./settings"
+import {EditorView, keymap, ViewUpdate} from '@codemirror/view';
+import {
+	getObsidianSettings,
+	ObsidianSettings,
+	getTypeStrOfTransac,
+	offsetToPos,
+	print,
+	ruleStringList2RuleList,
+	string2pairstring
+} from './utils'
+import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
+import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 
 declare module "obsidian" {
 	// add type safety for the undocumented methods, 
@@ -26,6 +31,7 @@ declare module "obsidian" {
 		getConfig: (config: string) => boolean;
 	}
 }
+
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
@@ -50,6 +56,8 @@ export default class EasyTypingPlugin extends Plugin {
 
 	onFormatArticle: boolean;
 	TaboutPairStrs: PairString[];
+
+	obsidianSettings: ObsidianSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -105,6 +113,8 @@ export default class EasyTypingPlugin extends Plugin {
 		this.Formater = new LineFormater();
 
 		this.onFormatArticle = false;
+
+		this.obsidianSettings = new ObsidianSettings(this.app);
 
 		this.registerEditorExtension([
 			EditorState.transactionFilter.of(this.transactionFilterPlugin),
@@ -247,9 +257,11 @@ export default class EasyTypingPlugin extends Plugin {
 		// 		}
 		// 	}
 		// }));
+		console.log("Easy Typing Plugin loaded.")
 	}
 
 	onunload() {
+		console.log("Easy Typing Plugin unloaded.")
 	}
 
 	transactionFilterPlugin = (tr: Transaction): TransactionSpec | readonly TransactionSpec[] => {
@@ -262,11 +274,11 @@ export default class EasyTypingPlugin extends Plugin {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
 			let changestr_ = changedStr.replace(/\s/g, '0')
 			let insertedStr = inserted.sliceString(0);
-			// if (this.settings.debug)
-			// {
-			// 	console.log("TransactionFilter catch change: changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr");
-			// 	console.log(changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr);
-			// }
+			if (this.settings.debug)
+			{
+				console.log("[TransactionFilter] type, fromA, toA, changed, fromB, toB, inserted");
+				console.log(changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr);
+			}
 
 			// 表格编辑时直接返回，解决表格内容编辑有时候会跳出聚焦状态的 Bug
 			if (getPosLineType(tr.startState, fromA)==LineType.table) return tr;
@@ -595,8 +607,11 @@ export default class EasyTypingPlugin extends Plugin {
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
 			let insertedStr = inserted.sliceString(0);
 			let changedStr = tr.startState.doc.sliceString(fromA, toA);
-			if (this.settings.debug)
-				console.log("ViewUpdate Catch Change-> Type: " + changeType + ", ", 'fromA-toA-changedStr:', fromA, toA, changedStr, "fromB-toB-insertedStr:", fromB, toB, insertedStr);
+			if (this.settings.debug){
+				console.log("[ViewUpdate] type, fromA, toA, changed, fromB, toB, inserted");
+				console.log(changeType, fromA, toA, changedStr, fromB, toB, insertedStr)
+				console.log("==>[Composing]", update.view.composing)
+			}
 
 			// table 内部不做处理，直接返回 => 配合 Obsidian 的机制
 			if (getPosLineType(update.view.state, fromB) == LineType.table) {
@@ -765,6 +780,20 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	const token = tree.resolve(p, 1).name
 		// 	console.log(p-line.from, token)
 		// }
+		// return true;
+
+		if (s.main.from==s.main.to && getPosLineType(view.state, s.main.from) == LineType.codeblock){
+			view.dispatch({
+				changes: {
+					from: s.main.from,
+					insert: this.obsidianSettings.getDefaultIndentChars()
+				},
+				selection: {
+					anchor: s.main.from + this.obsidianSettings.getDefaultIndentChars().length
+				}
+			})
+			return true;
+		}
 		// return true;
 
 		// 当光标在行内代码内部
@@ -1115,7 +1144,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	switchAutoFormatting() {
-		this.settings.AutoFormat = this.settings.AutoFormat ? false : true;
+		this.settings.AutoFormat = !this.settings.AutoFormat;
 		let status = this.settings.AutoFormat ? 'on' : 'off';
 		new Notice('EasyTyping: Autoformat is ' + status + '!');
 	}
