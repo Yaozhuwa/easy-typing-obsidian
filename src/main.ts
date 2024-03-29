@@ -653,47 +653,30 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
-			let ChineseRegExp = /^[\u4e00-\u9fa5【】·￥《》？：；’‘”“「」、。，（）！——……\d]+$/;
-			let chineseEndFlag = changeType == "input.type.compose" &&
-				cursor.anchor == cursor.head && cursor.anchor === toB &&
-				ChineseRegExp.test(insertedStr);
 
-			if (changeType != "input.type.compose") this.compose_need_handle = false;
-			if (this.settings.AutoFormat && notSelected && !isExcludeFile &&
-				(getPosLineType(update.view.state, fromB) == LineType.text || getPosLineType(update.view.state, fromB) == LineType.table)) {
-				if (changeType == "input.type.compose") {
-					if (!/^\d$/.test(insertedStr)){
-						if (this.compose_need_handle == false) {
-							this.compose_begin_pos = fromB;
-							this.compose_end_pos = toB;
-							this.compose_need_handle = true;
-						}
-						else {
-							this.compose_end_pos = toB;
-							if (this.compose_begin_pos == this.compose_end_pos) {
-								this.compose_need_handle = false;
-							}
-						}
-						if (chineseEndFlag) this.compose_need_handle = false;
-					}
-					else{
-						if (this.compose_need_handle) {
-							this.compose_end_pos = toB;
-							if (this.compose_begin_pos == this.compose_end_pos) {
-								this.compose_need_handle = false;
-							}
-							chineseEndFlag = this.compose_need_handle?false:chineseEndFlag;
-						}
-					}
-					
+
+			if (update.view.composing){
+				if (this.compose_need_handle){
+					this.compose_end_pos = cursor.anchor;
 				}
-				if (chineseEndFlag) this.compose_need_handle = false;
-				// console.log("Compose", chineseEndFlag, this.compose_need_handle);
+				else{
+					this.compose_need_handle = true;
+					this.compose_begin_pos = fromA;
+					this.compose_end_pos = cursor.anchor;
+				}
+				return;
 			}
 
+			let change_from = fromB;
+			let change_to = toB;
+			if (this.compose_need_handle){
+				this.compose_need_handle = false;
+				change_from = this.compose_begin_pos;
+				change_to = this.compose_end_pos;
+			}
 
 			// 判断每次输入结束
-			if (changeType == 'input.type' || changeType == "input" || chineseEndFlag || changeType == 'none') {
+			if (changeType != 'none') {
 				// 用户自定义转化规则
 				for (let rule of this.UserConvertRules) {
 					// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
@@ -724,16 +707,15 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 				}
 
-				if (this.settings.PuncRectify && chineseEndFlag && this.compose_begin_pos > 1 &&
-					/[,.?!]/.test(update.view.state.doc.sliceString(this.compose_begin_pos - 1, this.compose_begin_pos))) {
-					let punc = update.view.state.doc.sliceString(this.compose_begin_pos - 1, this.compose_begin_pos)
-					if (this.compose_begin_pos > 2 &&
-						/[\s\n\w]/.test(update.view.state.doc.sliceString(this.compose_begin_pos - 2, this.compose_begin_pos - 1))) { }
+				if (this.settings.PuncRectify &&
+					/[,.?!]/.test(update.view.state.doc.sliceString(change_from - 1, change_from))) {
+					let punc = update.view.state.doc.sliceString(change_from - 1, change_from)
+					if (change_from > 2 && /[\s\n\w]/.test(update.view.state.doc.sliceString(change_from - 2, change_from - 1))) { }
 					else {
 						update.view.dispatch({
 							changes: {
-								from: this.compose_begin_pos - 1,
-								to: this.compose_begin_pos,
+								from: change_from - 1,
+								to: change_from,
 								insert: this.halfToFullSymbolMap.get(punc)
 							},
 							// selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
@@ -749,8 +731,8 @@ export default class EasyTypingPlugin extends Plugin {
 				if (this.settings.AutoFormat && notSelected && !isExcludeFile &&
 					 (changeType != 'none' || insertedStr=="\n")) {
 					
-					if (getPosLineType(update.view.state, fromB) == LineType.text || getPosLineType(update.view.state, fromB) == LineType.table){
-						let changes = this.Formater.formatLineOfDoc(update.state, this.settings, fromB, cursor.anchor, insertedStr);
+					if (getPosLineType(update.view.state, change_from) == LineType.text || getPosLineType(update.view.state, change_from) == LineType.table){
+						let changes = this.Formater.formatLineOfDoc(update.state, this.settings, change_from, cursor.anchor, insertedStr);
 						if (changes != null) {
 							update.view.dispatch(...changes[0]);
 							update.view.dispatch(changes[1]);
@@ -929,7 +911,6 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
-		if (!this.settings.TryFixChineseIM) return;
 		if (['Enter', 'Process', ' ', 'Shift'].contains(event.key) && this.settings.AutoFormat &&
 			this.compose_need_handle && !this.isCurrentFileExclude()) {
 			let cursor = view.state.selection.asSingle().main;
