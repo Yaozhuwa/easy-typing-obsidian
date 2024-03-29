@@ -82,7 +82,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 		"\\[\\!.*?\\][-+]{0,1}|-+\n"+
 		"(file:///|https?://|ftp://|obsidian://|zotero://|www.)[^\\s（）《》。,，！？;；：“”‘’\\)\\(\\[\\]\\{\\}']+|--\n"+
 		"\n[a-zA-Z0-9_\\-.]+@[a-zA-Z0-9_\\-.]+|++\n"+
-		"(?<!#)#[\\u4e00-\\u9fa5\\w\\/]+|++",
+		"(?<!#)#[\\u4e00-\\u9fa5\\w-\\/]+|++",
 	debug: false,
 	userSelRepRuleTrigger: ["-", "#"],
 	userSelRepRuleValue: [{left:"~~", right:"~~"}, {left:"#", right:" "}],
