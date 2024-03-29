@@ -306,6 +306,39 @@ export default class EasyTypingPlugin extends Plugin {
 				return tr;
 			}
 
+			// 列表下的代码块删除功能优化
+			if (changeTypeStr == "delete.backward" && !selected && 
+				getPosLineType(tr.startState, toA) == LineType.codeblock) {
+				let line_number = tr.startState.doc.lineAt(toA).number;
+				let cur_line = tr.startState.doc.lineAt(toA);
+				let list_code = false;
+				let list_code_indent = 0;
+				for (let i = line_number - 1; i >= 0; i--) {
+					let line = tr.startState.doc.line(i);
+					if (/^\s+```/.test(line.text)) {
+						list_code = true;
+						list_code_indent = line.text.match(/^\s*/)[0].length;
+						break;
+					}
+					else if (/^```/.test(line.text)) break;
+					else continue;
+				}
+
+				if (list_code) {
+					console.log('list_code, indent: ', list_code_indent);
+					if (toA == cur_line.from + list_code_indent) {
+						changes.push({ changes: { from: tr.startState.doc.line(line_number-1).to, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
+						tr = tr.startState.update(...changes);
+						return tr;
+					}
+					if (fromA>=cur_line.from && fromA < cur_line.from+list_code_indent && toA>cur_line.from+list_code_indent){
+						changes.push({ changes: { from: cur_line.from+list_code_indent, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
+						tr = tr.startState.update(...changes);
+						return tr;
+					}
+				}
+			}
+
 			// UserDefined Delete Rule
 			if (changeTypeStr == "delete.backward") {
 				for (let rule of this.UserDeleteRules) {
@@ -543,7 +576,6 @@ export default class EasyTypingPlugin extends Plugin {
 			// 在代码块中粘贴时智能添加缩进
 			if (changeTypeStr=="input.paste" && fromA==toA && fromA==fromB && 
 					getPosLineType(tr.startState, fromB) == LineType.codeblock){
-				const editor_indent_sapce = 4;
 				let line = tr.startState.doc.lineAt(fromB).text;
 				let indent_space = line.match(/^\s*/)[0].length;
 				let inserted_lines = insertedStr.split('\n');
@@ -558,7 +590,8 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 					// remove this min_indent_space from rest lines
 					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
-					new_rest_lines = new_rest_lines.map((line:string)=>line.replace(/[\t]/g, ' '.repeat(editor_indent_sapce)));
+					new_rest_lines = new_rest_lines.map(
+						(line:string)=>line.replace(/[\t]/g, this.obsidianSettings.getDefaultIndentChars()));
 					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+line);
 					let new_insertedStr = first_line+'\n'+final_rest_lines.join('\n');
 					changes.push({
@@ -829,7 +862,7 @@ export default class EasyTypingPlugin extends Plugin {
 		if (selected){
 			let new_anchor = selection.anchor<selection.head?selection.anchor:selection.head;
 			let new_head = selection.anchor>selection.head?selection.anchor:selection.head;
-			console.log("selection", selection.anchor, selection.head)
+			// console.log("selection", selection.anchor, selection.head)
 
 			for (let pstr of this.TaboutPairStrs){
 				if (doc.sliceString(new_anchor-pstr.left.length, new_anchor) == pstr.left &&
