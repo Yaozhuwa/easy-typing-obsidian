@@ -93,7 +93,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	userCvtRuleSettingsOpen: true,
 
 	EnterTwice: false,
-	TryFixChineseIM: false,
+	TryFixChineseIM: true,
 	PuncRectify: false,
 	FixMacOSContextMenu: false,
 	TryFixMSIME: false,
