@@ -62,7 +62,7 @@ export default class EasyTypingPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.selectionReplaceMapInitalData = [
-			["【", { left: "[", right: "]" }], ["￥", { left: "$", right: "$" }], ["·", { left: "`", right: "`" }],
+			["【", { left: "[", right: "]" }], ["￥", { left: "$", right: "$" }], ["·", { left: "`", right: "`" }], ['¥', { left: "$", right: "$" }],
 			["《", { left: "《", right: "》" }], ["“", { left: "“", right: "”" }], ["”", { left: "“", right: "”" }], ["（", { left: "（", right: "）" }],
 			["<", { left: "<", right: ">" }]
 		];
@@ -270,6 +270,7 @@ export default class EasyTypingPlugin extends Plugin {
 		let selected = tr.startState.selection.asSingle().main.anchor != tr.startState.selection.asSingle().main.head;
 
 		let changeTypeStr = getTypeStrOfTransac(tr);
+
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
 			let changestr_ = changedStr.replace(/\s/g, '0')
@@ -296,6 +297,9 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			if (selected) return tr;
+
+			// let test_s = "¥"
+			// console.log( '¥', test_s == '￥')
 
 			// 尝试解决微软旧版输入法的问题~
 			if (this.settings.TryFixMSIME && 
@@ -675,8 +679,9 @@ export default class EasyTypingPlugin extends Plugin {
 				change_to = this.compose_end_pos;
 			}
 
+			if (changeType == 'EasyTyping.change') return;
 			// 判断每次输入结束
-			if (changeType != 'none') {
+			if (changeType != 'none' && notSelected) {
 				// 用户自定义转化规则
 				for (let rule of this.UserConvertRules) {
 					// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
