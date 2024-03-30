@@ -420,16 +420,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Enhance Chinese Input Method")
-			.setDesc("中文输入法下，回车/Shift/Enter 输入内容时自动格式化")
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.TryFixChineseIM).onChange(async (value) => {
-					this.plugin.settings.TryFixChineseIM = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(containerEl)
 			.setName("Fix MicroSoft Input Method Issue")
 			.setDesc("适配旧版微软输入法")
 			.addToggle((toggle) => {
