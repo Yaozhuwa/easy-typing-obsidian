@@ -681,7 +681,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			if (changeType == 'EasyTyping.change') return;
 			// 判断每次输入结束
-			if (changeType != 'none' && notSelected) {
+			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
 				// 用户自定义转化规则
 				for (let rule of this.UserConvertRules) {
 					// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
