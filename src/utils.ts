@@ -33,7 +33,7 @@ export function offsetToPos(doc:Text, offset:number) {
 }
 
 export function getTypeStrOfTransac(tr: Transaction): string {
-	let TransacTypeArray:string[] = ["EasyTyping.change", 
+	let TransacTypeArray:string[] = ["EasyTyping.change", "EasyTyping.paste",
 							"input.type.compose", "input.type", "input.paste", "input.drop", "input.complete", "input",
 							"delete.selection", "delete.forward", "delete.backward", "delete.cut", "delete",
 							"move.drop",

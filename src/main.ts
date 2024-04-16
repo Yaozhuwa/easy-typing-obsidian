@@ -312,12 +312,13 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// 列表下的代码块删除功能优化
 			if (changeTypeStr == "delete.backward" && !selected && 
-				getPosLineType(tr.startState, toA) == LineType.codeblock) {
+				getPosLineType(tr.startState, toA) == LineType.codeblock && 
+				getPosLineType(tr.state, fromA)==LineType.codeblock) {
 				let line_number = tr.startState.doc.lineAt(toA).number;
 				let cur_line = tr.startState.doc.lineAt(toA);
 				let list_code = false;
 				let list_code_indent = 0;
-				for (let i = line_number - 1; i >= 0; i--) {
+				for (let i = line_number - 1; i >= 1; i--) {
 					let line = tr.startState.doc.line(i);
 					if (/^\s+```/.test(line.text)) {
 						list_code = true;
@@ -329,7 +330,7 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 
 				if (list_code) {
-					console.log('list_code, indent: ', list_code_indent);
+					print('list_code, indent: ', list_code_indent);
 					if (toA == cur_line.from + list_code_indent) {
 						changes.push({ changes: { from: tr.startState.doc.line(line_number-1).to, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
 						tr = tr.startState.update(...changes);
@@ -578,7 +579,7 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			// 在代码块中粘贴时智能添加缩进
-			if (changeTypeStr=="input.paste" && fromA==toA && fromA==fromB && 
+			if (changeTypeStr.contains('paste') && fromA==toA && fromA==fromB && 
 					getPosLineType(tr.startState, fromB) == LineType.codeblock){
 				let line = tr.startState.doc.lineAt(fromB).text;
 				let indent_space = line.match(/^\s*/)[0].length;
@@ -622,7 +623,8 @@ export default class EasyTypingPlugin extends Plugin {
 		let mainSelection = editorView.state.selection.asSingle().main;
 		editorView.dispatch({
 			changes: { from: mainSelection.from, to: mainSelection.to, insert: clipboardText },
-			userEvent: "input.paste"
+			selection: {anchor: mainSelection.from + clipboardText.length},
+			userEvent: "EasyTyping.paste"
 		});
 	}
 
@@ -655,9 +657,7 @@ export default class EasyTypingPlugin extends Plugin {
 				return;
 			}
 
-			// 找到光标位置，比较和 toB 的位置是否相同，相同且最终插入文字为中文，则为中文输入结束的状态
 			let cursor = update.view.state.selection.asSingle().main;
-
 
 			if (update.view.composing){
 				if (this.compose_need_handle){
@@ -679,7 +679,7 @@ export default class EasyTypingPlugin extends Plugin {
 				change_to = this.compose_end_pos;
 			}
 
-			if (changeType == 'EasyTyping.change') return;
+			if (changeType.contains('EasyTyping') || changeType=='undo' || changeType=='redo') return;
 			// 判断每次输入结束
 			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
 				// 用户自定义转化规则
