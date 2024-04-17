@@ -313,7 +313,7 @@ export default class EasyTypingPlugin extends Plugin {
 			// 列表下的代码块删除功能优化
 			if (changeTypeStr == "delete.backward" && !selected && 
 				getPosLineType(tr.startState, toA) == LineType.codeblock && 
-				getPosLineType(tr.state, fromA)==LineType.codeblock) {
+				(tr.startState.sliceDoc(fromA,toA)!='`' || getPosLineType(tr.state, fromA)==LineType.codeblock)) {
 				let line_number = tr.startState.doc.lineAt(toA).number;
 				let cur_line = tr.startState.doc.lineAt(toA);
 				let list_code = false;
