@@ -22,6 +22,7 @@ export interface EasyTypingSettings {
 	IntrinsicSymbolPairs: boolean;
 	BaseObEditEnhance: boolean;
 	FW2HWEnhance: boolean;
+	BetterCodeEdit: boolean;
 	AutoFormat: boolean;
 	ExcludeFiles: string;
 	AutoCapital: boolean;
@@ -61,6 +62,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	IntrinsicSymbolPairs: true,
 	BaseObEditEnhance: true,
 	FW2HWEnhance: true,
+	BetterCodeEdit: true,
 
 	AutoFormat: true,
 	ExcludeFiles: "",
@@ -160,6 +162,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.BaseObEditEnhance)
 					.onChange(async (value) => {
 						this.plugin.settings.BaseObEditEnhance = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName("Enhance codeblock edit")
+			.setDesc("Improve editing in codeblock(Tab, delete, paste, cmd/ctrl+A select). 增强代码块内的编辑（Cmd/Ctrl+A 选中、Tab、删除、粘贴）")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.BetterCodeEdit)
+					.onChange(async (value) => {
+						this.plugin.settings.BetterCodeEdit = value;
 						await this.plugin.saveSettings();
 					});
 			});

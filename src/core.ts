@@ -2,10 +2,11 @@ import { Notice} from "obsidian"
 import { EasyTypingSettings, WorkMode } from './settings'
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text, Line } from '@codemirror/state';
 import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined} from './utils'
-import { syntaxTree } from "@codemirror/language";
-import {print} from "./utils"
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
+import { print } from "./utils"
 
 export enum LineType { text = 'text', codeblock = 'codeblock', formula = 'formula', 
+                        code_start = 'code_block_start', code_end = 'code_block_end',
                         none = 'none', frontmatter="frontmatter",
                         quote='quote', callout_title='callout_title', list='list', table= 'table' }
 
@@ -1084,7 +1085,8 @@ export function string2SpaceState(s:string):SpaceState
 export function getPosLineType(state: EditorState, pos: number):LineType {
     const line = state.doc.lineAt(pos)
     let line_number = line.number
-    const tree = syntaxTree(state);
+    // const tree = syntaxTree(state);
+    const tree = ensureSyntaxTree(state, line.to);
     const token = tree.resolve(line.from, 1).name
 
     // for (let p=line.from; p<line.to; p+=1){
@@ -1135,12 +1137,18 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
         
         // 然后判断是否为代码块
         let is_code_block:boolean = false;
+        let reset:boolean = false;
         let reg_code_begin = /^>+ ```/;
         let reg_code_end = /^>+ ```$/;
         for (let l=callout_start_line+1; l<=line_number; l+=1){
             let l_line = state.doc.line(l)
-            if(is_code_block && reg_code_end.test(l_line.text)){
+            if (reset){
                 is_code_block = false;
+                reset = false;
+            }
+            if(is_code_block && reg_code_end.test(l_line.text)){
+                is_code_block = true;
+                reset = true;
             }
             else if(!is_code_block && reg_code_begin.test(l_line.text)){
                 is_code_block = true;
@@ -1150,6 +1158,14 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
             return LineType.codeblock;
         }
         else return LineType.text;
+    }
+    else if(token.contains('list')){
+        for(let p=line.from+1;p<line.to;p+=1){
+            let t = tree.resolve(p, 1).name
+            if((t.contains('code') && t.contains('block'))){
+                return LineType.codeblock
+            }
+        }
     }
     return LineType.text
 }

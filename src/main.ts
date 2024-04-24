@@ -139,6 +139,13 @@ export default class EasyTypingPlugin extends Plugin {
 					const success = this.handleEnter(view);
 					return success;
 				}
+			},
+			{
+				key: "Mod-a", 
+				run: (view: EditorView): boolean => {
+					const success = this.handleModAInCodeBlock(view);
+					return success;
+				}
 			}
 		])));
 
@@ -296,6 +303,38 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
+			// 在代码块中粘贴时智能添加缩进
+			if (this.settings.BetterCodeEdit && changeTypeStr.contains('paste') && fromA==fromB && 
+					getPosLineType(tr.state, fromB) == LineType.codeblock){
+				print("检测到在代码块中粘贴")
+				let line = tr.startState.doc.lineAt(fromB).text;
+				let indent_space = line.match(/^\s*/)[0].length;
+				let inserted_lines = insertedStr.split('\n');
+				if(inserted_lines.length>1){
+					let first_line = inserted_lines[0].trimStart();
+					let rest_lines = inserted_lines.slice(1);
+					// find the minimum indent space in rest lines
+					let min_indent_space = Infinity;
+					for (let line of rest_lines){
+						let indent = line.match(/^\s*/)[0].length;
+						if (indent<min_indent_space) min_indent_space = indent;
+					}
+					// remove this min_indent_space from rest lines
+					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
+					new_rest_lines = new_rest_lines.map(
+						(line:string)=>line.replace(/[\t]/g, this.obsidianSettings.getDefaultIndentChars()));
+					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+line);
+					let new_insertedStr = first_line+'\n'+final_rest_lines.join('\n');
+					changes.push({
+						changes: {from: fromA, to: toA, insert: new_insertedStr},
+						selection: {anchor: fromA+new_insertedStr.length},
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
+				}				
+			}
+
 			if (selected) return tr;
 
 			// let test_s = "¥"
@@ -311,7 +350,7 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			// 列表下的代码块删除功能优化
-			if (changeTypeStr == "delete.backward" && !selected && 
+			if (this.settings.BetterCodeEdit && changeTypeStr == "delete.backward" && !selected && 
 				getPosLineType(tr.startState, toA) == LineType.codeblock && 
 				(tr.startState.sliceDoc(fromA,toA)!='`' || getPosLineType(tr.state, fromA)==LineType.codeblock)) {
 				let line_number = tr.startState.doc.lineAt(toA).number;
@@ -577,38 +616,6 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 				}
 			}
-
-			// 在代码块中粘贴时智能添加缩进
-			if (changeTypeStr.contains('paste') && fromA==toA && fromA==fromB && 
-					getPosLineType(tr.startState, fromB) == LineType.codeblock){
-				let line = tr.startState.doc.lineAt(fromB).text;
-				let indent_space = line.match(/^\s*/)[0].length;
-				let inserted_lines = insertedStr.split('\n');
-				if(inserted_lines.length>1){
-					let first_line = inserted_lines[0].trimStart();
-					let rest_lines = inserted_lines.slice(1);
-					// find the minimum indent space in rest lines
-					let min_indent_space = Infinity;
-					for (let line of rest_lines){
-						let indent = line.match(/^\s*/)[0].length;
-						if (indent<min_indent_space) min_indent_space = indent;
-					}
-					// remove this min_indent_space from rest lines
-					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
-					new_rest_lines = new_rest_lines.map(
-						(line:string)=>line.replace(/[\t]/g, this.obsidianSettings.getDefaultIndentChars()));
-					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+line);
-					let new_insertedStr = first_line+'\n'+final_rest_lines.join('\n');
-					changes.push({
-						changes: {from: fromA, to: toA, insert: new_insertedStr},
-						selection: {anchor: fromA+new_insertedStr.length},
-						userEvent: "EasyTyping.change"
-					});
-					tr = tr.startState.update(...changes);
-					return tr;
-				}				
-			}
-
 		})
 		return tr;
 	}
@@ -773,7 +780,7 @@ export default class EasyTypingPlugin extends Plugin {
 		// return true;
 
 		// 当光标在行内代码内部
-		if (pos - line.from != 0 && tree.resolve(pos - 1, 1).name.contains('inline-code')) {
+		if (this.settings.BetterCodeEdit && pos - line.from != 0 && tree.resolve(pos - 1, 1).name.contains('inline-code')) {
 			if (tree.resolve(pos, 1).name.contains('formatting-code_inline-code')) {
 				view.dispatch({
 					selection: { anchor: pos + 1, head: pos + 1 }
@@ -861,6 +868,44 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 
 		return false;
+	}
+
+	private readonly handleModAInCodeBlock = (view: EditorView) => {
+		if (!this.settings.BetterCodeEdit) return false;
+		let selected = false;
+		let mainSelection = view.state.selection.asSingle().main;
+		if (mainSelection.anchor != mainSelection.head) selected = true;
+		if (selected) return false;
+
+		let cursor_pos = mainSelection.anchor;
+		if (getPosLineType(view.state, cursor_pos)!=LineType.codeblock) return false;
+
+		let cursor_line = view.state.doc.lineAt(cursor_pos).number;
+		let code_start_line = cursor_line;
+		let code_end_line = cursor_line;
+		for (let i=cursor_line-1; i>=1; i--){
+			if (getPosLineType(view.state, view.state.doc.line(i).from)!=LineType.codeblock) break;
+			code_start_line = i;
+		}
+		for (let i=cursor_line+1; i<=view.state.doc.lines; i++){
+			if (getPosLineType(view.state, view.state.doc.line(i).from)!=LineType.codeblock) break;
+			code_end_line = i;
+		}
+		let anchor = view.state.doc.line(code_start_line+1).from;
+		let offset = 0;
+		let start_line_string = view.state.doc.line(code_start_line+1).text;
+		if (!/^\s+$/.test(start_line_string)){
+			let reg_spaces = /^\s+/;
+			let new_line_string = start_line_string.replace(reg_spaces, '');
+			offset = start_line_string.length - new_line_string.length;
+		}
+		view.dispatch({
+			selection: { 
+				anchor: anchor+offset, 
+				head: view.state.doc.line(code_end_line-1).to 
+			}
+		})
+		return true;
 	}
 
 	private readonly onKeyup = (event: KeyboardEvent, view: EditorView) => {
