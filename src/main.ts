@@ -683,52 +683,8 @@ export default class EasyTypingPlugin extends Plugin {
 			// 判断每次输入结束
 			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
 				// 用户自定义转化规则
-				for (let rule of this.UserConvertRules) {
-					// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
-					let left = update.view.state.doc.sliceString(toB - rule.before.left.length, toB);
-					let right = update.view.state.doc.sliceString(toB, toB + rule.before.right.length);
-					let inserted = rule.after.left + rule.after.right;
-					let anchor = toB - rule.before.left.length + rule.after.left.length;
-					let from = toB - rule.before.left.length;
-					let to = toB + rule.before.right.length;
-					// 对文档首行规则做特殊处理
-					if (rule.before.left.charAt(0) === '\n' && rule.after.left.charAt(0) === '\n' &&
-						toB - rule.before.left.length+1==0) {
-						left = '\n' + left;
-						inserted = inserted.substring(1);
-						from = 0;
-					}
-					if (left === rule.before.left && right === rule.before.right) {
-						update.view.dispatch({
-							changes: {
-								from: from,
-								to: to,
-								insert: inserted
-							},
-							selection: { anchor: anchor },
-							userEvent: "EasyTyping.change"
-						})
-						return;
-					}
-				}
-
-				if (this.settings.PuncRectify &&
-					/[,.?!]/.test(update.view.state.doc.sliceString(change_from - 1, change_from))) {
-					let punc = update.view.state.doc.sliceString(change_from - 1, change_from)
-					if (change_from > 2 && /[\s\n\w]/.test(update.view.state.doc.sliceString(change_from - 2, change_from - 1))) { }
-					else {
-						update.view.dispatch({
-							changes: {
-								from: change_from - 1,
-								to: change_from,
-								insert: this.halfToFullSymbolMap.get(punc)
-							},
-							// selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
-							userEvent: "EasyTyping.change"
-						})
-						return;
-					}
-				}
+				if (this.triggerUserCvtRule(update.view, toB)) return;
+				if (this.triggerPuncRectify(update.view, change_from)) return;
 
 				// 判断格式化文本
 				// console.log("ready to format");
@@ -915,21 +871,78 @@ export default class EasyTypingPlugin extends Plugin {
 		this.handleEndComposeTypeKey(event, view);
 	}
 
+	triggerUserCvtRule = (view: EditorView, cursor_pos: number):boolean => {
+		for (let rule of this.UserConvertRules) {
+			// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
+			let left = view.state.doc.sliceString(cursor_pos - rule.before.left.length, cursor_pos);
+			let right = view.state.doc.sliceString(cursor_pos, cursor_pos + rule.before.right.length);
+			let inserted = rule.after.left + rule.after.right;
+			let anchor = cursor_pos - rule.before.left.length + rule.after.left.length;
+			let from = cursor_pos - rule.before.left.length;
+			let to = cursor_pos + rule.before.right.length;
+			// 对文档首行规则做特殊处理
+			if (rule.before.left.charAt(0) === '\n' && rule.after.left.charAt(0) === '\n' &&
+				cursor_pos - rule.before.left.length+1==0) {
+				left = '\n' + left;
+				inserted = inserted.substring(1);
+				from = 0;
+			}
+			if (left === rule.before.left && right === rule.before.right) {
+				view.dispatch({
+					changes: {
+						from: from,
+						to: to,
+						insert: inserted
+					},
+					selection: { anchor: anchor },
+					userEvent: "EasyTyping.change"
+				})
+				return true;
+			}
+		}
+		return false;
+	}
+
+	triggerPuncRectify = (view: EditorView, change_from_pos: number):boolean => {
+		if (this.settings.PuncRectify &&
+			/[,.?!]/.test(view.state.doc.sliceString(change_from_pos - 1, change_from_pos))) {
+			let punc = view.state.doc.sliceString(change_from_pos - 1, change_from_pos)
+			if (change_from_pos > 2 && /[\s\n\w]/.test(view.state.doc.sliceString(change_from_pos - 2, change_from_pos - 1))) { }
+			else {
+				view.dispatch({
+					changes: {
+						from: change_from_pos - 1,
+						to: change_from_pos,
+						insert: this.halfToFullSymbolMap.get(punc)
+					},
+					// selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
+					userEvent: "EasyTyping.change"
+				})
+				return true;
+			}
+		}
+		return false;
+	}
+
 	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
-		if (['Enter', 'Process', ' ', 'Shift'].contains(event.key) && this.settings.AutoFormat &&
-			this.compose_need_handle && !this.isCurrentFileExclude()) {
+		if (['Enter', 'Process', ' ', 'Shift'].contains(event.key) &&
+			this.compose_need_handle) {
 			let cursor = view.state.selection.asSingle().main;
 			if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
 			if (cursor.head != cursor.anchor) return;
 			let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
 			// console.log("inserted str", insertedStr);
-			let changes = this.Formater.formatLineOfDoc(view.state, this.settings,
-				this.compose_begin_pos, cursor.anchor, insertedStr);
 			this.compose_need_handle = false;
-			if (changes != null) {
-				view.dispatch(...changes[0]);
-				view.dispatch(changes[1]);
-				return;
+			if (this.triggerUserCvtRule(view, cursor.anchor)) return;
+			if (this.triggerPuncRectify(view, this.compose_begin_pos)) return;
+			if (this.settings.AutoFormat && !this.isCurrentFileExclude()){
+				let changes = this.Formater.formatLineOfDoc(view.state, this.settings,
+					this.compose_begin_pos, cursor.anchor, insertedStr);
+				if (changes != null) {
+					view.dispatch(...changes[0]);
+					view.dispatch(changes[1]);
+					return;
+				}
 			}
 		}
 	}
