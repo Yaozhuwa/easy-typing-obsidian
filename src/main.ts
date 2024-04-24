@@ -970,7 +970,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
-		if (['Enter', 'Process', ' ', 'Shift'].contains(event.key) &&
+		if ((['Enter', 'Process', ' ', 'Shift'].contains(event.key) || /\d/.test(event.key)) &&
 			this.compose_need_handle) {
 			let cursor = view.state.selection.asSingle().main;
 			if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
