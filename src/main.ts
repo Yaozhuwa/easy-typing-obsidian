@@ -690,7 +690,7 @@ export default class EasyTypingPlugin extends Plugin {
 			// 判断每次输入结束
 			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
 				// 用户自定义转化规则
-				if (this.triggerUserCvtRule(update.view, toB)) return;
+				if (this.triggerUserCvtRule(update.view, mainSelection.anchor)) return;
 				if (this.triggerPuncRectify(update.view, change_from)) return;
 
 				// 判断格式化文本
