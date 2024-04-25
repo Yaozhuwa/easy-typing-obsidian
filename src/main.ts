@@ -317,9 +317,8 @@ export default class EasyTypingPlugin extends Plugin {
 					let min_indent_space = Infinity;
 					for (let line of rest_lines){
 						let indent = line.match(/^\s*/)[0].length;
-						if (indent<min_indent_space) min_indent_space = indent;
+						if (line!='' && indent<min_indent_space) min_indent_space = indent;
 					}
-					// remove this min_indent_space from rest lines
 					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
 					new_rest_lines = new_rest_lines.map(
 						(line:string)=>line.replace(/[\t]/g, this.obsidianSettings.getDefaultIndentChars()));
