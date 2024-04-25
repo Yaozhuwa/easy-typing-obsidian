@@ -317,7 +317,7 @@ export default class EasyTypingPlugin extends Plugin {
 					let min_indent_space = Infinity;
 					for (let line of rest_lines){
 						let indent = line.match(/^\s*/)[0].length;
-						if (line!='' && indent<min_indent_space) min_indent_space = indent;
+						if (!/^\s*$/.test(line) && indent<min_indent_space) min_indent_space = indent;
 					}
 					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
 					new_rest_lines = new_rest_lines.map(
