@@ -972,7 +972,6 @@ export default class EasyTypingPlugin extends Plugin {
 		if ((['Enter', 'Process', ' ', 'Shift'].contains(event.key) || /\d/.test(event.key)) &&
 			this.compose_need_handle) {
 			let cursor = view.state.selection.asSingle().main;
-			if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
 			if (cursor.head != cursor.anchor) return;
 			let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
 			// console.log("inserted str", insertedStr);
@@ -980,6 +979,7 @@ export default class EasyTypingPlugin extends Plugin {
 			if (this.triggerUserCvtRule(view, cursor.anchor)) return;
 			if (this.triggerPuncRectify(view, this.compose_begin_pos)) return;
 			if (this.settings.AutoFormat && !this.isCurrentFileExclude()){
+				if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
 				let changes = this.Formater.formatLineOfDoc(view.state, this.settings,
 					this.compose_begin_pos, cursor.anchor, insertedStr);
 				if (changes != null) {
