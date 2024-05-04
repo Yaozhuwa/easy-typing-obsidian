@@ -1,4 +1,11 @@
 ## 更新日志 Changelog
+- V5.3.3 2024-05-05 一些功能修复
+  - 修复代码块粘贴某些情况智能缩进错误的问题
+  - 修复中文输入法 IME 下，用户自定义规则在代码块中失效的问题
+  - 优化代码块识别的功能，修复 CMD+A 某些情况的不精确选择问题
+  - 修复 triggerPuncRectify 误触发导致的错误
+  - 不再在时间戳左边添加软空格 #223
+  - 使用 [obsidian-typings - npm package](https://www.npmjs.com/package/obsidian-typings) 来使用未公开的 Obsidian API。
 - V5.3.2 2024-04-24 Small Fix
   - 修复：中文输入法下某些情况输入文字时转换规则不生效的问题 #221
 - V5.3.1 2024-04-24 增加代码块编辑体验增强功能
