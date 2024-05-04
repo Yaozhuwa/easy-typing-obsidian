@@ -662,7 +662,9 @@ export default class EasyTypingPlugin extends Plugin {
 
 			let change_from = fromB;
 			let change_to = toB;
+			let composeEnd = false;
 			if (this.compose_need_handle){
+				composeEnd = true;
 				this.compose_need_handle = false;
 				change_from = this.compose_begin_pos;
 				change_to = this.compose_end_pos;
@@ -673,7 +675,7 @@ export default class EasyTypingPlugin extends Plugin {
 			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
 				// 用户自定义转化规则
 				if (this.triggerUserCvtRule(update.view, mainSelection.anchor)) return;
-				if (this.triggerPuncRectify(update.view, change_from)) return;
+				if (composeEnd && this.triggerPuncRectify(update.view, change_from)) return;
 
 				// 判断格式化文本
 				// console.log("ready to format");
@@ -905,7 +907,7 @@ export default class EasyTypingPlugin extends Plugin {
 		if (this.settings.PuncRectify &&
 			/[,.?!]/.test(view.state.doc.sliceString(change_from_pos - 1, change_from_pos))) {
 			let punc = view.state.doc.sliceString(change_from_pos - 1, change_from_pos)
-			if (change_from_pos > 2 && /[\s\n\w]/.test(view.state.doc.sliceString(change_from_pos - 2, change_from_pos - 1))) { }
+			if (change_from_pos > 2 && /[^\u4e00-\u9fa5]/.test(view.state.doc.sliceString(change_from_pos - 2, change_from_pos - 1))) { }
 			else {
 				view.dispatch({
 					changes: {
