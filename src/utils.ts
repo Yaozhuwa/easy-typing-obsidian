@@ -10,20 +10,6 @@ export const print=(message?: any, ...optionalParams: any[]) =>{
     }
 }
 
-interface AppHiddenProps {
-	internalPlugins: {
-		config: { [key: string]: boolean };
-	};
-	isMobile: boolean;
-	plugins: {
-		enabledPlugins: Set<string>;
-		manifests: { [key: string]: { version: string } };
-	};
-	vault: {
-		config: object;
-	};
-}
-
 export function posToOffset(doc:Text, pos:{line:number, ch:number}) {
 	return doc.line(pos.line + 1).from + pos.ch
 }
@@ -79,87 +65,4 @@ export function isParamDefined(param: any):boolean
 
 export function showString(s: string):string{
 	return s.replace(/\n/g, '\\n');
-}
-
-export function getObsidianSettings(plugin: Plugin) {
-	const app = plugin.app as any as AppHiddenProps;
-	return app.vault.config;
-}
-
-
-// Code Below is from https://github.com/vslinko/obsidian-outliner
-// Copyright (c) 2021 Viacheslav Slinko
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-export interface ObsidianTabsSettings {
-	useTab: boolean;
-	tabSize: number;
-}
-
-export interface ObsidianFoldSettings {
-	foldIndent: boolean;
-}
-
-function getHiddenObsidianConfig(app: App) {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return (app.vault as any).config;
-}
-
-export class ObsidianSettings {
-	constructor(private app: App) {}
-
-	isLegacyEditorEnabled() {
-		const config: { legacyEditor: boolean } = {
-			legacyEditor: false,
-			...getHiddenObsidianConfig(this.app),
-		};
-
-		return config.legacyEditor;
-	}
-
-	isDefaultThemeEnabled() {
-		const config: { cssTheme: string } = {
-			cssTheme: "",
-			...getHiddenObsidianConfig(this.app),
-		};
-
-		return config.cssTheme === "";
-	}
-
-	getTabsSettings(): ObsidianTabsSettings {
-		return {
-			useTab: true,
-			tabSize: 4,
-			...getHiddenObsidianConfig(this.app),
-		};
-	}
-
-	getFoldSettings(): ObsidianFoldSettings {
-		return {
-			foldIndent: true,
-			...getHiddenObsidianConfig(this.app),
-		};
-	}
-
-	getDefaultIndentChars() {
-		const { useTab, tabSize } = this.getTabsSettings();
-
-		return useTab ? "\t" : new Array(tabSize).fill(" ").join("");
-	}
 }

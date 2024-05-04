@@ -3,8 +3,6 @@ import {EditorSelection, EditorState, Prec, Transaction, TransactionSpec} from '
 import {ConvertRule, DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString} from "./settings"
 import {EditorView, keymap, ViewUpdate} from '@codemirror/view';
 import {
-	getObsidianSettings,
-	ObsidianSettings,
 	getTypeStrOfTransac,
 	offsetToPos,
 	print,
@@ -14,24 +12,6 @@ import {
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos } from './syntax';
-
-declare module "obsidian" {
-	// add type safety for the undocumented methods, 
-	// COPY FROM https://github.com/chrisgrieser/obsidian-smarter-md-hotkeys/tree/master
-	// interface Editor {
-	// 	cm: {
-	// 		findWordAt?: (pos: EditorPosition) => EditorSelection;
-	// 		state?: { wordAt: (offset: number) => { from: number, to: number} };
-	// 	};
-	// }
-	// interface App {
-	// 	commands: { executeCommandById: (commandID: string) => void };
-	// }
-	interface Vault {
-		setConfig: (config: string, newValue: boolean) => void;
-		getConfig: (config: string) => boolean;
-	}
-}
 
 
 export default class EasyTypingPlugin extends Plugin {
@@ -58,7 +38,6 @@ export default class EasyTypingPlugin extends Plugin {
 	onFormatArticle: boolean;
 	TaboutPairStrs: PairString[];
 
-	obsidianSettings: ObsidianSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -114,8 +93,6 @@ export default class EasyTypingPlugin extends Plugin {
 		this.Formater = new LineFormater();
 
 		this.onFormatArticle = false;
-
-		this.obsidianSettings = new ObsidianSettings(this.app);
 
 		this.registerEditorExtension([
 			EditorState.transactionFilter.of(this.transactionFilterPlugin),
@@ -272,6 +249,11 @@ export default class EasyTypingPlugin extends Plugin {
 		console.log("Easy Typing Plugin unloaded.")
 	}
 
+	getDefaultIndentChar = () => {
+		let default_indent = this.app.vault.config.useTab ? '\t' : ' '.repeat(this.app.vault.config.tabSize);
+		return default_indent;
+	}
+
 	transactionFilterPlugin = (tr: Transaction): TransactionSpec | readonly TransactionSpec[] => {
 		const changes: TransactionSpec[] = [];
 		if (!tr.docChanged) return tr;
@@ -321,8 +303,9 @@ export default class EasyTypingPlugin extends Plugin {
 						if (!/^\s*$/.test(line) && indent<min_indent_space) min_indent_space = indent;
 					}
 					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
+					
 					new_rest_lines = new_rest_lines.map(
-						(line:string)=>line.replace(/[\t]/g, this.obsidianSettings.getDefaultIndentChars()));
+						(line:string)=>line.replace(/[\t]/g, this.getDefaultIndentChar()));
 					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+line);
 					let new_insertedStr = first_line+'\n'+final_rest_lines.join('\n');
 					changes.push({
@@ -625,7 +608,6 @@ export default class EasyTypingPlugin extends Plugin {
 		if (clipboardText === null || clipboardText === "") return;
 
 		if (this.settings.debug) console.log("Normal Paste!!")
-		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let mainSelection = editorView.state.selection.asSingle().main;
 		editorView.dispatch({
@@ -769,10 +751,10 @@ export default class EasyTypingPlugin extends Plugin {
 			view.dispatch({
 				changes: {
 					from: s.main.from,
-					insert: this.obsidianSettings.getDefaultIndentChars()
+					insert: this.getDefaultIndentChar()
 				},
 				selection: {
-					anchor: s.main.from + this.obsidianSettings.getDefaultIndentChars().length
+					anchor: s.main.from + this.getDefaultIndentChar().length
 				}
 			})
 			return true;
@@ -833,11 +815,7 @@ export default class EasyTypingPlugin extends Plugin {
 		// console.log("this.settings.EnterTwice", this.settings.EnterTwice)
 		if (!this.settings.EnterTwice) return false;
 
-		// const basePath = (this.app.vault.adapter as any).basePath
-		// let config_path = basePath + "/" + this.app.vault.configDir + "/app.json";
-		// let config = JSON.parse(fs.readFileSync(config_path, 'utf-8'))
-		// let strictLineBreaks = config.strictLineBreaks || false;
-		let strictLineBreaks = this.app.vault.getConfig("strictLineBreaks");
+		let strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
 		if (!strictLineBreaks) return false;
 
 		let state = view.state;
@@ -968,7 +946,6 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	formatArticle = (editor: Editor, view: MarkdownView): void => {
-		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		const tree = ensureSyntaxTree(editorView.state, editorView.state.doc.length);
 		if (!tree){
@@ -1057,7 +1034,6 @@ export default class EasyTypingPlugin extends Plugin {
 
 	// param: lineNumber is (1-based), 废弃函数
 	formatOneLine = (editor: Editor, lineNumber: number): void => {
-		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
 		let line = state.doc.line(lineNumber)
@@ -1075,7 +1051,6 @@ export default class EasyTypingPlugin extends Plugin {
 
 	// param: lineNumber is (1-based)
 	preFormatOneLine = (editor: Editor, lineNumber: number, ch: number = -1): [string, number] => {
-		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
 		let line = state.doc.line(lineNumber)
@@ -1102,7 +1077,6 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 		let strictLineBreaks = this.app.vault.getConfig("strictLineBreaks");
 
-		// @ts-expect-error, not typed
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
 		let doc = state.doc
