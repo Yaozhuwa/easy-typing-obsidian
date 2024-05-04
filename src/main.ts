@@ -13,6 +13,7 @@ import {
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
+import { selectCodeBlockInPos } from './syntax';
 
 declare module "obsidian" {
 	// add type safety for the undocumented methods, 
@@ -869,6 +870,7 @@ export default class EasyTypingPlugin extends Plugin {
 		return false;
 	}
 
+
 	private readonly handleModAInCodeBlock = (view: EditorView) => {
 		if (!this.settings.BetterCodeEdit) return false;
 		let selected = false;
@@ -877,34 +879,8 @@ export default class EasyTypingPlugin extends Plugin {
 		if (selected) return false;
 
 		let cursor_pos = mainSelection.anchor;
-		if (getPosLineType(view.state, cursor_pos)!=LineType.codeblock) return false;
 
-		let cursor_line = view.state.doc.lineAt(cursor_pos).number;
-		let code_start_line = cursor_line;
-		let code_end_line = cursor_line;
-		for (let i=cursor_line-1; i>=1; i--){
-			if (getPosLineType(view.state, view.state.doc.line(i).from)!=LineType.codeblock) break;
-			code_start_line = i;
-		}
-		for (let i=cursor_line+1; i<=view.state.doc.lines; i++){
-			if (getPosLineType(view.state, view.state.doc.line(i).from)!=LineType.codeblock) break;
-			code_end_line = i;
-		}
-		let anchor = view.state.doc.line(code_start_line+1).from;
-		let offset = 0;
-		let start_line_string = view.state.doc.line(code_start_line+1).text;
-		if (!/^\s+$/.test(start_line_string)){
-			let reg_spaces = /^\s+/;
-			let new_line_string = start_line_string.replace(reg_spaces, '');
-			offset = start_line_string.length - new_line_string.length;
-		}
-		view.dispatch({
-			selection: { 
-				anchor: anchor+offset, 
-				head: view.state.doc.line(code_end_line-1).to 
-			}
-		})
-		return true;
+		return selectCodeBlockInPos(view, cursor_pos);
 	}
 
 	private readonly onKeyup = (event: KeyboardEvent, view: EditorView) => {
