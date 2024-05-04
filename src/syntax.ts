@@ -1,6 +1,6 @@
 import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
-import {EditorView} from '@codemirror/view';
-
+import { EditorView } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
 export interface CodeBlockInfo {
     start_pos: number;
     end_pos: number;
@@ -10,8 +10,8 @@ export interface CodeBlockInfo {
     indent: number;
 }
 
-export function isPosInCodeBlock(view: EditorView, pos: number): boolean {
-    let codeBlockInfos = getCodeBlocksInfos(view);
+export function isCodeBlockInPos(state: EditorState, pos: number): boolean {
+    let codeBlockInfos = getCodeBlocksInfos(state);
     for (let i = 0; i < codeBlockInfos.length; i++) {
         if (pos >= codeBlockInfos[i].start_pos && pos <= codeBlockInfos[i].end_pos) {
             return true;
@@ -20,8 +20,8 @@ export function isPosInCodeBlock(view: EditorView, pos: number): boolean {
     return false;
 }
 
-export function getCodeBlockInfoInPos(view: EditorView, pos: number): CodeBlockInfo | null {
-    let codeBlockInfos = getCodeBlocksInfos(view);
+export function getCodeBlockInfoInPos(state: EditorState, pos: number): CodeBlockInfo | null {
+    let codeBlockInfos = getCodeBlocksInfos(state);
     for (let i = 0; i < codeBlockInfos.length; i++) {
         if (pos >= codeBlockInfos[i].start_pos && pos <= codeBlockInfos[i].end_pos) {
             return codeBlockInfos[i];
@@ -31,7 +31,7 @@ export function getCodeBlockInfoInPos(view: EditorView, pos: number): CodeBlockI
 }
 
 export function selectCodeBlockInPos(view: EditorView, pos: number):boolean {
-    let codeBlockInfos = getCodeBlocksInfos(view);
+    let codeBlockInfos = getCodeBlocksInfos(view.state);
     for (let i = 0; i < codeBlockInfos.length; i++) {
         if (pos >= codeBlockInfos[i].start_pos && pos <= codeBlockInfos[i].end_pos) {
             view.dispatch({
@@ -46,23 +46,23 @@ export function selectCodeBlockInPos(view: EditorView, pos: number):boolean {
     return false;
 }
 
-export function getCodeBlocksInfos(view: EditorView): CodeBlockInfo[]{
+export function getCodeBlocksInfos(state: EditorState): CodeBlockInfo[]{
     let isCodeBlockBegin = false;
     let codeBlockInfos: CodeBlockInfo[] = [];
     let curCodeBlockInfo: CodeBlockInfo | null = null;
-    const doc = view.state.doc;
+    const doc = state.doc;
 
-    syntaxTree(view.state).iterate({
+    syntaxTree(state).iterate({
         enter(node) {
             const nodeName = node.name;
             const nodeFrom = node.from;
             const nodeTo = node.to;
-            const nodeText = view.state.sliceDoc(nodeFrom, nodeTo);
+            const nodeText = state.sliceDoc(nodeFrom, nodeTo);
             // console.log(nodeName, nodeFrom, nodeTo, nodeText);
             if (nodeName.includes('codeblock-begin')) {
                 isCodeBlockBegin = true;
                 let start_pos = nodeFrom + nodeText.indexOf('`');
-                let indent = start_pos - view.state.doc.lineAt(start_pos).from;
+                let indent = start_pos - state.doc.lineAt(start_pos).from;
                 let language = nodeText.trim().substring(3);
                 curCodeBlockInfo = {
                     start_pos: start_pos,

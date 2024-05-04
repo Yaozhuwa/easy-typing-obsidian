@@ -11,7 +11,7 @@ import {
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
-import { selectCodeBlockInPos } from './syntax';
+import { selectCodeBlockInPos, isCodeBlockInPos } from './syntax';
 
 
 export default class EasyTypingPlugin extends Plugin {
@@ -288,7 +288,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			// 在代码块中粘贴时智能添加缩进
 			if (this.settings.BetterCodeEdit && changeTypeStr.contains('paste') && fromA==fromB && 
-					getPosLineType(tr.state, fromB) == LineType.codeblock){
+					isCodeBlockInPos(tr.startState, fromA)){
 				print("检测到在代码块中粘贴")
 				let line = tr.startState.doc.lineAt(fromB).text;
 				let indent_space = line.match(/^\s*/)[0].length;
