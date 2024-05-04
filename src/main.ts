@@ -293,8 +293,12 @@ export default class EasyTypingPlugin extends Plugin {
 				let line = tr.startState.doc.lineAt(fromB).text;
 				let indent_space = line.match(/^\s*/)[0].length;
 				let inserted_lines = insertedStr.split('\n');
+				let extra_indent = '';
 				if(inserted_lines.length>1){
 					let first_line = inserted_lines[0].trimStart();
+					if (first_line.endsWith('{') || first_line.endsWith('(') || first_line.endsWith('[')){
+						extra_indent = this.getDefaultIndentChar();
+					}
 					let rest_lines = inserted_lines.slice(1);
 					// find the minimum indent space in rest lines
 					let min_indent_space = Infinity;
@@ -306,7 +310,7 @@ export default class EasyTypingPlugin extends Plugin {
 					
 					new_rest_lines = new_rest_lines.map(
 						(line:string)=>line.replace(/[\t]/g, this.getDefaultIndentChar()));
-					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+line);
+					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+extra_indent+line);
 					let new_insertedStr = first_line+'\n'+final_rest_lines.join('\n');
 					changes.push({
 						changes: {from: fromA, to: toA, insert: new_insertedStr},
