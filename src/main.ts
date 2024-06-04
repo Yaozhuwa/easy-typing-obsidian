@@ -296,9 +296,10 @@ export default class EasyTypingPlugin extends Plugin {
 				let extra_indent = '';
 				if(inserted_lines.length>1){
 					let first_line = inserted_lines[0].trimStart();
-					if (first_line.endsWith('{') || first_line.endsWith('(') || first_line.endsWith('[')){
-						extra_indent = this.getDefaultIndentChar();
-					}
+					// if (first_line.endsWith('{') || first_line.endsWith('(') || first_line.endsWith('[')
+					// 	|| first_line.endsWith(':')){
+					// 	extra_indent = this.getDefaultIndentChar();
+					// }
 					let rest_lines = inserted_lines.slice(1);
 					// find the minimum indent space in rest lines
 					let min_indent_space = Infinity;

@@ -34,10 +34,16 @@ export function getTypeStrOfTransac(tr: Transaction): string {
 }
 
 export function string2pairstring(s: string):PairString{
-	let cursorIdx = s.indexOf("|");
+	let cursorIdx = findFirstPipeNotPrecededByBackslash(s);
 	let left = s.substring(0, cursorIdx);
+	let convertedLeft = left.replace(/\\\|/g, "|").replace(/\\\\/g, "\\")
+							.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
+							.replace(/\\t/g, '\t')
 	let right = s.substring(cursorIdx+1);
-	return {left:left, right:right};
+	let convertedRight = right.replace(/\\\|/g, "|").replace(/\\\\/g, "\\")
+							.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
+							.replace(/\\t/g, '\t')
+	return {left:convertedLeft, right:convertedRight};
 }
 
 export function ruleStringList2RuleList(list: Array<[string, string]>):ConvertRule[] {
@@ -46,6 +52,11 @@ export function ruleStringList2RuleList(list: Array<[string, string]>):ConvertRu
 		res[i] = {before: string2pairstring(list[i][0]), after: string2pairstring(list[i][1])}
 	}
 	return res;
+}
+
+export function findFirstPipeNotPrecededByBackslash(s: string): number {
+    const match = s.match(/((^|[^\\])(\\\\)*)\|/);
+    return match ? s.indexOf(match[0]) + match[1].length : -1;
 }
 
 export function stringDeleteAt(str: string, index: number):string
