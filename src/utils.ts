@@ -67,6 +67,9 @@ export function ruleStringList2RuleList(list: Array<[string, string]>):ConvertRu
 }
 
 export function findFirstPipeNotPrecededByBackslash(s: string): number {
+	let regex = /^r\/[^]*?\/\|/;
+	let regMatch = s.match(regex);
+	if (regMatch) return regMatch[0].length - 1;
     const match = s.match(/((^|[^\\])(\\\\)*)\|/);
     return match ? s.indexOf(match[0]) + match[1].length : -1;
 }
