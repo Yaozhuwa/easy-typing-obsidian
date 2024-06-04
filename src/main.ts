@@ -7,7 +7,9 @@ import {
 	offsetToPos,
 	print,
 	ruleStringList2RuleList,
-	string2pairstring
+	string2pairstring,
+	isRegexp,
+	replacePlaceholders,
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
@@ -374,20 +376,52 @@ export default class EasyTypingPlugin extends Plugin {
 			// UserDefined Delete Rule
 			if (changeTypeStr == "delete.backward") {
 				for (let rule of this.UserDeleteRules) {
-					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
-					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
-					if (left === rule.before.left && right === rule.before.right) {
-						changes.push({
-							changes: {
-								from: toA - rule.before.left.length,
-								to: toA + rule.before.right.length,
-								insert: rule.after.left + rule.after.right
-							},
-							selection: { anchor: toA - rule.before.left.length + rule.after.left.length },
-							userEvent: "EasyTyping.change"
-						});
-						tr = tr.startState.update(...changes);
-						return tr;
+					let leftDocStr = tr.startState.doc.sliceString(0, toA);
+					let rightDocStr = tr.startState.doc.sliceString(toA);
+					let leftRegexpStr = rule.before.left;
+					if (isRegexp(rule.before.left)){
+						leftRegexpStr = leftRegexpStr.slice(2, -1);
+					}else{
+						leftRegexpStr = leftRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					}
+					
+					let leftRegexp = new RegExp(leftRegexpStr+"$");
+					let leftMatch = leftDocStr.match(leftRegexp);
+					if (leftMatch){
+						let leftMatchStr = leftMatch[0];
+						// 选择 leftMatch[0] 之后的所有匹配
+						let matchList = leftMatch.slice(1);
+						let matchPosBegin = toA - leftMatchStr.length;
+						let rightRegexpStr = rule.before.right;
+						if (isRegexp(rule.before.right)){
+							rightRegexpStr = rightRegexpStr.slice(2, -1);
+						}else{
+							// $& 表示匹配的子串
+							rightRegexpStr = rightRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+						}
+						let rightRegexp = new RegExp('^'+rightRegexpStr);
+						let rightMatch = rightDocStr.match(rightRegexp);
+						if(rightMatch){
+							let rightMatchStr = rightMatch[0];
+							let matchPosEnd = toA + rightMatchStr.length;
+							matchList.push(...rightMatch.slice(1));
+							// 左右都匹配成功，开始替换字符串
+							let replaceLeft = replacePlaceholders(rule.after.left, matchList);
+							let replaceRight = replacePlaceholders(rule.after.right, matchList);
+							changes.push({
+								changes: {
+									from: matchPosBegin,
+									to: matchPosEnd,
+									insert: replaceLeft+replaceRight
+								},
+								selection: {
+									anchor: matchPosBegin + replaceLeft.length
+								},
+								userEvent: "EasyTyping.change"
+							});
+							tr = tr.startState.update(...changes);
+							return tr;
+						}
 					}
 				}
 			}
@@ -878,31 +912,51 @@ export default class EasyTypingPlugin extends Plugin {
 
 	triggerUserCvtRule = (view: EditorView, cursor_pos: number):boolean => {
 		for (let rule of this.UserConvertRules) {
-			// if (insertedStr != rule.before.left.substring(rule.before.left.length - insertedStr.length)) continue;
-			let left = view.state.doc.sliceString(cursor_pos - rule.before.left.length, cursor_pos);
-			let right = view.state.doc.sliceString(cursor_pos, cursor_pos + rule.before.right.length);
-			let inserted = rule.after.left + rule.after.right;
-			let anchor = cursor_pos - rule.before.left.length + rule.after.left.length;
-			let from = cursor_pos - rule.before.left.length;
-			let to = cursor_pos + rule.before.right.length;
-			// 对文档首行规则做特殊处理
-			if (rule.before.left.charAt(0) === '\n' && rule.after.left.charAt(0) === '\n' &&
-				cursor_pos - rule.before.left.length+1==0) {
-				left = '\n' + left;
-				inserted = inserted.substring(1);
-				from = 0;
+			let leftDocStr = view.state.doc.sliceString(0, cursor_pos);
+			let rightDocStr = view.state.doc.sliceString(cursor_pos);
+			let leftRegexpStr = rule.before.left;
+			if (isRegexp(rule.before.left)){
+				leftRegexpStr = leftRegexpStr.slice(2, -1);
+			}else{
+				leftRegexpStr = leftRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 			}
-			if (left === rule.before.left && right === rule.before.right) {
-				view.dispatch({
-					changes: {
-						from: from,
-						to: to,
-						insert: inserted
-					},
-					selection: { anchor: anchor },
-					userEvent: "EasyTyping.change"
-				})
-				return true;
+			
+			let leftRegexp = new RegExp(leftRegexpStr+"$");
+			let leftMatch = leftDocStr.match(leftRegexp);
+			if (leftMatch){
+				let leftMatchStr = leftMatch[0];
+				// 选择 leftMatch[0] 之后的所有匹配
+				let matchList = leftMatch.slice(1);
+				let matchPosBegin = cursor_pos - leftMatchStr.length;
+				let rightRegexpStr = rule.before.right;
+				if (isRegexp(rule.before.right)){
+					rightRegexpStr = rightRegexpStr.slice(2, -1);
+				}else{
+					// $& 表示匹配的子串
+					rightRegexpStr = rightRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				}
+				let rightRegexp = new RegExp('^'+rightRegexpStr);
+				let rightMatch = rightDocStr.match(rightRegexp);
+				if(rightMatch){
+					let rightMatchStr = rightMatch[0];
+					let matchPosEnd = cursor_pos + rightMatchStr.length;
+					matchList.push(...rightMatch.slice(1));
+					// 左右都匹配成功，开始替换字符串
+					let replaceLeft = replacePlaceholders(rule.after.left, matchList);
+					let replaceRight = replacePlaceholders(rule.after.right, matchList);
+					view.dispatch({
+						changes: {
+							from: matchPosBegin,
+							to: matchPosEnd,
+							insert: replaceLeft+replaceRight
+						},
+						selection: {
+							anchor: matchPosBegin + replaceLeft.length
+						},
+						userEvent: "EasyTyping.change"
+					});
+					return true;
+				}
 			}
 		}
 		return false;

@@ -36,10 +36,20 @@ export function getTypeStrOfTransac(tr: Transaction): string {
 export function string2pairstring(s: string):PairString{
 	let cursorIdx = findFirstPipeNotPrecededByBackslash(s);
 	let left = s.substring(0, cursorIdx);
-	let convertedLeft = convertEscapeChar(left);
+	let _left = isRegexp(left) ? left : convertEscapeChar(left);
 	let right = s.substring(cursorIdx+1);
-	let convertedRight = convertEscapeChar(right);
-	return {left:convertedLeft, right:convertedRight};
+	let _right = isRegexp(right) ? right : convertEscapeChar(right)
+	return {left:_left, right:_right};
+}
+
+export function replacePlaceholders(str: string, replacements: string[]): string {
+	return str.replace(/\$(\d+)/g, function (match, index) {
+		return replacements[parseInt(index, 10)] || match;
+	});
+}
+
+export function isRegexp(s: string):boolean{
+	return s.startsWith("r/") && s.endsWith("/");
 }
 
 function convertEscapeChar(s: string):string{
