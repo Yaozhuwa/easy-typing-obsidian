@@ -36,14 +36,16 @@ export function getTypeStrOfTransac(tr: Transaction): string {
 export function string2pairstring(s: string):PairString{
 	let cursorIdx = findFirstPipeNotPrecededByBackslash(s);
 	let left = s.substring(0, cursorIdx);
-	let convertedLeft = left.replace(/\\\|/g, "|").replace(/\\\\/g, "\\")
-							.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
-							.replace(/\\t/g, '\t')
+	let convertedLeft = convertEscapeChar(left);
 	let right = s.substring(cursorIdx+1);
-	let convertedRight = right.replace(/\\\|/g, "|").replace(/\\\\/g, "\\")
-							.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
-							.replace(/\\t/g, '\t')
+	let convertedRight = convertEscapeChar(right);
 	return {left:convertedLeft, right:convertedRight};
+}
+
+function convertEscapeChar(s: string):string{
+	return s.replace(/\\\|/g, "|").replace(/\\\\/g, "\\")
+			.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
+			.replace(/\\t/g, '\t');
 }
 
 export function ruleStringList2RuleList(list: Array<[string, string]>):ConvertRule[] {

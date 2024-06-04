@@ -589,8 +589,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						let before = patternBefore.inputEl.value;
 						let after = patternAfter.inputEl.value;
 						if (before && after) {
-							let regRule = /\|/g;
-							if(before.search(regRule)==-1||after.search(regRule)==-1){
+							if(findFirstPipeNotPrecededByBackslash(before)==-1 ||
+							   findFirstPipeNotPrecededByBackslash(after)==-1){
 								new Notice("Inlvalid trigger, pattern must contain symbol \| which indicate cursor position");
 								return;
 							}
