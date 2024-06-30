@@ -872,9 +872,14 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	const token = tree.resolve(p, 1).name
 		// 	console.log(p-line.from, token)
 		// }
+		// 如果当前行为空白行，不做处理
 		if (/^\s*$/.test(line.text)) return false;
 
+		// 如果光标在当前行首，不做处理
 		if (pos==line.from) return false;
+
+		// 如下一行非空白行，不做处理
+		if (line.number < doc.lines && !/^\s*$/.test(doc.lineAt(line.number+1).text)) return false;
 
 		if (getPosLineType2(state, pos) == LineType.text) {
 			view.dispatch({
