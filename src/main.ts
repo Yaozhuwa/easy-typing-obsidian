@@ -252,7 +252,10 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	getDefaultIndentChar = () => {
-		let default_indent = this.app.vault.config.useTab ? '\t' : ' '.repeat(this.app.vault.config.tabSize);
+		// console.log('useTab, tabSize', this.app.vault.config.useTab, this.app.vault.config.tabSize);
+		let useTab = this.app.vault.config.useTab === undefined ? true : false;
+		let tabSize = this.app.vault.config.tabSize == undefined ? 4 : this.app.vault.config.tabSize;
+		let default_indent = useTab ? '\t' : ' '.repeat(tabSize);
 		return default_indent;
 	}
 
@@ -788,14 +791,15 @@ export default class EasyTypingPlugin extends Plugin {
 		// }
 		// return true;
 
-		if (s.main.from==s.main.to && getPosLineType(view.state, s.main.from) == LineType.codeblock){
+		if (s.main.from==s.main.to && isCodeBlockInPos(state, pos)){
+			const default_indent = this.getDefaultIndentChar();
 			view.dispatch({
 				changes: {
 					from: s.main.from,
-					insert: this.getDefaultIndentChar()
+					insert: default_indent
 				},
 				selection: {
-					anchor: s.main.from + this.getDefaultIndentChar().length
+					anchor: s.main.from + default_indent.length
 				}
 			})
 			return true;
@@ -1141,10 +1145,10 @@ export default class EasyTypingPlugin extends Plugin {
 
 	deleteBlankLines = (editor: Editor): void => {
 		if (this.settings.debug) {
-			console.log(this.app.vault.getConfig("strictLineBreaks"));
+			console.log('config.strictLineBreaks', this.app.vault.getConfig("strictLineBreaks"));
 			// return;
 		}
-		let strictLineBreaks = this.app.vault.getConfig("strictLineBreaks");
+		let strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
 
 		const editorView = editor.cm as EditorView;
 		let state = editorView.state;
