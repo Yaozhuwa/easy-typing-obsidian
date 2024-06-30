@@ -879,7 +879,7 @@ export default class EasyTypingPlugin extends Plugin {
 		if (pos==line.from) return false;
 
 		// 如下一行非空白行，不做处理
-		if (line.number < doc.lines && !/^\s*$/.test(doc.lineAt(line.number+1).text)) return false;
+		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)) return false;
 
 		if (getPosLineType2(state, pos) == LineType.text) {
 			view.dispatch({
