@@ -865,7 +865,7 @@ export default class EasyTypingPlugin extends Plugin {
 		const s = view.state.selection;
 		if (s.ranges.length > 1) return false;
 		const pos = s.main.to;
-		let line = doc.lineAt(pos)
+		let line = doc.lineAt(pos);
 
 		// console.log(line.text, getPosLineType2(state, pos))
 		// for (let p=line.from; p<=line.to; p+=1){
@@ -873,7 +873,10 @@ export default class EasyTypingPlugin extends Plugin {
 		// 	console.log(p-line.from, token)
 		// }
 		if (/^\s*$/.test(line.text)) return false;
-		else if (getPosLineType2(state, pos) == LineType.text) {
+
+		if (pos==line.from) return false;
+
+		if (getPosLineType2(state, pos) == LineType.text) {
 			view.dispatch({
 				changes: {
 					from: pos,
