@@ -1,0 +1,17 @@
+span[class="easy-typing-tabstops"] {
+    border-radius: 2px;
+    background-color: #87cefa2e;
+    outline: #87cefa6e solid 1px;
+}
+
+span[class="easy-typing-cursor-widget"] {
+    color: #1364ce6e;
+    animation: blink 1s step-start 0s infinite;
+    display: inline;
+    position: absolute;
+    white-space: pre;
+}
+
+@keyframes blink {
+    80% { opacity: 0; }
+}

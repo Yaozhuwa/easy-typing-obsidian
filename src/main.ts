@@ -10,10 +10,13 @@ import {
 	string2pairstring,
 	isRegexp,
 	replacePlaceholders,
+	parseTheAfterPattern
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos, isCodeBlockInPos } from './syntax';
+import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect } from './tabstops_state_field';
+import { tabstopSpecsToTabstopGroups } from './tabstop';
 
 
 export default class EasyTypingPlugin extends Plugin {
@@ -101,7 +104,8 @@ export default class EasyTypingPlugin extends Plugin {
 			EditorView.updateListener.of(this.viewUpdatePlugin),
 			Prec.highest(EditorView.domEventHandlers({
 				"keyup": this.onKeyup
-			}))
+			})),
+			tabstopsStateField.extension,
 		]);
 
 
@@ -662,6 +666,13 @@ export default class EasyTypingPlugin extends Plugin {
 	viewUpdatePlugin = (update: ViewUpdate) => {
 		if (this.onFormatArticle === true) return;
 
+		if ((update.docChanged || update.selectionSet) && !update.view.composing && !isInsideATabstop(update.view)) {
+			removeAllTabstops(update.view);
+		}
+		if (update.transactions.find(tr => tr.isUserEvent("undo"))){
+			removeAllTabstops(update.view);
+		}
+
 		let notSelected = true;
 		let mainSelection = update.view.state.selection.asSingle().main;
 		if (mainSelection.anchor != mainSelection.head) notSelected = false;
@@ -773,6 +784,10 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	private readonly handleTabDown = (view: EditorView) => {
+		if (consumeAndGotoNextTabstop(view)){
+			return true;
+		}
+
 		if (!this.settings.Tabout) return false;
 
 		let state = view.state;
@@ -954,19 +969,23 @@ export default class EasyTypingPlugin extends Plugin {
 					let matchPosEnd = cursor_pos + rightMatchStr.length;
 					matchList.push(...rightMatch.slice(1));
 					// 左右都匹配成功，开始替换字符串
-					let replaceLeft = replacePlaceholders(rule.after.left, matchList);
-					let replaceRight = replacePlaceholders(rule.after.right, matchList);
+					// let replaceLeft = replacePlaceholders(rule.after.left, matchList);
+					// let replaceRight = replacePlaceholders(rule.after.right, matchList);
+					let [new_string, tabstops] = parseTheAfterPattern(rule.after_pattern, matchList);
+					const updatedTabstops = tabstops.map(tabstop => ({
+						...tabstop, // 展开现有的属性
+						from: tabstop.from + matchPosBegin, // 增加from属性的值
+						to: tabstop.to + matchPosBegin // 增加to属性的值
+					}));
 					view.dispatch({
 						changes: {
 							from: matchPosBegin,
 							to: matchPosEnd,
-							insert: replaceLeft+replaceRight
-						},
-						selection: {
-							anchor: matchPosBegin + replaceLeft.length
+							insert: new_string
 						},
 						userEvent: "EasyTyping.change"
 					});
+					addTabstopsAndSelect(view, tabstopSpecsToTabstopGroups(updatedTabstops));
 					return true;
 				}
 			}

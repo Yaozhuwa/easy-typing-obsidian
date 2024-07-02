@@ -11,6 +11,7 @@ export interface PairString {
 export interface ConvertRule {
 	before: PairString;
 	after: PairString;
+	after_pattern?: string;
 }
 
 export enum RuleType {delete= "Delete Rule", convert='Convert Rule'}
@@ -665,8 +666,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						let before = patternBefore.inputEl.value;
 						let after = patternAfter.inputEl.value;
 						if (before && after) {
-							if(findFirstPipeNotPrecededByBackslash(before)==-1 ||
-							   findFirstPipeNotPrecededByBackslash(after)==-1){
+							if(findFirstPipeNotPrecededByBackslash(before)==-1){
 								new Notice("Inlvalid trigger, pattern must contain symbol \| which indicate cursor position");
 								return;
 							}
@@ -850,8 +850,7 @@ export class EditConvertRuleModal extends Modal {
 	}
 
 	checkConvertPatternString(before: string, after:string):boolean{
-		if(findFirstPipeNotPrecededByBackslash(before)==-1 ||
-			findFirstPipeNotPrecededByBackslash(after)==-1) return false;
+		if(findFirstPipeNotPrecededByBackslash(before)==-1) return false;
 		return true;
 	}
 

@@ -1,6 +1,7 @@
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text} from '@codemirror/state';
 import { EasyTypingSettingTab, EasyTypingSettings, PairString, ConvertRule} from "./settings"
-import { App, Plugin } from 'obsidian'
+import { App, Plugin, Platform } from 'obsidian'
+import { TabstopSpec } from './tabstop';
 
 let DEBUG = true;
 
@@ -43,9 +44,80 @@ export function string2pairstring(s: string):PairString{
 }
 
 export function replacePlaceholders(str: string, replacements: string[]): string {
-	return str.replace(/\$(\d+)/g, function (match, index) {
+	let replace_matches = str.replace(/\[\[(\d+)\]\]/g, function (match, index) {
 		return replacements[parseInt(index, 10)] || match;
 	});
+	return replace_matches;
+}
+
+export function replacePlaceholdersAndTabstops(str: string, replacements: string[]): [string, TabstopSpec[]]{
+	let tabstops: TabstopSpec[] = [];
+	const regex = /\$(\d+)|\$\{(\d+): *([^ {}]*?)\}|\[\[(\d+)\]\]/g;
+	let match;
+	interface ReplaceString {
+		from: number;
+		to: number;
+		replacement: string;
+		tabstop: boolean;
+		tabstopNumber?: number;
+	}
+
+	let replaceStrings: ReplaceString[] = [];
+	while ((match = regex.exec(str)) !== null) {
+		// 检查是哪种模式的匹配
+		const isSimpleVar = match[1]; // 用于 $n 形式
+		const isNamedVar = match[2]; // 用于 ${n: 内容} 形式
+		const content = match[3]; // 用于 ${n: 内容} 形式的内容
+		const replaceN = match[4]; // 用于 [[n]] 形式
+
+		const tabstopN = isSimpleVar || isNamedVar; // 取 n 的值，无论是简单还是命名变量
+		const startIndex = match.index;
+		const endIndex = startIndex + match[0].length;
+		if (replaceN){
+			let matchedN = parseInt(replaceN, 10);
+			if(matchedN < replacements.length){
+				replaceStrings.push({from: startIndex, to: endIndex, replacement: replacements[matchedN], tabstop:false});
+			}
+		}
+		else {
+			let n = parseInt(tabstopN, 10);
+			let contentStr = replacePlaceholders(content?content:"", replacements);
+			replaceStrings.push({from: startIndex, to: endIndex, replacement: contentStr, tabstop:true, tabstopNumber: n});
+		}
+	}
+
+	let newString = str;
+	let offset = 0;
+	for (let i=0; i<replaceStrings.length; i++){
+		let replaceString = replaceStrings[i];
+		newString = newString.substring(0, replaceString.from + offset) + replaceString.replacement + newString.substring(replaceString.to + offset);
+		if (replaceString.tabstop){
+			let tabstop: TabstopSpec = {
+				from: replaceString.from + offset,
+				to: replaceString.from + offset + replaceString.replacement.length,
+				number: replaceString.tabstopNumber,
+			}
+			tabstops.push(tabstop);
+		}
+		offset += replaceString.replacement.length - (replaceString.to - replaceString.from);
+	}
+
+	return [newString, tabstops];
+}
+
+export function parseTheAfterPattern(pattern: string, replacements: string[]): [string, TabstopSpec[]]{
+	let single_cursor_pos = findFirstPipeNotPrecededByBackslash(pattern);
+	let general_cursor_find = /\$(\d+)|\$\{(\d+): *([^ {}]*?)\}/.test(pattern);
+	let single_cursor_find = single_cursor_pos !== -1;
+	let final_pattern = pattern;
+	if (general_cursor_find){
+		final_pattern = pattern;
+	}else if (single_cursor_find){
+		final_pattern = pattern.substring(0, single_cursor_pos) + "$0" + pattern.substring(single_cursor_pos+1);
+	}else {
+		final_pattern = pattern + "$0";
+	}
+	return replacePlaceholdersAndTabstops(convertEscapeChar(final_pattern), replacements);
 }
 
 export function isRegexp(s: string):boolean{
@@ -61,7 +133,7 @@ function convertEscapeChar(s: string):string{
 export function ruleStringList2RuleList(list: Array<[string, string]>):ConvertRule[] {
 	let res:ConvertRule[] = [];
 	for (let i in list){
-		res[i] = {before: string2pairstring(list[i][0]), after: string2pairstring(list[i][1])}
+		res[i] = {before: string2pairstring(list[i][0]), after: string2pairstring(list[i][1]), after_pattern: list[i][1]}
 	}
 	return res;
 }
