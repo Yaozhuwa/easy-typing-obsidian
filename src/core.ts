@@ -972,7 +972,7 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
     let regExpList: RegExp[] = [];
     let leftSRequireList: SpaceState[] = [];
     let rightSRequireList: SpaceState[] = [];
-    let regNull = /^\s*$/g;
+    let regNull = /^\s*$|^\/\//g;
     let regSRequire = /\|[\-=\+][\-=\+]$/;
     if (regExps) {
         let regs = regExps.split('\n');
