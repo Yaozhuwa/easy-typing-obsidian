@@ -2,8 +2,8 @@ import { EditorView, Decoration } from "@codemirror/view";
 import { EditorSelection, StateEffect, StateField, Transaction } from "@codemirror/state";
 import { TabstopGroup } from "./tabstop";
 
-const addTabstopsEffect = StateEffect.define<TabstopGroup[]>();
-const filterTabstopsEffect = StateEffect.define<EditorSelection>();
+export const addTabstopsEffect = StateEffect.define<TabstopGroup[]>();
+export const filterTabstopsEffect = StateEffect.define<EditorSelection>();
 const removeTabstopEffect = StateEffect.define();
 const removeAllTabstopsEffect = StateEffect.define();
 

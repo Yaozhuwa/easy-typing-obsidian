@@ -15,7 +15,7 @@ import {
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos, isCodeBlockInPos } from './syntax';
-import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect } from './tabstops_state_field';
+import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, filterTabstopsEffect } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 
 
@@ -413,17 +413,23 @@ export default class EasyTypingPlugin extends Plugin {
 							let matchPosEnd = toA + rightMatchStr.length;
 							matchList.push(...rightMatch.slice(1));
 							// 左右都匹配成功，开始替换字符串
-							let replaceLeft = replacePlaceholders(rule.after.left, matchList);
-							let replaceRight = replacePlaceholders(rule.after.right, matchList);
+							// let replaceLeft = replacePlaceholders(rule.after.left, matchList);
+							// let replaceRight = replacePlaceholders(rule.after.right, matchList);
+							let [new_string, tabstops] = parseTheAfterPattern(rule.after_pattern, matchList);
+							const updatedTabstops = tabstops.map(tabstop => ({
+								...tabstop, // 展开现有的属性
+								from: tabstop.from + matchPosBegin, // 增加from属性的值
+								to: tabstop.to + matchPosBegin // 增加to属性的值
+							}));
+							let tabstopGroups = tabstopSpecsToTabstopGroups(updatedTabstops);
 							changes.push({
 								changes: {
 									from: matchPosBegin,
 									to: matchPosEnd,
-									insert: replaceLeft+replaceRight
+									insert: new_string
 								},
-								selection: {
-									anchor: matchPosBegin + replaceLeft.length
-								},
+								selection: tabstopGroups[0].toEditorSelection(),
+								effects:  [addTabstopsEffect.of(tabstopGroups), filterTabstopsEffect.of(tabstopGroups[0].toEditorSelection())],
 								userEvent: "EasyTyping.change"
 							});
 							tr = tr.startState.update(...changes);
