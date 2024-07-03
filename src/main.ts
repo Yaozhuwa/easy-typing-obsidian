@@ -380,6 +380,50 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
+			// ========== delete pair symbol ============
+			if (changeTypeStr === "delete.backward" && this.settings.IntrinsicSymbolPairs) {
+				if (this.SymbolPairsMap.has(changedStr) && this.SymbolPairsMap.get(changedStr) === tr.startState.sliceDoc(toA, toA + 1)) {
+					changes.push({ changes: { from: fromA, to: toA + 1 }, userEvent: "EasyTyping.change" });
+					tr = tr.startState.update(...changes);
+					return tr;
+				}
+
+				// 处理删除代码块
+				let line_content = tr.startState.doc.lineAt(toA).text;
+				let next_line_content = tr.startState.doc.sliceString(toA, toA + line_content.length+1);
+				if (/^\s*```$/.test(line_content) && '\n'+line_content==next_line_content) {
+					changes.push({
+						changes:{
+							from: toA-3, 
+							to: toA+line_content.length+1,
+							insert: ''
+						},
+						selection: { anchor: toA - 3 },
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
+				}
+
+				for (let rule of this.IntrinsicDeleteRules) {
+					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
+					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
+					if (left === rule.before.left && right === rule.before.right) {
+						changes.push({
+							changes: {
+								from: toA - rule.before.left.length,
+								to: toA + rule.before.right.length,
+								insert: rule.after.left + rule.after.right
+							},
+							selection: { anchor: toA - rule.before.left.length + rule.after.left.length },
+							userEvent: "EasyTyping.change"
+						});
+						tr = tr.startState.update(...changes);
+						return tr;
+					}
+				}
+			}
+			
 			// UserDefined Delete Rule
 			if (changeTypeStr == "delete.backward") {
 				for (let rule of this.UserDeleteRules) {
@@ -435,50 +479,6 @@ export default class EasyTypingPlugin extends Plugin {
 							tr = tr.startState.update(...changes);
 							return tr;
 						}
-					}
-				}
-			}
-
-			// ========== delete pair symbol ============
-			if (changeTypeStr === "delete.backward" && this.settings.IntrinsicSymbolPairs) {
-				if (this.SymbolPairsMap.has(changedStr) && this.SymbolPairsMap.get(changedStr) === tr.startState.sliceDoc(toA, toA + 1)) {
-					changes.push({ changes: { from: fromA, to: toA + 1 }, userEvent: "EasyTyping.change" });
-					tr = tr.startState.update(...changes);
-					return tr;
-				}
-
-				// 处理删除代码块
-				let line_content = tr.startState.doc.lineAt(toA).text;
-				let next_line_content = tr.startState.doc.sliceString(toA, toA + line_content.length+1);
-				if (/^\s*```$/.test(line_content) && '\n'+line_content==next_line_content) {
-					changes.push({
-						changes:{
-							from: toA-3, 
-							to: toA+line_content.length+1,
-							insert: ''
-						},
-						selection: { anchor: toA - 3 },
-						userEvent: "EasyTyping.change"
-					});
-					tr = tr.startState.update(...changes);
-					return tr;
-				}
-
-				for (let rule of this.IntrinsicDeleteRules) {
-					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
-					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
-					if (left === rule.before.left && right === rule.before.right) {
-						changes.push({
-							changes: {
-								from: toA - rule.before.left.length,
-								to: toA + rule.before.right.length,
-								insert: rule.after.left + rule.after.right
-							},
-							selection: { anchor: toA - rule.before.left.length + rule.after.left.length },
-							userEvent: "EasyTyping.change"
-						});
-						tr = tr.startState.update(...changes);
-						return tr;
 					}
 				}
 			}
