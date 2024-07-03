@@ -13,5 +13,5 @@ span[class="easy-typing-cursor-widget"] {
 }
 
 @keyframes blink {
-    80% { opacity: 0; }
+    50% { opacity: 0; }
 }

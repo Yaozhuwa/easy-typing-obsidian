@@ -30,14 +30,12 @@ function getMarkerDecoration(from: number, to: number) {
 export class TabstopGroup {
     decos: DecorationSet;
     selections: SelectionRange[];
-    hidden: boolean;
 
     constructor(tabstopSpecs: TabstopSpec[]) {
         // const tabstopSpecsRange = tabstopSpecs.filter(spec => spec.from != spec.to);
         const decos = tabstopSpecs.map(spec => getMarkerDecoration(spec.from, spec.to));
         this.selections = tabstopSpecs.map(spec => EditorSelection.range(spec.from, spec.to));
         this.decos = Decoration.set(decos, true);
-        this.hidden = true;
     }
 
     select(view: EditorView, selectEndpoints: boolean) {
@@ -46,9 +44,7 @@ export class TabstopGroup {
 
         view.dispatch({
             selection: toSelect,
-        })
-
-        this.hideFromEditor();
+        });
     }
 
     toSelectionRanges() {
@@ -81,14 +77,6 @@ export class TabstopGroup {
         return result;
     }
 
-    hideFromEditor() {
-        this.hidden = true;
-    }
-
-    showFromEditor() {
-        this.hidden = false;
-    }
-
     map(changes: ChangeDesc) {
         this.decos = this.decos.map(changes);
         this.selections = this.selections.map(range => {
@@ -118,7 +106,6 @@ export class TabstopGroup {
 
 export function tabstopSpecsToTabstopGroups(tabstops: TabstopSpec[]):TabstopGroup[] {
     const tabstopsByNumber: {[n: string]: TabstopSpec[]} = {};
-    console.log("tabstops", tabstops)
 
     for (const tabstop of tabstops) {
         const n = String(tabstop.number);
@@ -134,7 +121,6 @@ export function tabstopSpecsToTabstopGroups(tabstops: TabstopSpec[]):TabstopGrou
     const result = [];
     const numbers = Object.keys(tabstopsByNumber);
     numbers.sort((a,b) => parseInt(a) - parseInt(b));
-    console.log('tabstopsByNumber', tabstopsByNumber)
 
     for (const number of numbers) {
         const grp = new TabstopGroup(tabstopsByNumber[number]);

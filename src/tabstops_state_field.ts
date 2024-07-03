@@ -3,7 +3,6 @@ import { EditorSelection, StateEffect, StateField, Transaction } from "@codemirr
 import { TabstopGroup } from "./tabstop";
 
 export const addTabstopsEffect = StateEffect.define<TabstopGroup[]>();
-export const filterTabstopsEffect = StateEffect.define<EditorSelection>();
 const removeTabstopEffect = StateEffect.define();
 const removeAllTabstopsEffect = StateEffect.define();
 
@@ -21,24 +20,6 @@ export const tabstopsStateField = StateField.define<TabstopGroup[]>({
                 tabstopGroups = [];
 				tabstopGroups.unshift(...effect.value);
 			}
-			else if (effect.is(filterTabstopsEffect)) {
-				// Show next tabstops
-                tabstopGroups.forEach((value: TabstopGroup) => {
-					value.hideFromEditor();
-				})
-
-				const editorSel = effect.value;
-                let showGroupIndex = -1;
-                for (let i=0; i<tabstopGroups.length; i++) {
-                    if (editorSel.eq(tabstopGroups[i].toEditorSelection())) {
-                        // tabstopGroups[i].hideFromEditor();
-                        showGroupIndex = i+1 < tabstopGroups.length ? i+1 : -1;
-                    }
-                }
-                if (showGroupIndex != -1) {
-                    tabstopGroups[showGroupIndex].showFromEditor();
-                }
-			}
 			else if (effect.is(removeTabstopEffect)) {
 				tabstopGroups.shift();
 			}
@@ -46,7 +27,6 @@ export const tabstopsStateField = StateField.define<TabstopGroup[]>({
 				tabstopGroups = [];
 			}
 		}
-
 
 		return tabstopGroups;
     },
@@ -58,11 +38,8 @@ export const tabstopsStateField = StateField.define<TabstopGroup[]>({
             
 			const decos = [];
 
-			for (const tabstopGroup of tabstopGroups) {
-				if (!tabstopGroup.hidden){
-                    console.log('tabstopGroup', tabstopGroup.getDecoRanges())
-                    decos.push(...tabstopGroup.getDecoRanges());
-                }
+			if (tabstopGroups.length >= 2){
+				decos.push(...tabstopGroups[1].getDecoRanges());
 			}
 
 			return Decoration.set(decos, true);
@@ -83,12 +60,6 @@ export function addTabstops(view: EditorView, tabstopGroups: TabstopGroup[]) {
 	});
 }
 
-export function filterTabstops(view: EditorView) {
-	view.dispatch({
-		effects: [filterTabstopsEffect.of(view.state.selection)],
-	});
-}
-
 export function removeTabstop(view: EditorView) {
 	view.dispatch({
 		effects: [removeTabstopEffect.of(null)],
@@ -104,16 +75,10 @@ export function removeAllTabstops(view: EditorView) {
 export function addTabstopsAndSelect(view: EditorView, tabstopGroups: TabstopGroup[]) {
     addTabstops(view, tabstopGroups);
     tabstopGroups[0].select(view, false);
-    filterTabstops(view);
 }
 
 
-
-
 export function tidyTabstops(view: EditorView) {
-	// Hide (filter out) tabstops equivalent to the editor's current selection
-	filterTabstops(view);
-
 	// Clear all tabstop groups if there's just one remaining
 	const currentTabstopGroups = getTabstopGroupsFromView(view);
 
@@ -129,6 +94,16 @@ export function isInsideATabstop(view: EditorView):boolean {
 		if (tabstopGroup.containsSelection(view.state.selection)) {
 			return true;
 		}
+	}
+
+	return false;
+}
+
+export function isInsideCurTabstop(view: EditorView):boolean {
+	const currentTabstopGroups = getTabstopGroupsFromView(view);
+
+	if (currentTabstopGroups.length>1 && currentTabstopGroups[0].containsSelection(view.state.selection)) {
+		return true;
 	}
 
 	return false;

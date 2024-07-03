@@ -15,7 +15,7 @@ import {
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos, isCodeBlockInPos } from './syntax';
-import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, filterTabstopsEffect } from './tabstops_state_field';
+import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 
 
@@ -423,7 +423,7 @@ export default class EasyTypingPlugin extends Plugin {
 					}
 				}
 			}
-			
+
 			// UserDefined Delete Rule
 			if (changeTypeStr == "delete.backward") {
 				for (let rule of this.UserDeleteRules) {
@@ -473,7 +473,7 @@ export default class EasyTypingPlugin extends Plugin {
 									insert: new_string
 								},
 								selection: tabstopGroups[0].toEditorSelection(),
-								effects:  [addTabstopsEffect.of(tabstopGroups), filterTabstopsEffect.of(tabstopGroups[0].toEditorSelection())],
+								effects:  [addTabstopsEffect.of(tabstopGroups)],
 								userEvent: "EasyTyping.change"
 							});
 							tr = tr.startState.update(...changes);
@@ -672,7 +672,10 @@ export default class EasyTypingPlugin extends Plugin {
 	viewUpdatePlugin = (update: ViewUpdate) => {
 		if (this.onFormatArticle === true) return;
 
-		if ((update.docChanged || update.selectionSet) && !update.view.composing && !isInsideATabstop(update.view)) {
+		let cursor_changed = update.transactions.find(tr => tr.selection) != null;
+		// console.log('cursor_changed', cursor_changed)
+		
+		if ((update.docChanged || cursor_changed) && !update.view.composing && !isInsideCurTabstop(update.view)) {
 			removeAllTabstops(update.view);
 		}
 		if (update.transactions.find(tr => tr.isUserEvent("undo"))){
