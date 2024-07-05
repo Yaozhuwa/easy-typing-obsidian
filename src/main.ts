@@ -1391,12 +1391,24 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "无格式化粘贴"],
 		]);
 
+		let command_name_map_ru = new Map([
+			["format_article", "Форматировать текущую статью"],
+			["format_selection", "Форматировать выделенный текст или текущую строку"],
+			["delete_blank_line", "Удалить пустые строки в выделенном или всей статье"],
+			["insert_codeblock", "Вставить блок кода с/без выделением"],
+			["switch_autoformat", "Переключить автоформатирование"],
+			["paste_wo_format", "Вставить без форматирования"],
+		]);
+
 		let command_name_map = command_name_map_en;
 		if (lang == 'zh') {
 			command_name_map = command_name_map_zh;
 		}
 		else if (lang == 'zh-TW') {
 			command_name_map = command_name_map_zh_TW;
+		}
+		else if (lang == "ru") {
+			command_name_map = command_name_map_ru;
 		}
 
 		return command_name_map;
