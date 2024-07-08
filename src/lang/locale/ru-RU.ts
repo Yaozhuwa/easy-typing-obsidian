@@ -1,5 +1,7 @@
+import { enUS } from ".";
+
 // machine translation
-const locale = {
+const locale: typeof enUS = {
     settings: {
         symbolAutoPair: {
             name: "Автоматическое добавление и удаление символов пара",
