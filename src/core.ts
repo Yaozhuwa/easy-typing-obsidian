@@ -620,45 +620,55 @@ export class LineFormater {
                         case InlineType.none:
                             break;
                         case InlineType.text:
-                            if (prevTextEndSpaceState>settings.InlineLinkSpaceMode) break;
+                            if (prevTextEndSpaceState>=settings.InlineLinkSpaceMode &&  !settings.InlineLinkSmartSpace) break;
+                            if (prevTextEndSpaceState==SpaceState.strict && settings.InlineLinkSpaceMode==SpaceState.strict) break;
+                            
+                            let charAtTextEnd = lineParts[i - 1].content.charAt(lineParts[i - 1].content.length - 1);
+                            let charAtLinkBegin: string = "";
+                            if (lineParts[i].type == InlineType.wikilink) {
+                                let regAlias = /\|/;
+                                let charOfAliasBegin = lineParts[i].content.search(regAlias);
+                                // console.log("charOfAliasBegin",charOfAliasBegin)
+                                let beginIndex = 2;
+                                if (lineParts[i].content.charAt(0) === '!') beginIndex = 3;
+
+                                if (charOfAliasBegin != -1) {
+                                    beginIndex = charOfAliasBegin + 1;
+                                }
+                                else if (lineParts[i].content.charAt(beginIndex) == '#') {
+                                    beginIndex += 1;
+                                }
+
+                                charAtLinkBegin = lineParts[i].content.charAt(beginIndex);
+                                // console.log("beginIndex", beginIndex);
+                                if (charAtLinkBegin == ']') break;
+                            }
+                            else {
+                                let regMdLinkBegin = /\[/;
+                                let charAtLinkBeginIndex = lineParts[i].content.search(regMdLinkBegin) + 1;
+                                charAtLinkBegin = lineParts[i].content.charAt(charAtLinkBeginIndex);
+                                if (charAtLinkBegin === ']') break;
+                            } 
+
+
                             if (settings.InlineLinkSpaceMode==SpaceState.strict && prevTextEndSpaceState<SpaceState.strict)
                             {
                                 lineParts[i-1].content += ' ';
                                 resultLine += ' ';
                                 offset += 1;
                             }
+                            else if (settings.InlineLinkSmartSpace && lineParts[i-1].content.endsWith(' ')){
+                                let tempContent = lineParts[i-1].content+charAtLinkBegin;
+                                let regRevertSpace = /[\u4e00-\u9fa5] [\u4e00-\u9fa5]$/;
+                                if (regRevertSpace.test(tempContent)){
+                                    lineParts[i-1].content = lineParts[i-1].content.substring(0, lineParts[i-1].content.length-1);
+                                    resultLine = resultLine.substring(0, resultLine.length-1);
+                                    offset -= 1;
+                                }
+                            }
                             else if (settings.InlineLinkSmartSpace && prevTextEndSpaceState==SpaceState.none)
                             {
                                 let regNoNeedSpace = /[\u4e00-\u9fa5][\u4e00-\u9fa5]/g;
-                                let charAtTextEnd = lineParts[i-1].content.charAt(lineParts[i-1].content.length-1);
-                                let charAtLinkBegin:string = "";
-                                if (lineParts[i].type==InlineType.wikilink)
-                                {
-                                    let regAlias = /\|/;
-                                    let charOfAliasBegin = lineParts[i].content.search(regAlias);
-                                    // console.log("charOfAliasBegin",charOfAliasBegin)
-                                    let beginIndex = 2;
-                                    if(lineParts[i].content.charAt(0)==='!') beginIndex=3;
-
-                                    if (charOfAliasBegin!=-1)
-                                    {
-                                        beginIndex = charOfAliasBegin+1;
-                                    }
-                                    else if(lineParts[i].content.charAt(beginIndex)=='#'){
-                                        beginIndex += 1;
-                                    }
-                                    
-                                    charAtLinkBegin = lineParts[i].content.charAt(beginIndex);
-                                    // console.log("beginIndex", beginIndex);
-                                    if(charAtLinkBegin==']') break;      
-                                }
-                                else
-                                {
-                                    let regMdLinkBegin = /\[/;
-                                    let charAtLinkBeginIndex = lineParts[i].content.search(regMdLinkBegin)+1;
-                                    charAtLinkBegin = lineParts[i].content.charAt(charAtLinkBeginIndex);
-                                    if(charAtLinkBegin===']') break; 
-                                } 
                                 let twoNeighborChars = charAtTextEnd+charAtLinkBegin;
                                 if(!regNoNeedSpace.test(twoNeighborChars))
                                 {
