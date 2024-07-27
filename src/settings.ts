@@ -2,7 +2,7 @@ import { SpaceState, string2SpaceState } from 'src/core';
 import { App, TextComponent, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TextAreaComponent, moment } from 'obsidian';
 import EasyTypingPlugin from './main';
 import { showString, findFirstPipeNotPrecededByBackslash } from './utils';
-import { enUS, ruRU, zhCN } from './lang/locale';
+import { enUS, ruRU, zhCN, zhTW } from './lang/locale';
 import {sprintf} from "sprintf-js";
 
 export interface PairString {
@@ -123,7 +123,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			locale = zhCN;
 		}
 		else if (moment.locale().toLowerCase() == "zh-tw"){
-			locale = zhCN;
+			locale = zhTW;
 		}
 		else if (moment.locale() == "ru") {
 			locale = ruRU;
@@ -503,10 +503,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const replaceRuleTrigger = new TextComponent(selectionRuleSetting.controlEl);
 		replaceRuleTrigger.setPlaceholder(locale.placeHolder.triggerSymbol);
 
-		const replaceLeftString = new TextAreaComponent(selectionRuleSetting.controlEl);
+		const replaceLeftString = new TextComponent(selectionRuleSetting.controlEl);
 		replaceLeftString.setPlaceholder(locale.placeHolder.newLeftSideString);
 
-		const replaceRightString = new TextAreaComponent(selectionRuleSetting.controlEl);
+		const replaceRightString = new TextComponent(selectionRuleSetting.controlEl);
 		replaceRightString.setPlaceholder(locale.placeHolder.newRightSideString);
 
 		selectionRuleSetting
