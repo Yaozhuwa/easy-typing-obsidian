@@ -1,7 +1,9 @@
 import { SpaceState, string2SpaceState } from 'src/core';
-import { App, TextComponent, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TextAreaComponent } from 'obsidian';
+import { App, TextComponent, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TextAreaComponent, moment } from 'obsidian';
 import EasyTypingPlugin from './main';
 import { showString, findFirstPipeNotPrecededByBackslash } from './utils';
+import { enUS, ruRU, zhCN } from './lang/locale';
+import {sprintf} from "sprintf-js";
 
 export interface PairString {
 	left: string;
@@ -102,6 +104,8 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	TryFixMSIME: false,
 }
 
+var locale = enUS;
+
 export class EasyTypingSettingTab extends PluginSettingTab {
 	plugin: EasyTypingPlugin;
 
@@ -113,19 +117,31 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 
+		// new Notice("moment.locale() "+moment.locale())
+
+		if (moment.locale() == "zh" || moment.locale() == "zh-cn") {
+			locale = zhCN;
+		}
+		else if (moment.locale().toLowerCase() == "zh-tw"){
+			locale = zhCN;
+		}
+		else if (moment.locale() == "ru") {
+			locale = ruRU;
+		}
+
 		containerEl.empty();
 
-		containerEl.createEl("h1", { text: "Obsidian EasyTyping Plugin" });
-		containerEl.createEl("p", { text: "More detail is in Github: " }).createEl("a", {
+		containerEl.createEl("h1", { text: locale.headers.main });
+		containerEl.createEl("p", { text: locale.headers.githubDetail }).createEl("a", {
 			text: "easy-typing-obsidian",
 			href: "https://github.com/Yaozhuwa/easy-typing-obsidian",
 		});
 
-		containerEl.createEl('h2', { text: '增强编辑设置 (Enhanced Editing Setting)' });
+		containerEl.createEl('h2', { text: locale.headers.enhancedEditing });
 
 		new Setting(containerEl)
-			.setName("Symbol auto pair and delete with pair")
-			.setDesc("增加多种符号配对输入，配对删除，如《》, “”, 「」, 『』,【】等")
+			.setName(locale.settings.symbolAutoPair.name)
+			.setDesc(locale.settings.symbolAutoPair.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.IntrinsicSymbolPairs)
 					.onChange(async (value) => {
@@ -135,8 +151,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Selection Replace Enhancement")
-			.setDesc("选中文本情况下的编辑增强，按￥→$选中的文本$, 按·→`选中的文本`，《 → 《选中的文本》等等")
+			.setName(locale.settings.selectionReplace.name)
+			.setDesc(locale.settings.selectionReplace.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.SelectionEnhance)
 					.onChange(async (value) => {
@@ -146,8 +162,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Convert successive full width symbol to half width symbol")
-			.setDesc("连续输入全角符号转半角，。。→ .，！！→ !， 》》→ >")
+			.setName(locale.settings.fullWidthToHalfWidth.name)
+			.setDesc(locale.settings.fullWidthToHalfWidth.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.FW2HWEnhance)
 					.onChange(async (value) => {
@@ -157,8 +173,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Basic symbol input enhance for obsidian")
-			.setDesc("Obsidian 的基础输入增强，如【【| → [[|]]，句首的、→ /，句首的》→ >，··| → `|`， `·|` 变成代	码块，￥￥| → $|$")
+			.setName(locale.settings.basicInputEnhance.name)
+			.setDesc(locale.settings.basicInputEnhance.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.BaseObEditEnhance)
 					.onChange(async (value) => {
@@ -168,8 +184,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Enhance codeblock edit")
-			.setDesc("Improve editing in codeblock(Tab, delete, paste, cmd/ctrl+A select). 增强代码块内的编辑（Cmd/Ctrl+A 选中、Tab、删除、粘贴）")
+			.setName(locale.settings.codeblockEdit.name)
+			.setDesc(locale.settings.codeblockEdit.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.BetterCodeEdit)
 					.onChange(async (value) => {
@@ -179,8 +195,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Tabout")
-			.setDesc("Tabout inline code or paired symbols(when selected). Tab 跳出行内代码块或配对符号块(选中时)")
+			.setName(locale.settings.tabOut.name)
+			.setDesc(locale.settings.tabOut.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.Tabout)
 					.onChange(async (value) => {
@@ -189,7 +205,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		containerEl.createEl('h2', { text: '自定义编辑转换规则 (Customize Edit Convertion Rule)' });
+		containerEl.createEl('h2', { text: locale.headers.customizeEditRule });
 		this.buildUserSelRepRuleSetting(this.containerEl.createEl("details", {
 			cls: "easytyping-nested-settings",
 			attr: {
@@ -212,11 +228,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		}))
 		
 
-		containerEl.createEl('h2', { text: '自动格式化设置 (Autoformat Setting)' });
+		containerEl.createEl('h2', { text: locale.headers.autoformatSetting });
 
 		new Setting(containerEl)
-			.setName("Auto formatting when typing")
-			.setDesc("是否在编辑文档时自动格式化文本，自动格式化的总开关")
+			.setName(locale.settings.autoFormatting.name)
+			.setDesc(locale.settings.autoFormatting.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.AutoFormat)
 					.onChange(async (value) => {
@@ -224,11 +240,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
-		containerEl.createEl('p', { text: 'Detailed Setting Below' });
+		containerEl.createEl('p', { text: locale.headers.detailedSetting });
 
 		new Setting(containerEl)
-			.setName("Space between Chinese and English")
-			.setDesc("在中文和英文间空格")
+			.setName(locale.settings.spaceBetweenChineseEnglish.name)
+			.setDesc(locale.settings.spaceBetweenChineseEnglish.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.ChineseEnglishSpace).onChange(async (value) => {
 					this.plugin.settings.ChineseEnglishSpace = value;
@@ -237,8 +253,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Space between Chinese and Number")
-			.setDesc("在中文和数字间空格")
+			.setName(locale.settings.spaceBetweenChineseNumber.name)
+			.setDesc(locale.settings.spaceBetweenChineseNumber.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.ChineseNumberSpace).onChange(async (value) => {
 					this.plugin.settings.ChineseNumberSpace = value;
@@ -247,8 +263,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 		
 		new Setting(containerEl)
-			.setName("Space between Engilsh and Number")
-			.setDesc("在英文和数字间空格")
+			.setName(locale.settings.spaceBetweenEnglishNumber.name)
+			.setDesc(locale.settings.spaceBetweenEnglishNumber.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.EnglishNumberSpace).onChange(async (value) => {
 					this.plugin.settings.EnglishNumberSpace = value;
@@ -257,8 +273,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Delete the Space between Chinese characters")
-			.setDesc("在中文字符间去除空格")
+			.setName(locale.settings.deleteSpaceBetweenChinese.name)
+			.setDesc(locale.settings.deleteSpaceBetweenChinese.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.ChineseNoSpace).onChange(async (value) => {
 					this.plugin.settings.ChineseNoSpace = value;
@@ -267,11 +283,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Capitalize the first letter of every sentence")
-			.setDesc("英文每个句首字母大写")
+			.setName(locale.settings.capitalizeFirstLetter.name)
+			.setDesc(locale.settings.capitalizeFirstLetter.desc)
 			.addDropdown((dropdown) => {
-				dropdown.addOption(WorkMode.OnlyWhenTyping, "输入时生效(Only When Typing)");
-				dropdown.addOption(WorkMode.Globally, "全局生效(Work Globally)");
+				dropdown.addOption(WorkMode.OnlyWhenTyping, locale.dropdownOptions.onlyWhenTyping);
+				dropdown.addOption(WorkMode.Globally, locale.dropdownOptions.globally);
 				dropdown.setValue(this.plugin.settings.AutoCapitalMode);
 				dropdown.onChange(async (v: WorkMode.OnlyWhenTyping | WorkMode.Globally) => {
 					this.plugin.settings.AutoCapitalMode = v;
@@ -279,7 +295,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			})
 			.addToggle((toggle) => {
-				toggle.setTooltip("功能开关(Switch)");
+				toggle.setTooltip(locale.toolTip.switch);
 				toggle.setValue(this.plugin.settings.AutoCapital).onChange(async (value) => {
 					this.plugin.settings.AutoCapital = value;
 					await this.plugin.saveSettings();
@@ -287,11 +303,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Smartly insert space between text and punctuation")
-			.setDesc("在文本和标点间添加空格")
+			.setName(locale.settings.smartInsertSpace.name)
+			.setDesc(locale.settings.smartInsertSpace.desc)
 			.addDropdown((dropdown) => {
-				dropdown.addOption(WorkMode.OnlyWhenTyping, "输入时生效(Only When Typing)");
-				dropdown.addOption(WorkMode.Globally, "全局生效(Work Globally)");
+				dropdown.addOption(WorkMode.OnlyWhenTyping, locale.dropdownOptions.onlyWhenTyping);
+				dropdown.addOption(WorkMode.Globally, locale.dropdownOptions.globally);
 				dropdown.setValue(this.plugin.settings.PunctuationSpaceMode);
 				dropdown.onChange(async (v: WorkMode.OnlyWhenTyping | WorkMode.Globally) => {
 					this.plugin.settings.PunctuationSpaceMode = v;
@@ -306,16 +322,12 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Space stategy between inline code and text")
-			.setDesc("在 `行内代码` 和文本间的空格策略。" +
-				"无要求：对本类别块与左右文本没有空格的要求，" +
-				"软空格：对本类别块与周围区块只要求有软空格，软空格如当前块左边的临近文本为。，；？等全角标点，当前块右边的临近文本为所有全半角标点，" +
-				"严格空格：当前块与临近文本之间严格添加空格。"
-			)
+			.setName(locale.settings.spaceStrategyInlineCode.name)
+			.setDesc(locale.settings.spaceStrategyInlineCode.desc)
 			.addDropdown((dropdown) => {
-				dropdown.addOption(String(SpaceState.none), "无要求(No Require)");
-				dropdown.addOption(String(SpaceState.soft), "软空格(Soft Space)");
-				dropdown.addOption(String(SpaceState.strict), "严格空格(Strict Space)");
+				dropdown.addOption(String(SpaceState.none), locale.dropdownOptions.noRequire);
+				dropdown.addOption(String(SpaceState.soft), locale.dropdownOptions.softSpace);
+				dropdown.addOption(String(SpaceState.strict), locale.dropdownOptions.strictSpace);
 				dropdown.setValue(String(this.plugin.settings.InlineCodeSpaceMode));
 				dropdown.onChange(async (v: string) => {
 					this.plugin.settings.InlineCodeSpaceMode = string2SpaceState(v);
@@ -324,12 +336,12 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Space stategy between inline formula and text")
-			.setDesc("在 $行内公式$ 和文本间的空格策略")
+			.setName(locale.settings.spaceStrategyInlineFormula.name)
+			.setDesc(locale.settings.spaceStrategyInlineFormula.desc)
 			.addDropdown((dropdown) => {
-				dropdown.addOption(String(SpaceState.none), "无要求(No Require)");
-				dropdown.addOption(String(SpaceState.soft), "软空格(Soft Space)");
-				dropdown.addOption(String(SpaceState.strict), "严格空格(Strict Space)");
+				dropdown.addOption(String(SpaceState.none), locale.dropdownOptions.noRequire);
+				dropdown.addOption(String(SpaceState.soft), locale.dropdownOptions.softSpace);
+				dropdown.addOption(String(SpaceState.strict), locale.dropdownOptions.strictSpace);
 				dropdown.setValue(String(this.plugin.settings.InlineFormulaSpaceMode));
 				dropdown.onChange(async (v: string) => {
 					this.plugin.settings.InlineFormulaSpaceMode = string2SpaceState(v);
@@ -338,11 +350,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Space strategy between link and text")
-			.setDesc("在 [[wikilink]] [mdlink](...) 和文本间空格策略。智能空格模式下则会考虑该链接块的显示内容（如wiki链接的别名）来与临近文本进行空格。")
+			.setName(locale.settings.spaceStrategyLinkText.name)
+			.setDesc(locale.settings.spaceStrategyLinkText.desc)
 			.addDropdown((dropdown) => {
-				dropdown.addOption("dummy", "呆空格(dummy)");
-				dropdown.addOption("smart", "智能空格(Smart)");
+				dropdown.addOption("dummy", locale.dropdownOptions.dummy);
+				dropdown.addOption("smart", locale.dropdownOptions.smart);
 				dropdown.setValue(this.plugin.settings.InlineLinkSmartSpace ? "smart" : "dummy");
 				dropdown.onChange(async (v: string) => {
 					this.plugin.settings.InlineLinkSmartSpace = v == "smart" ? true : false;
@@ -351,9 +363,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			})
 			.addDropdown((dropdown) => {
-				dropdown.addOption(String(SpaceState.none), "无要求(No Require)");
-				dropdown.addOption(String(SpaceState.soft), "软空格(Soft Space)");
-				dropdown.addOption(String(SpaceState.strict), "严格空格(Strict Space)");
+				dropdown.addOption(String(SpaceState.none), locale.dropdownOptions.noRequire);
+				dropdown.addOption(String(SpaceState.soft), locale.dropdownOptions.softSpace);
+				dropdown.addOption(String(SpaceState.strict), locale.dropdownOptions.strictSpace);
 				dropdown.setValue(String(this.plugin.settings.InlineLinkSpaceMode));
 				dropdown.onChange(async (v: string) => {
 					this.plugin.settings.InlineLinkSpaceMode = string2SpaceState(v);
@@ -361,10 +373,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			})
 
-		containerEl.createEl('h2', { text: '自定义正则区块 (Custom regular expressions block)' });
+		containerEl.createEl('h2', { text: locale.headers.customRegexpBlock });
 		new Setting(containerEl)
-			.setName("User Defined RegExp Switch")
-			.setDesc("自定义正则表达式开关，匹配到的内容不进行格式化，且可以设置匹配到的内容块与其他内容之间的空格策略")
+			.setName(locale.settings.userDefinedRegexpSwitch.name)
+			.setDesc(locale.settings.userDefinedRegexpSwitch.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.UserDefinedRegSwitch).onChange(async (value) => {
 					this.plugin.settings.UserDefinedRegSwitch = value;
@@ -372,13 +384,13 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		containerEl.createEl("p", { text: "正则表达式相关知识，见 " }).createEl("a", {
-			text: "《阮一峰：正则表达式简明教程》",
+		containerEl.createEl("p", { text: locale.headers.aboutRegexp.header }).createEl("a", {
+			text: locale.headers.aboutRegexp.text,
 			href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#",
 		});
 
-		containerEl.createEl("p", { text: "正则表达式规则使用说明与示例：" }).createEl("a", {
-			text: "自定义正则表达式规则",
+		containerEl.createEl("p", { text: locale.headers.instructionsRegexp.header }).createEl("a", {
+			text: locale.headers.instructionsRegexp.text,
 			href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md",
 		});
 
@@ -388,12 +400,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			"display: grid; grid-template-columns: 1fr;"
 		);
 		regContentAreaSetting
-			.setName("User-defined Regular Expression, one expression per line")
-			.setDesc(
-				"用户自定义正则表达式，匹配到的内容不进行格式化，每行一个表达式，行尾不要随意加空格。" +
-				"每行末尾3个字符的固定为|和两个空格策略符号，空格策略符号为-=+，分别代表不要求空格(-)，软空格(=)，严格空格(+)。" +
-				"这两个空格策略符号分别为匹配区块的左右两边的空格策略"
-			);
+			.setName(locale.settings.userDefinedRegexp.name)
+			.setDesc(locale.settings.userDefinedRegexp.desc);
 		const regContentArea = new TextAreaComponent(
 			regContentAreaSetting.controlEl
 		);
@@ -409,10 +417,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				this.plugin.saveSettings();
 			});
 
-		containerEl.createEl('h2', { text: '指定文件不自动格式化 (Exclude Folders/Files)' });
+		containerEl.createEl('h2', { text: locale.headers.excludeFoldersFiles });
 		new Setting(containerEl)
-			.setName("Exclude Folders/Files")
-			.setDesc("This plugin will parse each line as a exlude folder or file. For example: DailyNote/, DailyNote/WeekNotes/, DailyNote/test.md")
+			.setName(locale.settings.excludeFoldersFiles.name)
+			.setDesc(locale.settings.excludeFoldersFiles.desc)
 			.addTextArea((text) =>
 				text
 					.setValue(this.plugin.settings.ExcludeFiles)
@@ -422,10 +430,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					})
 			);
 		
-		containerEl.createEl('h2', { text: 'Experimental Features' });
+		containerEl.createEl('h2', { text: locale.headers.experimentalFeatures });
 		new Setting(containerEl)
-			.setName("Fix MacOS context-menu cursor position(Need to restart Obsidian)")
-			.setDesc("修复 MacOS 鼠标右键呼出菜单时光标跳到下一行的问题(需要重启Obsidian生效)")
+			.setName(locale.settings.fixMacOSContextMenu.name)
+			.setDesc(locale.settings.fixMacOSContextMenu.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.FixMacOSContextMenu).onChange(async (value) => {
 					this.plugin.settings.FixMacOSContextMenu = value;
@@ -434,8 +442,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Fix MicroSoft Input Method Issue")
-			.setDesc("适配旧版微软输入法")
+			.setName(locale.settings.fixMicrosoftIME.name)
+			.setDesc(locale.settings.fixMicrosoftIME.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.TryFixMSIME).onChange(async (value) => {
 					this.plugin.settings.TryFixMSIME = value;
@@ -444,8 +452,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Strict Line breaks Mode Enter Twice")
-			.setDesc("严格换行的设置下，在普通文本行进行一次回车会产生两个换行符")
+			.setName(locale.settings.strictLineBreaks.name)
+			.setDesc(locale.settings.strictLineBreaks.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.EnterTwice).onChange(async (value) => {
 					this.plugin.settings.EnterTwice = value;
@@ -454,8 +462,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 		
 		new Setting(containerEl)
-			.setName("Punc rectify")
-			.setDesc("仅在输入过程中，中文间的英文标点（,.?!）自动转换为全角（可撤销）")
+			.setName(locale.settings.puncRectify.name)
+			.setDesc(locale.settings.puncRectify.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.PuncRectify).onChange(async (value) => {
 					this.plugin.settings.PuncRectify = value;
@@ -464,8 +472,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Print debug info in console")
-			.setDesc("在控制台输出调试信息")
+			.setName(locale.settings.printDebugInfo.name)
+			.setDesc(locale.settings.printDebugInfo.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.debug).onChange(async (value) => {
 					this.plugin.settings.debug = value;
@@ -480,37 +488,39 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			this.plugin.settings.userSelRuleSettingsOpen = containerEl.open;
 			await this.plugin.saveSettings();
         };
+		
 		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
-		summary.setText("自定义选中文本编辑增强规则 (Customize Selection Replace Rule)")
+		summary.setText(locale.headers.customizeSelectionRule)
 
         // summary.setHeading().setName("User defined Selection Replace Rule");
         // summary.createDiv("collapser").createDiv("handle");
 
 		const selectionRuleSetting = new Setting(containerEl);
 		selectionRuleSetting
-			.setName("Selection Replece Rule")
+			.setName(locale.settings.selectionReplaceRule.name)
+			// .setDesc(locale.settings.selectionReplaceRule.desc)
 
 		const replaceRuleTrigger = new TextComponent(selectionRuleSetting.controlEl);
-		replaceRuleTrigger.setPlaceholder("Triggr Symbol");
+		replaceRuleTrigger.setPlaceholder(locale.placeHolder.triggerSymbol);
 
 		const replaceLeftString = new TextAreaComponent(selectionRuleSetting.controlEl);
-		replaceLeftString.setPlaceholder("New Left Side String");
+		replaceLeftString.setPlaceholder(locale.placeHolder.newLeftSideString);
 
 		const replaceRightString = new TextAreaComponent(selectionRuleSetting.controlEl);
-		replaceRightString.setPlaceholder("New Right Side String");
+		replaceRightString.setPlaceholder(locale.placeHolder.newRightSideString);
 
 		selectionRuleSetting
 			.addButton((button) => {
 				button
 					.setButtonText("+")
-					.setTooltip("Add Rule")
+					.setTooltip(locale.placeHolder.addRule)
 					.onClick(async (buttonEl: any) => {
 						let trigger = replaceRuleTrigger.inputEl.value;
 						let left = replaceLeftString.inputEl.value;
 						let right = replaceRightString.inputEl.value;
 						if (trigger && (left || right)) {
 							if(trigger.length!=1 && trigger!="——" && trigger!="……"){
-								new Notice("Inlvalid trigger, trigger must be a symbol of length 1 or symbol ——, ……");
+								new Notice(locale.placeHolder.noticeInvaidTrigger);
 								return;
 							}
 							if (this.plugin.addUserSelectionRepRule(trigger, left, right)){
@@ -518,11 +528,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 								this.display();
 							}
 							else{
-								new Notice("warning! Trigger " + trigger + " is already exist!")
+								new Notice(sprintf(locale.placeHolder.noticeWarnTriggerExists, trigger))
 							}
 						}
 						else {
-							new Notice("missing input");
+							new Notice(locale.placeHolder.noticeMissingInput);
 						}
 					});
 			});
@@ -538,7 +548,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				.setName(showStr)
 				.addExtraButton(button => {
 					button.setIcon("gear")
-						.setTooltip("Edit rule")
+						.setTooltip(locale.toolTip.editRule)
 						.onClick(() => {
 							new SelectRuleEditModal(this.app, trigger,left_s, right_s, async (new_left, new_right) => {
 								this.plugin.updateUserSelectionRepRule(i, new_left, new_right);
@@ -549,7 +559,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 				.addExtraButton(button => {
 					button.setIcon("trash")
-						.setTooltip("Remove rule")
+						.setTooltip(locale.toolTip.removeRule)
 						.onClick(async () => {
 							this.plugin.deleteUserSelectionRepRule(i);
 							await this.plugin.saveSettings();
@@ -568,30 +578,30 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			await this.plugin.saveSettings();
         };
 		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
-		summary.setText("自定义删除编辑增强规则 (Customize Delete Rule)")
+		summary.setText(locale.headers.customizeDeleteRule)
 
 		const deleteRuleSetting = new Setting(containerEl);
 		deleteRuleSetting
-			.setName("Delete Rule")
-			.setDesc("规则：用|代表光标位置，必须包含光标。 Tips: Using | to indicate the cursor position.")
+			.setName(locale.settings.deleteRule.name)
+			.setDesc(locale.settings.deleteRule.desc)
 
 		const patternBefore = new TextAreaComponent(deleteRuleSetting.controlEl);
-		patternBefore.setPlaceholder("Before Delete");
+		patternBefore.setPlaceholder(locale.placeHolder.beforeDelete);
 
 		const patternAfter = new TextAreaComponent(deleteRuleSetting.controlEl);
-		patternAfter.setPlaceholder("New Pattern");
+		patternAfter.setPlaceholder(locale.placeHolder.newPattern);
 
 		deleteRuleSetting
 			.addButton((button) => {
 				button
 					.setButtonText("+")
-					.setTooltip("Add Rule")
+					.setTooltip(locale.toolTip.addRule)
 					.onClick(async (buttonEl: any) => {
 						let before = patternBefore.inputEl.value;
 						let after = patternAfter.inputEl.value;
 						if (before && after) {
 							if(findFirstPipeNotPrecededByBackslash(before)==-1){
-								new Notice("Inlvalid trigger, pattern must contain symbol \| which indicate cursor position");
+								new Notice(locale.placeHolder.noticeInvaidTriggerPatternContainSymbol);
 								return;
 							}
 							else{
@@ -601,7 +611,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 							}
 						}
 						else {
-							new Notice("missing input");
+							new Notice(locale.placeHolder.noticeMissingInput);
 						}
 					});
 			});
@@ -614,7 +624,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				.setName(showStr)
 				.addExtraButton(button => {
 					button.setIcon("gear")
-						.setTooltip("Edit rule")
+						.setTooltip(locale.toolTip.editRule)
 						.onClick(() => {
 							new EditConvertRuleModal(this.app, RuleType.delete, before, after, async (new_before, new_after) => {
 								this.plugin.updateUserDeleteRule(i, new_before, new_after);
@@ -625,7 +635,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 				.addExtraButton(button => {
 					button.setIcon("trash")
-						.setTooltip("Remove rule")
+						.setTooltip(locale.toolTip.removeRule)
 						.onClick(async () => {
 							this.plugin.deleteUserDeleteRule(i);
 							await this.plugin.saveSettings();
@@ -643,30 +653,30 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			await this.plugin.saveSettings();
         };
 		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
-		summary.setText("自定义编辑转换规则 (Customize Convert Rule)")
+		summary.setText(locale.headers.customizeConvertRule)
 
 		const convertRuleSetting = new Setting(containerEl);
 		convertRuleSetting
-			.setName("Convert Rule")
-			.setDesc("规则：用|代表光标位置，必须包含光标。 Tips: Using | to indicate the cursor position.")
+			.setName(locale.settings.convertRule.name)
+			.setDesc(locale.settings.convertRule.desc)
 
 		const patternBefore = new TextAreaComponent(convertRuleSetting.controlEl);
-		patternBefore.setPlaceholder("Before Convert");
+		patternBefore.setPlaceholder(locale.placeHolder.beforeConvert);
 
 		const patternAfter = new TextAreaComponent(convertRuleSetting.controlEl);
-		patternAfter.setPlaceholder("New Pattern");
+		patternAfter.setPlaceholder(locale.placeHolder.newPattern);
 
 		convertRuleSetting
 			.addButton((button) => {
 				button
 					.setButtonText("+")
-					.setTooltip("Add Rule")
+					.setTooltip(locale.toolTip.addRule)
 					.onClick(async (buttonEl: any) => {
 						let before = patternBefore.inputEl.value;
 						let after = patternAfter.inputEl.value;
 						if (before && after) {
 							if(findFirstPipeNotPrecededByBackslash(before)==-1){
-								new Notice("Inlvalid trigger, pattern must contain symbol \| which indicate cursor position");
+								new Notice(locale.placeHolder.noticeInvaidTriggerPatternContainSymbol);
 								return;
 							}
 							else{
@@ -676,7 +686,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 							}
 						}
 						else {
-							new Notice("missing input");
+							new Notice(locale.placeHolder.noticeMissingInput);
 						}
 					});
 			});
@@ -689,7 +699,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				.setName(showStr)
 				.addExtraButton(button => {
 					button.setIcon("gear")
-						.setTooltip("Edit rule")
+						.setTooltip(locale.toolTip.editRule)
 						.onClick(() => {
 							new EditConvertRuleModal(this.app, RuleType.convert, before, after, async (new_before, new_after) => {
 								this.plugin.updateUserConvertRule(i, new_before, new_after);
@@ -700,7 +710,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 				.addExtraButton(button => {
 					button.setIcon("trash")
-						.setTooltip("Remove rule")
+						.setTooltip(locale.toolTip.removeRule)
 						.onClick(async () => {
 							this.plugin.deleteUserConvertRule(i);
 							await this.plugin.saveSettings();
@@ -742,17 +752,17 @@ export class SelectRuleEditModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 
-		contentEl.createEl("h1", { text: "Edit Selection Replace Rule" });
+		contentEl.createEl("h1", { text: locale.headers.editSelectionReplaceRule });
 
 		new Setting(contentEl)
-			.setName("Trigger")
+			.setName(locale.settings.trigger.name)
 			.addText((text) => {
 				text.setValue(this.trigger);
 				text.setDisabled(true);
 			})
 		
 		new Setting(contentEl)
-			.setName("Left")
+			.setName(locale.settings.left.name)
 			.addTextArea((text) => {
 				text.setValue(this.old_left);
 				text.onChange((value) => {
@@ -760,7 +770,7 @@ export class SelectRuleEditModal extends Modal {
 				})
 			})
 		new Setting(contentEl)
-			.setName("Right")
+			.setName(locale.settings.right.name)
 			.addTextArea((text) => {
 				text.setValue(this.old_right);
 				text.onChange((value) => {
@@ -772,7 +782,7 @@ export class SelectRuleEditModal extends Modal {
 		new Setting(contentEl)
 			.addButton((btn) =>
 				btn
-					.setButtonText("Update")
+					.setButtonText(locale.button.update)
 					.setCta()
 					.onClick(() => {
 						this.close();
@@ -813,7 +823,7 @@ export class EditConvertRuleModal extends Modal {
 		contentEl.createEl("h1", { text: "Edit " + this.type});
 		
 		new Setting(contentEl)
-			.setName("Old Pattern")
+			.setName(locale.settings.oldPattern.name)
 			.addTextArea((text) => {
 				text.setValue(this.old_before);
 				text.onChange((value) => {
@@ -821,7 +831,7 @@ export class EditConvertRuleModal extends Modal {
 				})
 			})
 		new Setting(contentEl)
-			.setName("New Pattern")
+			.setName(locale.settings.newPattern.name)
 			.addTextArea((text) => {
 				text.setValue(this.old_after);
 				text.onChange((value) => {
@@ -833,7 +843,7 @@ export class EditConvertRuleModal extends Modal {
 		new Setting(contentEl)
 			.addButton((btn) =>
 				btn
-					.setButtonText("Update")
+					.setButtonText(locale.button.update)
 					.setCta()
 					.onClick(() => {
 						if (this.checkConvertPatternString(this.new_before, this.new_after))
@@ -842,7 +852,7 @@ export class EditConvertRuleModal extends Modal {
 							this.onSubmit(this.new_before, this.new_after);
 						}
 						else{
-							new Notice("Invalid pattern string!");
+							new Notice(locale.placeHolder.noticeInvalidPatternString);
 						}
 						
 					}));
