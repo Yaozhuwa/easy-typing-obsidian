@@ -125,9 +125,10 @@ export function isRegexp(s: string):boolean{
 }
 
 function convertEscapeChar(s: string):string{
-	return s.replace(/\\\|/g, "|").replace(/\\\\/g, "\\")
-			.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
-			.replace(/\\t/g, '\t');
+	return s.replace(/\\\|/g, "|")
+			.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t')
+			.replace(/\\\n/g, '\\n').replace(/\\\r/g, '\\r').replace(/\\\t/g, '\\t')
+			.replace(/\\\\/g, "\\");
 }
 
 export function ruleStringList2RuleList(list: Array<[string, string]>):ConvertRule[] {
