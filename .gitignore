@@ -14,3 +14,4 @@ main.js
 data.json
 
 .DS_Store
+.vscode
