@@ -10,7 +10,8 @@ import {
 	string2pairstring,
 	isRegexp,
 	replacePlaceholders,
-	parseTheAfterPattern
+	parseTheAfterPattern,
+	taboutCursorInPairedString,
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
@@ -49,7 +50,8 @@ export default class EasyTypingPlugin extends Plugin {
 		this.selectionReplaceMapInitalData = [
 			["【", { left: "[", right: "]" }], ["￥", { left: "$", right: "$" }], ["·", { left: "`", right: "`" }], ['¥', { left: "$", right: "$" }],
 			["《", { left: "《", right: "》" }], ["“", { left: "“", right: "”" }], ["”", { left: "“", right: "”" }], ["（", { left: "（", right: "）" }],
-			["<", { left: "<", right: ">" }]
+			["<", { left: "<", right: ">" }], ["\"", { left: "\"", right: "\"" }], ["'", { left: "'", right: "'" }],
+			['「', { left: '「', right: '」' }], ['『', { left: '『', right: '』' }],
 		];
 		this.refreshSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
@@ -873,6 +875,15 @@ export default class EasyTypingPlugin extends Plugin {
 						})
 						return true;
 					}
+			}
+		}
+		else {
+			let taboutRes = taboutCursorInPairedString(line.text, pos-line.from, this.TaboutPairStrs);
+			if (taboutRes.isSuccess){
+				view.dispatch({
+					selection: { anchor: taboutRes.newPosition+line.from }
+				})
+				return true;
 			}
 		}
 

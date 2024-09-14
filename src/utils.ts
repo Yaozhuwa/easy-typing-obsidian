@@ -165,3 +165,56 @@ export function isParamDefined(param: any):boolean
 export function showString(s: string):string{
 	return s.replace(/\n/g, '\\n');
 }
+
+
+type TabOutResult = {
+    isSuccess: boolean;
+    newPosition: number;
+};
+
+
+
+
+export function taboutCursorInPairedString(input: string, cursorPosition: number, symbolPairs: PairString[]): TabOutResult {
+    let stack: string[] = [];
+    let fail: TabOutResult = { isSuccess: false, newPosition: 0 };
+
+    for (let i = 0; i < cursorPosition; i++) {
+        for (const { left: open, right: close } of symbolPairs) {
+            if (input.startsWith(open, i) && (open !== close || stack.lastIndexOf(open) === -1)) {
+                stack.push(open);
+                i += open.length - 1;
+            } else if (input.startsWith(close, i) && stack.length > 0) {
+                const lastOpenIndex = stack.lastIndexOf(open);
+                if (lastOpenIndex !== -1) {
+                    stack = stack.slice(0, lastOpenIndex);
+                }
+                i += close.length - 1;
+            }
+        }
+    }
+
+    if (stack.length === 0) {
+        return fail;
+    }
+
+    let tempStack: string[] = [];
+    for (let i = cursorPosition; i < input.length; i++) {
+        for (const { left: open, right: close } of symbolPairs) {
+            if (input.startsWith(open, i) && (open !== close || (stack.lastIndexOf(open) === -1 && tempStack.lastIndexOf(open) === -1))) {
+                tempStack.push(open);
+                i += open.length - 1;
+            } else if (input.startsWith(close, i)) {
+                const lastOpenIndex = tempStack.lastIndexOf(open);
+                if (lastOpenIndex === -1 && stack.lastIndexOf(open) !== -1) {
+                    return { isSuccess: true, newPosition: cursorPosition === i ? i + close.length : i };
+                } else if (lastOpenIndex !== -1) {
+                    tempStack = tempStack.slice(0, lastOpenIndex);
+                }
+                i += close.length - 1;
+            }
+        }
+    }
+
+    return fail;
+}
