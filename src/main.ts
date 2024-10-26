@@ -377,26 +377,17 @@ export default class EasyTypingPlugin extends Plugin {
 				return tr;
 			}
 
+			let codeblockinfo = getCodeBlockInfoInPos(tr.startState, toA);
+			print(codeblockinfo, toA)
 			// 列表下的代码块删除功能优化
-			if (this.settings.BetterCodeEdit && changeTypeStr == "delete.backward" && !selected && 
-				getPosLineType(tr.startState, toA) == LineType.codeblock && 
-				(tr.startState.sliceDoc(fromA,toA)!='`' || getPosLineType(tr.state, fromA)==LineType.codeblock)) {
+			if (this.settings.BetterCodeEdit && changeTypeStr == "delete.backward" && !selected &&
+				codeblockinfo && toA>tr.startState.doc.lineAt(codeblockinfo.start_pos).to
+			) {
 				let line_number = tr.startState.doc.lineAt(toA).number;
 				let cur_line = tr.startState.doc.lineAt(toA);
-				let list_code = false;
-				let list_code_indent = 0;
-				for (let i = line_number - 1; i >= 1; i--) {
-					let line = tr.startState.doc.line(i);
-					if (/^\s+```/.test(line.text)) {
-						list_code = true;
-						list_code_indent = line.text.match(/^\s*/)[0].length;
-						break;
-					}
-					else if (/^```/.test(line.text)) break;
-					else continue;
-				}
+				let list_code_indent = codeblockinfo.indent;
 
-				if (list_code) {
+				if (list_code_indent !== 0) {
 					print('list_code, indent: ', list_code_indent);
 					if (toA == cur_line.from + list_code_indent) {
 						changes.push({ changes: { from: tr.startState.doc.line(line_number-1).to, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
