@@ -183,6 +183,15 @@ export default class EasyTypingPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "easy-typing-goto-new-line-after-cur-line",
+			name: command_name_map.get("goto_new_line_after_cur_line"),
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				this.goNewLineAfterCurLine(editor.cm as EditorView);
+			},
+			hotkeys: [{ modifiers: ["Mod"], key: "Enter" }],
+		});
+
+		this.addCommand({
 			id: "easy-typing-insert-codeblock",
 			name: command_name_map.get("insert_codeblock"),
 			editorCallback: (editor: Editor, view: MarkdownView) => {
@@ -1135,6 +1144,49 @@ export default class EasyTypingPlugin extends Plugin {
         return commentSymbols[language] || null;
     }
 
+	goNewLineAfterCurLine(view: EditorView): boolean {
+		const state = view.state;
+		const doc = state.doc;
+		const selection = state.selection.main;
+	
+		// 获取当前行的信息
+		const line = doc.lineAt(selection.head);
+		const lineContent = line.text;
+	
+		// 检查是否在列表或引用块中
+		const listMatch = lineContent.match(/^(\s*)([-*+]|\d+\.)\s/);
+		const quoteMatch = lineContent.match(/^(\s*>)+(\s)?/);
+	
+		let changes;
+		let newCursorPos;
+	
+		let prefix = '';
+		if (listMatch) {
+			// 继续列表
+			const [, indent, listMarker] = listMatch;
+			prefix = indent + (listMarker === '-' || listMarker === '*' || listMarker === '+' 
+				? listMarker 
+				: (parseInt(listMarker) + 1) + '.') + ' ';
+		} else if (quoteMatch) {
+			// 继续引用，保持相同的引用级别，确保每个 > 后有一个空格
+			prefix = quoteMatch[0].replace(/>\s*/g, '> ');
+		}
+	
+		changes = [{from: line.to, insert: '\n' + prefix}];
+		newCursorPos = line.to + 1 + prefix.length;
+	
+		// 创建一个新的事务
+		const tr = state.update({
+			changes: changes,
+			selection: {anchor: newCursorPos, head: newCursorPos}
+		});
+	
+		// 应用事务
+		view.dispatch(tr);
+	
+		return true;
+	}
+
 	triggerUserCvtRule = (view: EditorView, cursor_pos: number):boolean => {
 		for (let rule of this.UserConvertRules) {
 			let leftDocStr = view.state.doc.sliceString(0, cursor_pos);
@@ -1589,6 +1641,8 @@ export default class EasyTypingPlugin extends Plugin {
 			["switch_autoformat", "Switch autoformat"],
 			["paste_wo_format", "Paste without format"],
 			["toggle_comment", "Toggle comment"],
+			["goto_new_line_after_cur_line", "Go to new line after current line"],
+
 		]);
 
 		let command_name_map_zh_TW = new Map([
@@ -1599,6 +1653,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["switch_autoformat", "切換自動格式化開關"],
 			["paste_wo_format", "無格式化粘貼"],
 			["toggle_comment", "切換註釋"],
+			["goto_new_line_after_cur_line", "跳到當前行後的新行"],
 		]);
 
 		let command_name_map_zh = new Map([
@@ -1609,6 +1664,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["switch_autoformat", "切换自动格式化开关"],
 			["paste_wo_format", "无格式化粘贴"],
 			["toggle_comment", "切换注释"],
+			["goto_new_line_after_cur_line", "跳到当前行后新行"],
 		]);
 
 		let command_name_map_ru = new Map([
@@ -1619,6 +1675,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["switch_autoformat", "Переключить автоформатирование"],
 			["paste_wo_format", "Вставить без форматирования"],
 			["toggle_comment", "Переключить комментарий"],
+			["goto_new_line_after_cur_line", "Перейти к новой строке после текущей"],
 		]);
 
 		let command_name_map = command_name_map_en;
