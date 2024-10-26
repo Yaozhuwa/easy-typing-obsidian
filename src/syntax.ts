@@ -34,8 +34,7 @@ export function selectCodeBlockInPos(view: EditorView, pos: number):boolean {
     let codeBlockInfos = getCodeBlocksInfos(view.state);
     for (let i = 0; i < codeBlockInfos.length; i++) {
         if (pos >= codeBlockInfos[i].start_pos && pos <= codeBlockInfos[i].end_pos) {
-            if (view.state.doc.lineAt(codeBlockInfos[i].start_pos).number == 
-                view.state.doc.lineAt(codeBlockInfos[i].end_pos).number - 1) 
+            if (codeBlockInfos[i].code_start_pos == codeBlockInfos[i].code_end_pos) 
                 return false;
             view.dispatch({
                 selection: {
