@@ -134,13 +134,12 @@ export default class EasyTypingPlugin extends Plugin {
 					return success;
 				}
 			},
-			// {
-            //     key: "Mod-/",
-            //     run: (view: EditorView): boolean => {
-			// 		console.log('toggle code block comment')
-            //         return this.toggleCodeBlockComment(view);
-            //     }
-            // }
+			{
+                key: "Backspace",
+                run: (view: EditorView): boolean => {
+                    return this.handleBackspace(view);
+                }
+            }
 		])));
 
 		this.lang = window.localStorage.getItem('language');
@@ -1178,14 +1177,98 @@ export default class EasyTypingPlugin extends Plugin {
 		// 创建一个新的事务
 		const tr = state.update({
 			changes: changes,
-			selection: {anchor: newCursorPos, head: newCursorPos}
+			selection: {anchor: newCursorPos, head: newCursorPos},
+			userEvent: "EasyTyping.goNewLineAfterCurLine"
 		});
 	
-		// 应用事务
 		view.dispatch(tr);
 	
 		return true;
 	}
+
+
+	handleBackspace(view: EditorView): boolean {
+        const state = view.state;
+        const doc = state.doc;
+        const selection = state.selection.main;
+		if (selection.anchor != selection.head) return false;
+
+		const line = doc.lineAt(selection.from);
+		const lineContent = line.text;
+
+		// 检查是否是空的列表项或引用项
+		const listMatch = lineContent.match(/^\s*([-*+]|\d+\.) $/);
+		const quoteMatch = lineContent.match(/^\s*(> )+$/);
+
+		if ((listMatch || quoteMatch) && selection.anchor == line.to) {
+			let changes;
+			let newCursorPos;
+
+			if (quoteMatch) {
+				// 处理引用项
+				const quoteLevel = (quoteMatch[0].match(/>/g) || []).length;
+				if (quoteLevel > 1) {
+					// 多级引用，降低一级
+					const newQuotePrefix = '> ' .repeat(quoteLevel - 1);
+					changes = [{ from: line.from, to: line.to, insert: newQuotePrefix }];
+					newCursorPos = line.from + newQuotePrefix.length;
+				} else {
+					// 单级引用
+					if (line.number > 1) {
+						const prevLine = doc.line(line.number - 1);
+						const prevLineContent = prevLine.text;
+						const prevQuoteMatch = prevLineContent.match(/^\s*(> )+/);
+
+						if (prevQuoteMatch) {
+							// 上一行也是引用，删除当前行并将光标移到上一行末尾
+							changes = [{ from: prevLine.to, to: line.to, insert: '' }];
+							newCursorPos = prevLine.to;
+						} else {
+							// 上一行不是引用，只删除当前行
+							changes = [{ from: line.from, to: line.to, insert: '' }];
+							newCursorPos = line.from;
+						}
+					} else {
+						// 这是文档的第一行，只删除当前行
+						changes = [{ from: line.from, to: line.to, insert: '' }];
+						newCursorPos = line.from;
+					}
+				}
+			} else {
+				// 处理列表项
+				if (line.number > 1) {
+					const prevLine = doc.line(line.number - 1);
+					const prevLineContent = prevLine.text;
+					const prevListMatch = prevLineContent.match(/^\s*([-*+]|\d+\.)\s/);
+
+					if (prevListMatch) {
+						// 前一行也是列表项，删除当前行并将光标移到前一行末尾
+						changes = [{ from: prevLine.to, to: line.to, insert: '' }];
+						newCursorPos = prevLine.to;
+					} else {
+						// 前一行不是列表项，只删除当前行
+						changes = [{ from: line.from, to: line.to, insert: '' }];
+						newCursorPos = line.from;
+					}
+				} else {
+					// 这是文档的第一行，只删除当前行
+					changes = [{ from: line.from, to: line.to, insert: '' }];
+					newCursorPos = line.from;
+				}
+			}
+
+			const tr = state.update({
+				changes: changes,
+				selection: { anchor: newCursorPos, head: newCursorPos },
+				userEvent: "EasyTyping.handleBackspace"
+			});
+
+			view.dispatch(tr);
+			return true;
+		}
+
+		return false;
+    }
 
 	triggerUserCvtRule = (view: EditorView, cursor_pos: number):boolean => {
 		for (let rule of this.UserConvertRules) {
