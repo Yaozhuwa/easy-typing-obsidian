@@ -15,7 +15,7 @@ import {
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
-import { selectCodeBlockInPos, isCodeBlockInPos } from './syntax';
+import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos } from './syntax';
 import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 
@@ -302,28 +302,33 @@ export default class EasyTypingPlugin extends Plugin {
 					isCodeBlockInPos(tr.startState, fromA)){
 				print("检测到在代码块中粘贴")
 				let line = tr.startState.doc.lineAt(fromB).text;
-				let indent_space = line.match(/^\s*/)[0].length;
+				let base_indent_num = getCodeBlockInfoInPos(tr.startState, fromA)?.indent;
+				let base_indent = base_indent_num==0 ? '' : ' '.repeat(base_indent_num);
 				let inserted_lines = insertedStr.split('\n');
-				let extra_indent = '';
+				
 				if(inserted_lines.length>1){
-					let first_line = inserted_lines[0].trimStart();
-					// if (first_line.endsWith('{') || first_line.endsWith('(') || first_line.endsWith('[')
-					// 	|| first_line.endsWith(':')){
-					// 	extra_indent = this.getDefaultIndentChar();
-					// }
-					let rest_lines = inserted_lines.slice(1);
-					// find the minimum indent space in rest lines
+					// 找出所有行的最小共同缩进
 					let min_indent_space = Infinity;
-					for (let line of rest_lines){
-						let indent = line.match(/^\s*/)[0].length;
-						if (!/^\s*$/.test(line) && indent<min_indent_space) min_indent_space = indent;
+					for (let line of inserted_lines){
+						if (!/^\s*$/.test(line)) {  // 忽略空行
+							let indent = line.match(/^\s*/)[0].length;
+							min_indent_space = Math.min(min_indent_space, indent);
+						}
 					}
-					let new_rest_lines = rest_lines.map((line:string)=>line.substring(min_indent_space));
-					
-					new_rest_lines = new_rest_lines.map(
-						(line:string)=>line.replace(/[\t]/g, this.getDefaultIndentChar()));
-					let final_rest_lines = new_rest_lines.map((line:string)=>' '.repeat(indent_space)+extra_indent+line);
-					let new_insertedStr = first_line+'\n'+final_rest_lines.join('\n');
+
+					// 删除每行的最小缩进，并给除第一行以外的行添加基础缩进
+					let adjusted_lines = inserted_lines.map((line:string, index:number) => {
+						let trimmed_line = line.substring(min_indent_space);
+						trimmed_line = trimmed_line.replace(/[\t]/g, this.getDefaultIndentChar())
+						if (index === 0) {
+							return trimmed_line;  // 第一行不添加额外缩进
+						} else {
+							return base_indent + trimmed_line;  // 其他行添加基础缩进
+						}
+					});
+
+					console.log('default indent: ', this.getDefaultIndentChar().length)
+					let new_insertedStr = adjusted_lines.join('\n');
 					changes.push({
 						changes: {from: fromA, to: toA, insert: new_insertedStr},
 						selection: {anchor: fromA+new_insertedStr.length},
