@@ -129,10 +129,18 @@ export default class EasyTypingPlugin extends Plugin {
 			{
 				key: "Mod-a", 
 				run: (view: EditorView): boolean => {
+					console.log('handle mod a in code block')
 					const success = this.handleModAInCodeBlock(view);
 					return success;
 				}
-			}
+			},
+			// {
+            //     key: "Mod-/",
+            //     run: (view: EditorView): boolean => {
+			// 		console.log('toggle code block comment')
+            //         return this.toggleCodeBlockComment(view);
+            //     }
+            // }
 		])));
 
 		this.lang = window.localStorage.getItem('language');
@@ -201,12 +209,20 @@ export default class EasyTypingPlugin extends Plugin {
 			name: command_name_map.get("paste_wo_format"),
 			editorCallback: (editor) => this.normalPaste(editor),
 			hotkeys: [
-			  {
-				modifiers: ["Mod", "Shift"],
-				key: "v",
-			  },
+				{
+					modifiers: ["Mod", "Shift"],
+					key: "v",
+				},
 			],
-		  });
+		});
+
+
+		this.addCommand({
+			id: "easy-typing-toggle-comment",
+			name: command_name_map.get("toggle_comment"),
+			editorCallback: (editor: Editor, view: MarkdownView) => this.toggleComment(editor.cm as EditorView),
+			hotkeys: [{ modifiers: ["Mod"], key: "/" }],
+		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new EasyTypingSettingTab(this.app, this));
@@ -962,6 +978,163 @@ export default class EasyTypingPlugin extends Plugin {
 		this.handleEndComposeTypeKey(event, view);
 	}
 
+	toggleComment(view: EditorView): boolean {
+		const state = view.state;
+        const selection = state.selection.main;
+        const codeBlockInfo = getCodeBlockInfoInPos(state, selection.from);
+
+        if (codeBlockInfo){
+			return this.toggleCodeBlockComment(view);
+		}
+		return this.toggleMarkdownComment(selection.from, selection.to, view);
+	}
+
+	toggleCodeBlockComment(view: EditorView): boolean {
+        const state = view.state;
+        const selection = state.selection.main;
+        const codeBlockInfo = getCodeBlockInfoInPos(state, selection.from);
+
+        if (!codeBlockInfo) return false; // 不在代码块内，不执行操作
+
+        const language = codeBlockInfo.language;
+        const commentSymbol = this.getCommentSymbol(language);
+
+        if (!commentSymbol) return false; // 未知语言，不执行操作
+
+        let changes: { from: number; to: number; insert: string }[] = [];
+
+        if (selection.from === selection.to) {
+            // 没有选中文本，注释当前行
+            const line = state.doc.lineAt(selection.from);
+            changes.push(this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol));
+        } else {
+            // 有选中文本，注释选中的行
+            const fromLine = state.doc.lineAt(selection.from);
+            const toLine = state.doc.lineAt(selection.to);
+            for (let i = fromLine.number; i <= toLine.number; i++) {
+                const line = state.doc.line(i);
+                changes.push(this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol));
+            }
+        }
+
+        view.dispatch({ changes, userEvent: "EasyTyping.toggleComment" });
+        return true;
+    }
+
+	toggleCodeBlockLineComment(from: number, to: number, text: string, commentSymbol: string): { from: number; to: number; insert: string } {
+        const trimmedText = text.trimStart();
+        if (trimmedText.startsWith(commentSymbol)) {
+            // 移除注释
+            const commentIndex = text.indexOf(commentSymbol);
+            return {
+                from: from + commentIndex,
+                to: from + commentIndex + commentSymbol.length + (trimmedText.startsWith(commentSymbol + ' ') ? 1 : 0),
+                insert: ''
+            };
+        } else {
+            // 添加注释
+            const indent = text.length - trimmedText.length;
+            return {
+                from: from + indent,
+                to: from + indent,
+                insert: commentSymbol + ' '
+            };
+        }
+    }
+	
+	toggleMarkdownComment(from: number, to: number, view: EditorView): boolean {
+		const state = view.state;
+		const doc = state.doc;
+		const changes = [];
+	
+		if (from === to) {
+			const currentText = doc.sliceString(from - 3, to + 3);
+			if (currentText === "%%  %%") {
+				// 如果当前文本是 %%  %%，则删除它
+				changes.push({
+					from: from - 3,
+					to: to + 3,
+					insert: ""
+				});
+				view.dispatch({
+					changes,
+					selection: {anchor: from - 3, head: from - 3},
+					userEvent: "EasyTyping.toggleComment"
+				});
+				return true;
+			}
+			// 没有选中文字，在当前位置插入 %%  %%
+			changes.push({
+				from: from,
+				to: to,
+				insert: "%%  %%"
+			});
+			
+			// 设置光标位置到 %% 之间
+			const newPos = from + 3;
+			view.dispatch({
+				changes,
+				selection: {anchor: newPos, head: newPos},
+				userEvent: "EasyTyping.toggleComment"
+			});
+		} else {
+			// 有文字选中，在选中部分左右加上 %%
+			const selectedText = doc.sliceString(from, to);
+			
+			// 检查是否已经被 %% 包围
+			if (selectedText.startsWith("%%") && selectedText.endsWith("%%")) {
+				// 如果已经被注释，则移除注释
+				changes.push({
+					from: from,
+					to: to,
+					insert: selectedText.slice(2, -2)
+				});
+			} else {
+				// 如果没有被注释，则添加注释
+				changes.push({
+					from: from,
+					to: to,
+					insert: `%%${selectedText}%%`
+				});
+			}
+			
+			view.dispatch({changes, userEvent: "EasyTyping.toggleComment"});
+		}
+	
+		return true;
+	}
+
+	getCommentSymbol(language: string): string | null {
+        const commentSymbols: { [key: string]: string } = {
+            'js': '//',
+            'javascript': '//',
+            'ts': '//',
+            'typescript': '//',
+            'py': '#',
+            'python': '#',
+            'rb': '#',
+            'ruby': '#',
+            'java': '//',
+            'c': '//',
+            'cpp': '//',
+            'cs': '//',
+            'go': '//',
+            'rust': '//',
+            'swift': '//',
+            'kotlin': '//',
+            'php': '//',
+            'css': '//',
+            'scss': '//',
+            'sql': '--',
+            'shell': '#',
+            'bash': '#',
+            'powershell': '#',
+            // 可以根据需要添加更多语言
+        };
+
+        return commentSymbols[language] || null;
+    }
+
 	triggerUserCvtRule = (view: EditorView, cursor_pos: number):boolean => {
 		for (let rule of this.UserConvertRules) {
 			let leftDocStr = view.state.doc.sliceString(0, cursor_pos);
@@ -1415,6 +1588,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["insert_codeblock", "Insert code block w/wo selection"],
 			["switch_autoformat", "Switch autoformat"],
 			["paste_wo_format", "Paste without format"],
+			["toggle_comment", "Toggle comment"],
 		]);
 
 		let command_name_map_zh_TW = new Map([
@@ -1424,6 +1598,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["insert_codeblock", "插入代碼塊"],
 			["switch_autoformat", "切換自動格式化開關"],
 			["paste_wo_format", "無格式化粘貼"],
+			["toggle_comment", "切換註釋"],
 		]);
 
 		let command_name_map_zh = new Map([
@@ -1433,6 +1608,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["insert_codeblock", "插入代码块"],
 			["switch_autoformat", "切换自动格式化开关"],
 			["paste_wo_format", "无格式化粘贴"],
+			["toggle_comment", "切换注释"],
 		]);
 
 		let command_name_map_ru = new Map([
@@ -1442,6 +1618,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["insert_codeblock", "Вставить блок кода с/без выделением"],
 			["switch_autoformat", "Переключить автоформатирование"],
 			["paste_wo_format", "Вставить без форматирования"],
+			["toggle_comment", "Переключить комментарий"],
 		]);
 
 		let command_name_map = command_name_map_en;
