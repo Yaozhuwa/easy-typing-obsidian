@@ -69,7 +69,7 @@ export function getCodeBlocksInfos(state: EditorState): CodeBlockInfo[]{
                     end_pos: -1,
                     code_start_pos: -1,
                     code_end_pos: -1,
-                    language: language,
+                    language: language.toLowerCase(),
                     indent: indent
                 }
             } else if (nodeName.includes('codeblock-end')) {

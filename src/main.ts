@@ -1005,7 +1005,7 @@ export default class EasyTypingPlugin extends Plugin {
         if (!codeBlockInfo) return false; // 不在代码块内，不执行操作
 
         const language = codeBlockInfo.language;
-        const commentSymbol = this.getCommentSymbol(language);
+        const commentSymbol = this.getCommentSymbol(language.toLowerCase());
 
         if (!commentSymbol) return false; // 未知语言，不执行操作
 
