@@ -940,7 +940,8 @@ export default class EasyTypingPlugin extends Plugin {
 		// 如下一行非空白行，不做处理
 		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)) return false;
 
-		if (getPosLineType2(state, pos) == LineType.text) {
+		let codeBlockInfo = getCodeBlockInfoInPos(state, pos);
+		if (getPosLineType2(state, pos) == LineType.text || (codeBlockInfo && pos == codeBlockInfo.end_pos)) {
 			view.dispatch({
 				changes: {
 					from: pos,
@@ -948,7 +949,7 @@ export default class EasyTypingPlugin extends Plugin {
 					insert: '\n\n'
 				},
 				selection: { anchor: pos + 2 },
-				userEvent: "EasyTyping.change"
+				userEvent: "EasyTyping.handleEnter"
 			})
 			return true;
 		}
