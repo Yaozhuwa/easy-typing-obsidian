@@ -20,6 +20,10 @@ const locale = {
             name: "Enhance codeblock edit",
             desc: "Improve editing in codeblocks (Tab, delete, paste, Cmd/Ctrl+A select)."
         },
+        backspaceEdit: {
+            name: "Enhance backspace edit",
+            desc: "Improve backspace featurefor empty list item or empty quote line."
+        },
         tabOut: {
             name: "Tabout",
             desc: "Tab out of inline code or paired symbols."

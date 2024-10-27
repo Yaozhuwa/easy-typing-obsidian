@@ -26,6 +26,7 @@ export interface EasyTypingSettings {
 	BaseObEditEnhance: boolean;
 	FW2HWEnhance: boolean;
 	BetterCodeEdit: boolean;
+	BetterBackspace: boolean;
 	AutoFormat: boolean;
 	ExcludeFiles: string;
 	AutoCapital: boolean;
@@ -66,7 +67,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	BaseObEditEnhance: true,
 	FW2HWEnhance: true,
 	BetterCodeEdit: true,
-
+	BetterBackspace: true,
 	AutoFormat: true,
 	ExcludeFiles: "",
 	ChineseEnglishSpace: true,
@@ -193,6 +194,18 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		new Setting(containerEl)
+			.setName(locale.settings.backspaceEdit.name)
+			.setDesc(locale.settings.backspaceEdit.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.BetterBackspace)
+					.onChange(async (value) => {
+						this.plugin.settings.BetterBackspace = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
 
 		new Setting(containerEl)
 			.setName(locale.settings.tabOut.name)

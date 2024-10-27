@@ -22,6 +22,10 @@ const locale: typeof enUS = {
             name: "增强代码块编辑",
             desc: "增强代码块内的编辑（Cmd/Ctrl+A 选中、Tab、删除、粘贴）"
         },
+        backspaceEdit: {
+            name: "增强删除功能",
+            desc: "增强删除空列表项或空引用行的功能"
+        },
         tabOut: {
             name: "Tab 键光标跳出",
             desc: "Tab 键跳出行内代码块或配对符号块"

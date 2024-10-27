@@ -137,6 +137,7 @@ export default class EasyTypingPlugin extends Plugin {
 			{
                 key: "Backspace",
                 run: (view: EditorView): boolean => {
+					if (!this.settings.BetterBackspace) return false;
                     return this.handleBackspace(view);
                 }
             }
