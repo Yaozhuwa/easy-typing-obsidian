@@ -16,6 +16,10 @@ Easy Typing is an enhancement plugin for [Obsidian](https://obsidian.md) that im
 
 3. **Customizable Conversion Rules**: Supports user-defined conversion rules for various editing scenarios.
 
+4. **Plugin Built-in Commands**: Includes the deletion of extra blank lines, formatting the entire document, formatting the current line/selected area, creating a new line after the current line and jumping (Ctrl+Enter), and toggling comments (supports comments within code blocks, Mod+/).
+
+5. **Experimental Features**: Includes some experimental features, including strict line breaks where Enter inputs two line breaks, automatic punctuation correction (only during input, English punctuation between Chinese is converted to Chinese punctuation), etc.
+
 ## Detailed Documentation
 
 For detailed information on each feature, please refer to the following documents:
