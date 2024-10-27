@@ -23,8 +23,8 @@ const locale: typeof enUS = {
             desc: "增强代码块内的编辑（Cmd/Ctrl+A 选中、Tab、删除、粘贴）"
         },
         tabOut: {
-            name: "跳出代码块",
-            desc: "Tab 跳出行内代码块或配对符号块(选中时)"
+            name: "Tab 键光标跳出",
+            desc: "Tab 键跳出行内代码块或配对符号块"
         },
         autoFormatting: {
             name: "输入时自动格式化",

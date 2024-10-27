@@ -3,7 +3,7 @@
 	"name": "Easy Typing",
 	"version": "5.5.3",
 	"minAppVersion": "0.15.0",
-	"description": "Autoformat your note as typing.(Auto captalize, autospace)",
+	"description": "This plugin aims to enhance and optimize the editing experience in Obsidian",
 	"author": "yaozhuwa",
 	"authorUrl": "https://github.com/Yaozhuwa",
 	"isDesktopOnly": false,

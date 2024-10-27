@@ -22,7 +22,7 @@ const locale = {
         },
         tabOut: {
             name: "Tabout",
-            desc: "Tab out of inline code or paired symbols (when selected)."
+            desc: "Tab out of inline code or paired symbols."
         },
         autoFormatting: {
             name: "Auto formatting when typing",
