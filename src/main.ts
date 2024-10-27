@@ -152,7 +152,7 @@ export default class EasyTypingPlugin extends Plugin {
 				this.formatArticle(editor, view);
 			},
 			hotkeys: [{
-				modifiers: ['Ctrl', 'Shift'],
+				modifiers: ['Mod', 'Shift'],
 				key: "s"
 			}],
 		});
@@ -164,7 +164,7 @@ export default class EasyTypingPlugin extends Plugin {
 				this.formatSelectionOrCurLine(editor, view);
 			},
 			hotkeys: [{
-				modifiers: ['Ctrl', 'Shift'],
+				modifiers: ['Mod', 'Shift'],
 				key: "l"
 			}],
 		});
@@ -176,7 +176,7 @@ export default class EasyTypingPlugin extends Plugin {
 				this.deleteBlankLines(editor);
 			},
 			hotkeys: [{
-				modifiers: ['Ctrl', 'Shift'],
+				modifiers: ['Mod', 'Shift'],
 				key: "k"
 			}],
 		});
@@ -197,7 +197,7 @@ export default class EasyTypingPlugin extends Plugin {
 				this.convert2CodeBlock(editor);
 			},
 			hotkeys: [{
-				modifiers: ['Ctrl', 'Shift'],
+				modifiers: ['Mod', 'Shift'],
 				key: "n"
 			}],
 		});
@@ -1245,6 +1245,36 @@ export default class EasyTypingPlugin extends Plugin {
 					// 这是文档的第一行，只删除当前行
 					changes = [{ from: line.from, to: line.to, insert: '' }];
 					newCursorPos = line.from;
+				}
+
+				// 检查后续行是否是有序列表，并更新其编号
+				let nextLineNumber = line.number + 1;
+				const currentIndent = lineContent.match(/^\s*/)[0];
+				const currentListMatch = lineContent.match(/^\s*(\d+)\.\s/);
+				let expectedNextNumber = currentListMatch ? parseInt(currentListMatch[1], 10) + 1 : null;
+
+				while (nextLineNumber <= doc.lines && expectedNextNumber !== null) {
+					const nextLine = doc.line(nextLineNumber);
+					const nextLineContent = nextLine.text;
+					const nextListMatch = nextLineContent.match(/^\s*(\d+)\.\s/);
+
+					if (nextListMatch) {
+						const nextIndent = nextLineContent.match(/^\s*/)[0];
+						if (nextIndent !== currentIndent) {
+							break;
+						}
+						const nextListNumber = parseInt(nextListMatch[1], 10);
+						if (nextListNumber === expectedNextNumber) {
+							const newNextLineContent = nextLineContent.replace(/^\s*\d+\.\s/, `${nextIndent}${nextListNumber - 1}. `);
+							changes.push({ from: nextLine.from, to: nextLine.to, insert: newNextLineContent });
+							expectedNextNumber++;
+						} else {
+							break;
+						}
+					} else {
+						break;
+					}
+					nextLineNumber++;
 				}
 			}
 
