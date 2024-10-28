@@ -913,11 +913,6 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	private readonly handleEnter = (view: EditorView) => {
-		// console.log("this.settings.EnterTwice", this.settings.EnterTwice)
-		if (!this.settings.EnterTwice) return false;
-
-		let strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
-		if (!strictLineBreaks) return false;
 
 		let state = view.state;
 		let doc = state.doc
@@ -926,6 +921,22 @@ export default class EasyTypingPlugin extends Plugin {
 		if (s.ranges.length > 1) return false;
 		const pos = s.main.to;
 		let line = doc.lineAt(pos);
+		let codeBlockInfo = getCodeBlockInfoInPos(state, pos);
+
+		if (this.settings.BetterCodeEdit && codeBlockInfo && codeBlockInfo.code_start_pos !== doc.lineAt(codeBlockInfo.start_pos).to 
+			&& pos >= codeBlockInfo.code_start_pos && pos <= codeBlockInfo.code_end_pos ){
+			let line_indent_str = line.text.match(/^\s*/)?.[0] || '';
+			view.dispatch({
+				changes: {from: pos, to: pos, insert: '\n'+line_indent_str},
+				selection: {anchor: pos + line_indent_str.length + 1, head: pos + line_indent_str.length + 1},
+				userEvent: "EasyTyping.handleEnter"
+			})
+			return true;
+		}
+
+		if (!this.settings.EnterTwice) return false;
+		let strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
+		if (!strictLineBreaks) return false;
 
 		// console.log(line.text, getPosLineType2(state, pos))
 		// for (let p=line.from; p<=line.to; p+=1){
@@ -941,7 +952,6 @@ export default class EasyTypingPlugin extends Plugin {
 		// 如下一行非空白行，不做处理
 		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)) return false;
 
-		let codeBlockInfo = getCodeBlockInfoInPos(state, pos);
 		if (getPosLineType2(state, pos) == LineType.text || (codeBlockInfo && pos == codeBlockInfo.end_pos)) {
 			view.dispatch({
 				changes: {
