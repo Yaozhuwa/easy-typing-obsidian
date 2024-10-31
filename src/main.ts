@@ -6,6 +6,7 @@ import {
 	getTypeStrOfTransac,
 	offsetToPos,
 	print,
+	setDebug,
 	ruleStringList2RuleList,
 	string2pairstring,
 	isRegexp,
@@ -101,6 +102,8 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.onFormatArticle = false;
 
+		setDebug(this.settings.debug);
+
 		this.registerEditorExtension([
 			EditorState.transactionFilter.of(this.transactionFilterPlugin),
 			EditorView.updateListener.of(this.viewUpdatePlugin),
@@ -129,7 +132,7 @@ export default class EasyTypingPlugin extends Plugin {
 			{
 				key: "Mod-a", 
 				run: (view: EditorView): boolean => {
-					console.log('handle mod a in code block')
+					// console.log('handle mod a in code block')
 					const success = this.handleModAInCodeBlock(view);
 					return success;
 				}
@@ -352,7 +355,7 @@ export default class EasyTypingPlugin extends Plugin {
 						}
 					});
 
-					console.log('default indent: ', this.getDefaultIndentChar().length)
+					// console.log('default indent: ', this.getDefaultIndentChar().length)
 					let new_insertedStr = adjusted_lines.join('\n');
 					changes.push({
 						changes: {from: fromA, to: toA, insert: new_insertedStr},
@@ -379,7 +382,7 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 
 			let codeblockinfo = getCodeBlockInfoInPos(tr.startState, toA);
-			print(codeblockinfo, toA)
+			// print(codeblockinfo, toA)
 			// 列表下的代码块删除功能优化
 			if (this.settings.BetterCodeEdit && changeTypeStr == "delete.backward" && !selected &&
 				codeblockinfo && toA>tr.startState.doc.lineAt(codeblockinfo.start_pos).to

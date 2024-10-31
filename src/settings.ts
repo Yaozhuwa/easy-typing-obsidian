@@ -4,6 +4,7 @@ import EasyTypingPlugin from './main';
 import { showString, findFirstPipeNotPrecededByBackslash } from './utils';
 import { enUS, ruRU, zhCN, zhTW } from './lang/locale';
 import {sprintf} from "sprintf-js";
+import { setDebug } from './utils';
 
 export interface PairString {
 	left: string;
@@ -490,6 +491,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.debug).onChange(async (value) => {
 					this.plugin.settings.debug = value;
+					setDebug(value);
 					await this.plugin.saveSettings();
 				});
 			});

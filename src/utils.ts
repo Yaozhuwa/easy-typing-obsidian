@@ -3,12 +3,16 @@ import { EasyTypingSettingTab, EasyTypingSettings, PairString, ConvertRule} from
 import { App, Plugin, Platform } from 'obsidian'
 import { TabstopSpec } from './tabstop';
 
-let DEBUG = true;
+let DEBUG = false;
 
 export const print=(message?: any, ...optionalParams: any[]) =>{
     if (DEBUG) {
         console.log(message, ...optionalParams);
     }
+}
+
+export function setDebug(value: boolean) {
+    DEBUG = value;
 }
 
 export function posToOffset(doc:Text, pos:{line:number, ch:number}) {
