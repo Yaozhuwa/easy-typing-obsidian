@@ -1159,7 +1159,7 @@ export default class EasyTypingPlugin extends Plugin {
 		const lineContent = line.text;
 	
 		// 检查是否在列表或引用块中
-		const listMatch = lineContent.match(/^(\s*)([-*+]|\d+\.)\s/);
+		const listMatch = lineContent.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/);
 		const quoteMatch = lineContent.match(/^(\s*>)+(\s)?/);
 	
 		let changes;
@@ -1169,9 +1169,17 @@ export default class EasyTypingPlugin extends Plugin {
 		if (listMatch) {
 			// 继续列表
 			const [, indent, listMarker] = listMatch;
-			prefix = indent + (listMarker === '-' || listMarker === '*' || listMarker === '+' 
-				? listMarker 
-				: (parseInt(listMarker) + 1) + '.') + ' ';
+			console.log(indent, listMarker);
+			if (['-', '*', '+'].includes(listMarker)){
+				prefix = indent + listMarker + ' ';
+			}
+			else if (listMarker.match(/[-*+] \[.\]/)){
+				prefix = indent + listMarker.replace(/\[.\]/g, '[ ]') + ' ';
+			}
+			else {
+				prefix = indent + (parseInt(listMarker) + 1) + '. ';
+			}
+
 		} else if (quoteMatch) {
 			// 继续引用，保持相同的引用级别，确保每个 > 后有一个空格
 			prefix = quoteMatch[0].replace(/>\s*/g, '> ');
