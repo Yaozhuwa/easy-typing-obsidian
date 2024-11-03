@@ -143,7 +143,14 @@ export default class EasyTypingPlugin extends Plugin {
 					if (!this.settings.BetterBackspace) return false;
                     return this.handleBackspace(view);
                 }
-            }
+            },
+			{
+				key: "Shift-Enter",
+				run: (view: EditorView): boolean => {
+					const success = this.handleShiftEnter(view);
+					return success;
+				}
+			},
 		])));
 
 		this.lang = window.localStorage.getItem('language');
@@ -1148,6 +1155,33 @@ export default class EasyTypingPlugin extends Plugin {
 
         return commentSymbols[language] || null;
     }
+
+	handleShiftEnter(view: EditorView): boolean {
+		const state = view.state;
+		const doc = state.doc;
+		const selection = state.selection.main;
+		
+		if (selection.anchor != selection.head) return false;
+		
+		// 获取当前行的信息
+		const line = doc.lineAt(selection.head);
+		const lineContent = line.text;
+
+		const taskListMatch = lineContent.match(/^(\s*)([-*+] \[.\]|\d+\.)\s/);
+
+		if (taskListMatch){
+			const [, indent, listMarker] = taskListMatch;
+			let inserted = '\n' + indent + '  ';
+			view.dispatch({
+				changes: [{from: selection.anchor, insert: inserted}],
+				selection: {anchor: selection.anchor + inserted.length, head: selection.anchor + inserted.length},
+				userEvent: "EasyTyping.handleShiftEnter"
+			});
+			return true;
+		}
+
+		return false;
+	}
 
 	goNewLineAfterCurLine(view: EditorView): boolean {
 		const state = view.state;
