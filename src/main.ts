@@ -1167,7 +1167,7 @@ export default class EasyTypingPlugin extends Plugin {
 		const line = doc.lineAt(selection.head);
 		const lineContent = line.text;
 
-		const taskListMatch = lineContent.match(/^(\s*)([-*+] \[.\]|\d+\.)\s/);
+		const taskListMatch = lineContent.match(/^(\s*)([-*+] \[.\])\s/);
 
 		if (taskListMatch){
 			const [, indent, listMarker] = taskListMatch;
