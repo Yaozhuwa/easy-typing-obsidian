@@ -1199,7 +1199,7 @@ export default class EasyTypingPlugin extends Plugin {
 		if (listMatch) {
 			// 继续列表
 			const [, indent, listMarker] = listMatch;
-			console.log(indent, listMarker);
+			// console.log(indent, listMarker);
 			if (['-', '*', '+'].includes(listMarker)){
 				prefix = indent + listMarker + ' ';
 			}

@@ -32,8 +32,7 @@ export function getCodeBlockInfoInPos(state: EditorState, pos: number): CodeBloc
 
 export function selectCodeBlockInPos(view: EditorView, selection: SelectionRange):boolean {
     let pos = selection.anchor;
-    let selected = selection.anchor !== selection.head;
-    console.log("selection", selection.anchor, selection.head);
+    // let selected = selection.anchor !== selection.head;
     let codeBlockInfos = getCodeBlocksInfos(view.state);
     for (let i = 0; i < codeBlockInfos.length; i++) {
         if (pos >= codeBlockInfos[i].start_pos && pos <= codeBlockInfos[i].end_pos) {
