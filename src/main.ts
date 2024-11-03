@@ -983,12 +983,8 @@ export default class EasyTypingPlugin extends Plugin {
 		if (!this.settings.BetterCodeEdit) return false;
 		let selected = false;
 		let mainSelection = view.state.selection.asSingle().main;
-		if (mainSelection.anchor != mainSelection.head) selected = true;
-		if (selected) return false;
 
-		let cursor_pos = mainSelection.anchor;
-
-		return selectCodeBlockInPos(view, cursor_pos);
+		return selectCodeBlockInPos(view, mainSelection);
 	}
 
 	private readonly onKeyup = (event: KeyboardEvent, view: EditorView) => {

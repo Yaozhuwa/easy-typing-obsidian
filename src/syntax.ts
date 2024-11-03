@@ -1,6 +1,6 @@
 import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
 import { EditorView } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { EditorState, SelectionRange } from '@codemirror/state';
 export interface CodeBlockInfo {
     start_pos: number;
     end_pos: number;
@@ -30,15 +30,40 @@ export function getCodeBlockInfoInPos(state: EditorState, pos: number): CodeBloc
     return null;
 }
 
-export function selectCodeBlockInPos(view: EditorView, pos: number):boolean {
+export function selectCodeBlockInPos(view: EditorView, selection: SelectionRange):boolean {
+    let pos = selection.anchor;
+    let selected = selection.anchor !== selection.head;
+    console.log("selection", selection.anchor, selection.head);
     let codeBlockInfos = getCodeBlocksInfos(view.state);
     for (let i = 0; i < codeBlockInfos.length; i++) {
         if (pos >= codeBlockInfos[i].start_pos && pos <= codeBlockInfos[i].end_pos) {
-            if (codeBlockInfos[i].code_start_pos == codeBlockInfos[i].code_end_pos) 
-                return false;
+            if (codeBlockInfos[i].code_start_pos == codeBlockInfos[i].code_end_pos) {
+                view.dispatch({
+                    selection: {
+                        anchor: codeBlockInfos[i].start_pos,
+                        head: codeBlockInfos[i].end_pos
+                    }
+                });
+                return true;
+            }
+            let code_line_start = view.state.doc.lineAt(codeBlockInfos[i].code_start_pos);
+            let isCodeSelected = selection.anchor == code_line_start.from &&
+                selection.head == codeBlockInfos[i].code_end_pos;
+            let isCodeBlockSelected = selection.anchor == codeBlockInfos[i].start_pos &&
+                selection.head == codeBlockInfos[i].end_pos;
+            if (isCodeSelected) {
+                view.dispatch({
+                    selection: {
+                        anchor: codeBlockInfos[i].start_pos,
+                        head: codeBlockInfos[i].end_pos
+                    }
+                });
+                return true;
+            }
+            if (isCodeBlockSelected) return false;
             view.dispatch({
                 selection: {
-                    anchor: codeBlockInfos[i].code_start_pos,
+                    anchor: code_line_start.from,
                     head: codeBlockInfos[i].code_end_pos
                 }
             });
