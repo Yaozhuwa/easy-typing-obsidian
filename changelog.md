@@ -1,4 +1,13 @@
 ## 更新日志 Changelog
+- V5.5.5 2024-11-03
+  - 优化了列表下代码块内空行时 Enter 的处理
+  - 跳转到新建行功能支持 Task
+  - 优化 Ctrl/Cmd+A 选中代码块的功能，第一次会选中代码内容，第二次会选中整个代码块（包含 \`\`\`）
+  - 修复了 Debug 信息的输出
+  - Optimized the handling of Enter in code blocks under lists when there are empty lines
+  - The function of jumping to a new line supports Task
+  - Optimized the function of selecting code blocks with Ctrl/Cmd+A, the first time will select the code content, the second time will select the entire code block (including \`\`\`)
+  - Fixed the output of Debug information
 - V5.5.4 2024年10月27日
   - 重构文档，使文档更简洁清晰
   - 增强删除功能添加功能开关，默认开启，可以到设置中关闭。
