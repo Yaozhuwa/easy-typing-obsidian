@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- V5.5.6 2024-11-14
+  - 增加了 Ctrl/Cmd+A 增强功能，第一次选中当前行，第二次选中当前文本块，第三次选中全文 #255
+    - (目前仅在纯文本块中生效，不包括引用和列表)
+  - Added enhanced functionality for Ctrl/Cmd+A: the first press selects the current line, the second press selects the current text block, and the third press selects the entire text #255
+    - (Currently only effective in plain text blocks, excluding quotes and lists)
 - V5.5.5 2024-11-03
   - 优化了列表下代码块内空行时 Enter 的处理
   - 跳转到新建行功能支持 Task
