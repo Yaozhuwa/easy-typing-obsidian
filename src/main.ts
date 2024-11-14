@@ -133,7 +133,7 @@ export default class EasyTypingPlugin extends Plugin {
 				key: "Mod-a", 
 				run: (view: EditorView): boolean => {
 					// console.log('handle mod a in code block')
-					const success = this.handleModAInCodeBlock(view);
+					const success = this.handleModA(view);
 					return success;
 				}
 			},
@@ -978,8 +978,66 @@ export default class EasyTypingPlugin extends Plugin {
 		return false;
 	}
 
+	getBlockLinesInPos(state: EditorState, pos: number): [number, number] {
+		const strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
+		let line = state.doc.lineAt(pos);
+		if (!strictLineBreaks) {
+			return [line.number, line.number];
+		}
 
-	private readonly handleModAInCodeBlock = (view: EditorView) => {
+		let block_start = line.number;
+		let block_end = line.number;
+		for (let i = line.number-1; i >= 1; i--) {
+			if (getPosLineType2(state, state.doc.line(i).from) == LineType.text &&
+				state.doc.line(i).text !== ''){
+				block_start = i;
+				continue;
+			}
+			break;
+		}
+		for (let i = line.number+1; i <= state.doc.lines; i++) {
+			if (getPosLineType2(state, state.doc.line(i).from) == LineType.text &&
+				state.doc.line(i).text !== ''){
+				block_end = i;
+				continue;
+			}
+			break;
+		}
+		return [block_start, block_end];
+	}
+
+	private readonly handleModA = (view: EditorView) => {
+		let selection = view.state.selection.main;
+		let line = view.state.doc.lineAt(selection.head);
+		let [block_start, block_end] = this.getBlockLinesInPos(view.state, selection.head);
+
+		if (this.settings.EnhanceModA && getPosLineType2(view.state, selection.head) == LineType.text) {
+			// // 检查是否已选中整个block
+			if (selection.anchor <= view.state.doc.line(block_start).from && selection.head >= view.state.doc.line(block_end).to) {
+				return false;
+			}
+			// 检查是否已选中当前行
+			if (selection.anchor == line.from && selection.head == line.to) {
+				// 如果block范围大于当前行，选中整个block
+				if (block_start != block_end) {
+					view.dispatch({
+						selection: {
+							anchor: view.state.doc.line(block_start).from,
+							head: view.state.doc.line(block_end).to
+						},
+						userEvent: "EasyTyping.handleModA"
+					});
+					return true;
+				}
+				return false; // block等于当前行时，直接返回false
+			}
+			// 首次选中当前行
+			view.dispatch({
+				selection: {anchor: line.from, head: line.to},
+				userEvent: "EasyTyping.handleModA"
+			});
+			return true;
+		}
 		if (!this.settings.BetterCodeEdit) return false;
 		let selected = false;
 		let mainSelection = view.state.selection.asSingle().main;

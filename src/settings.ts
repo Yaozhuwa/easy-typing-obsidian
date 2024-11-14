@@ -55,6 +55,7 @@ export interface EasyTypingSettings {
 	userCvtRuleSettingsOpen: boolean;
 
 	EnterTwice: boolean;
+	EnhanceModA: boolean;
 	PuncRectify: boolean;
 	TryFixChineseIM: boolean;
 	FixMacOSContextMenu: boolean;
@@ -100,6 +101,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	userCvtRuleSettingsOpen: true,
 
 	EnterTwice: false,
+	EnhanceModA: false,
 	TryFixChineseIM: true,
 	PuncRectify: false,
 	FixMacOSContextMenu: false,
@@ -445,12 +447,23 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			);
 		
 		containerEl.createEl('h2', { text: locale.headers.experimentalFeatures });
+		
 		new Setting(containerEl)
-			.setName(locale.settings.fixMacOSContextMenu.name)
-			.setDesc(locale.settings.fixMacOSContextMenu.desc)
+			.setName(locale.settings.strictLineBreaks.name)
+			.setDesc(locale.settings.strictLineBreaks.desc)
 			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.FixMacOSContextMenu).onChange(async (value) => {
-					this.plugin.settings.FixMacOSContextMenu = value;
+				toggle.setValue(this.plugin.settings.EnterTwice).onChange(async (value) => {
+					this.plugin.settings.EnterTwice = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName(locale.settings.enhanceModA.name)
+			.setDesc(locale.settings.enhanceModA.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.EnhanceModA).onChange(async (value) => {
+					this.plugin.settings.EnhanceModA = value;
 					await this.plugin.saveSettings();
 				});
 			});
@@ -464,13 +477,13 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-
+		
 		new Setting(containerEl)
-			.setName(locale.settings.strictLineBreaks.name)
-			.setDesc(locale.settings.strictLineBreaks.desc)
+			.setName(locale.settings.fixMacOSContextMenu.name)
+			.setDesc(locale.settings.fixMacOSContextMenu.desc)
 			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.EnterTwice).onChange(async (value) => {
-					this.plugin.settings.EnterTwice = value;
+				toggle.setValue(this.plugin.settings.FixMacOSContextMenu).onChange(async (value) => {
+					this.plugin.settings.FixMacOSContextMenu = value;
 					await this.plugin.saveSettings();
 				});
 			});

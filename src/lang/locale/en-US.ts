@@ -97,6 +97,10 @@ const locale = {
             name: "Strict Line breaks Mode Enter Twice",
             desc: "In strict line breaks mode, pressing Enter once in normal text lines will produce two line breaks."
         },
+        enhanceModA: {
+            name: "Enhance Mod+A selection in text",
+            desc: "First select the current line, second select the current text block, third select the entire text."
+        },
         puncRectify: {
             name: "Punc rectify",
             desc: "Automatically convert English punctuation (, . ? !) between Chinese characters to full-width punctuation during typing (reversible)."

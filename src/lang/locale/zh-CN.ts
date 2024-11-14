@@ -98,6 +98,10 @@ const locale: typeof enUS = {
             name: "严格换行模式下按两次回车",
             desc: "严格换行的设置下，在普通文本行进行一次回车会产生两个换行符"
         },
+        enhanceModA: {
+            name: "增强 Ctrl/Cmd+A 功能",
+            desc: "第一次选中当前行，第二次选中当前文本块，第三次选中全文。"
+        },
         puncRectify: {
             name: "标点矫正",
             desc: "仅在输入过程中，中文间的英文标点（,.?!）自动转换为全角（可撤销）"
