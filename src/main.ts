@@ -34,6 +34,8 @@ export default class EasyTypingPlugin extends Plugin {
 	IntrinsicAutoPairRulesPatch: ConvertRule[];
 	CurActiveMarkdown: string;
 
+	ExtraBasicConvRules: ConvertRule[];
+
 	UserDeleteRules: ConvertRule[];
 	UserConvertRules: ConvertRule[];
 	lang: string;
@@ -69,7 +71,9 @@ export default class EasyTypingPlugin extends Plugin {
 		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
-		this.addUserConvertRule('r/(?<=^|\\n)(\\s*>*) ?>/|', '[[0]]> |')
+		let ExtraBasicConvRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>*) ?>/|', '[[0]]> |']];
+		
+		this.ExtraBasicConvRules = ruleStringList2RuleList(ExtraBasicConvRuleStringList);
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
 		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""], ["‘‘|’", "'|'"], ["‘’|’", "'|'"],
@@ -770,7 +774,7 @@ export default class EasyTypingPlugin extends Plugin {
 			// 判断每次输入结束
 			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
 				// 用户自定义转化规则
-				if (this.triggerUserCvtRule(update.view, mainSelection.anchor)) return;
+				if (this.triggerCvtRule(update.view, mainSelection.anchor)) return;
 				if (composeEnd && this.triggerPuncRectify(update.view, change_from)) return;
 
 				// 判断格式化文本
@@ -1445,8 +1449,14 @@ export default class EasyTypingPlugin extends Plugin {
 		return false;
     }
 
-	triggerUserCvtRule = (view: EditorView, cursor_pos: number):boolean => {
-		for (let rule of this.UserConvertRules) {
+	triggerCvtRule = (view: EditorView, cursor_pos: number):boolean => {
+		let rules = []
+		if (this.settings.BaseObEditEnhance){
+			rules = this.ExtraBasicConvRules.concat(this.UserConvertRules);
+		}else{
+			rules = this.UserConvertRules;
+		}
+		for (let rule of rules) {
 			let leftDocStr = view.state.doc.sliceString(0, cursor_pos);
 			let rightDocStr = view.state.doc.sliceString(cursor_pos);
 			let leftRegexpStr = rule.before.left;
@@ -1530,7 +1540,7 @@ export default class EasyTypingPlugin extends Plugin {
 			let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
 			// console.log("inserted str", insertedStr);
 			this.compose_need_handle = false;
-			if (this.triggerUserCvtRule(view, cursor.anchor)) return;
+			if (this.triggerCvtRule(view, cursor.anchor)) return;
 			if (this.triggerPuncRectify(view, this.compose_begin_pos)) return;
 			if (this.settings.AutoFormat && !this.isCurrentFileExclude()){
 				if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
