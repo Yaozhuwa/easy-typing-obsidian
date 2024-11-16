@@ -69,6 +69,7 @@ export default class EasyTypingPlugin extends Plugin {
 		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
+		this.addUserConvertRule('r/(?<=^|\\n)(\\s*>*) ?>/|', '[[0]]> |')
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
 		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""], ["‘‘|’", "'|'"], ["‘’|’", "'|'"],
@@ -959,6 +960,25 @@ export default class EasyTypingPlugin extends Plugin {
 		// 如果光标在当前行首，不做处理
 		if (pos==line.from) return false;
 
+		if (getPosLineType2(state, pos) == LineType.quote){
+			let reg_quote = /^(\s*)(>+)/
+			let quote_match = line.text.match(reg_quote);
+			if (!quote_match) return false;
+			let quote_indent_str = quote_match?.[1] || '';
+			let quote_level = quote_match?.[2].length || 0;
+			let quote_content = line.text.slice(quote_match[0].length);
+
+			if (quote_content.trim() == '') return false;
+			else{
+				let inserted_str = '\n' + quote_match[0]+' \n' + quote_match[0]+' ';
+				view.dispatch({
+					changes: {from: pos, to: pos, insert: inserted_str},
+					selection: {anchor: pos + inserted_str.length},
+					userEvent: "EasyTyping.handleEnter"
+				})
+				return true;
+			}
+		}
 		// 如下一行非空白行，不做处理
 		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)) return false;
 
@@ -1299,27 +1319,50 @@ export default class EasyTypingPlugin extends Plugin {
 		const lineContent = line.text;
 
 		// 检查是否是空的列表项或引用项
-		const listMatch = lineContent.match(/^\s*([-*+]|\d+\.) $/);
-		const quoteMatch = lineContent.match(/^\s*(> )+$/);
+		const listMatchEmpty = lineContent.match(/^\s*([-*+]|\d+\.) $/);
+		const quoteMatchEmpty = lineContent.match(/^(\s*)(>+) ?$/);
 
-		if ((listMatch || quoteMatch) && selection.anchor == line.to) {
+		if ((listMatchEmpty || quoteMatchEmpty) && selection.anchor == line.to) {
 			let changes;
 			let newCursorPos;
 
-			if (quoteMatch) {
+			if (quoteMatchEmpty) {
 				// 处理引用项
-				const quoteLevel = (quoteMatch[0].match(/>/g) || []).length;
+				const quote_indent_str = quoteMatchEmpty[1]
+				const quoteLevel = quoteMatchEmpty[2].length;
 				if (quoteLevel > 1) {
-					// 多级引用，降低一级
-					const newQuotePrefix = '> ' .repeat(quoteLevel - 1);
-					changes = [{ from: line.from, to: line.to, insert: newQuotePrefix }];
-					newCursorPos = line.from + newQuotePrefix.length;
+					if (line.number > 1) {
+						const prevLine = doc.line(line.number - 1);
+						const prevLineContent = prevLine.text;
+						const prevQuoteMatchEmpty = prevLineContent.match(/^(\s*)(>+) ?$/);
+
+						if (prevQuoteMatchEmpty && 
+							prevQuoteMatchEmpty[1] == quote_indent_str && 
+							prevQuoteMatchEmpty[2].length == quoteLevel) {
+							let temp_line = quote_indent_str + '>'.repeat(quoteLevel - 1) + ' ';
+							let inseted = temp_line + '\n' + temp_line
+							changes = [{ from: prevLine.from, to: line.to, insert: inseted }];
+							newCursorPos = prevLine.from + inseted.length;
+						}
+						else{
+							// 多级引用，降低一级
+							const newQuotePrefix = '>' .repeat(quoteLevel - 1) + ' ';
+							changes = [{ from: line.from, to: line.to, insert: newQuotePrefix }];
+							newCursorPos = line.from + newQuotePrefix.length;
+						}
+					}else{
+						// 多级引用，降低一级
+						const newQuotePrefix = '>' .repeat(quoteLevel - 1) + ' ';
+						changes = [{ from: line.from, to: line.to, insert: newQuotePrefix }];
+						newCursorPos = line.from + newQuotePrefix.length;
+					}
+					
 				} else {
 					// 单级引用
 					if (line.number > 1) {
 						const prevLine = doc.line(line.number - 1);
 						const prevLineContent = prevLine.text;
-						const prevQuoteMatch = prevLineContent.match(/^\s*(> )+/);
+						const prevQuoteMatch = prevLineContent.match(/^\s*(>+)/);
 
 						if (prevQuoteMatch) {
 							// 上一行也是引用，删除当前行并将光标移到上一行末尾
