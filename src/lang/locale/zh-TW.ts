@@ -46,6 +46,10 @@ const locale: typeof enUS = {
             name: "英文與數字之間的空格",
             desc: "在英文和數字之間插入空格，可取消"
         },
+        quoteSpace: {
+            name: "引用符號>與文本之間自動空格",
+            desc: "在引用符號>與文本之間自動插入空格，不可取消"
+        },
         deleteSpaceBetweenChinese: {
             name: "刪除中文字符間的空格",
             desc: "去除中文字符之間的空格，不可取消"

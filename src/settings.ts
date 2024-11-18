@@ -34,6 +34,7 @@ export interface EasyTypingSettings {
 	AutoCapitalMode: WorkMode;
 	ChineseEnglishSpace: boolean;
 	EnglishNumberSpace: boolean;
+	QuoteSpace: boolean;
 	ChineseNoSpace: boolean;
 	ChineseNumberSpace: boolean;
 	PunctuationSpace: boolean;
@@ -76,6 +77,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	ChineseNumberSpace: true,
 	EnglishNumberSpace: true,
 	ChineseNoSpace: true,
+	QuoteSpace: true,
 	PunctuationSpace: true,
 	AutoCapital: true,
 	AutoCapitalMode: WorkMode.OnlyWhenTyping,
@@ -294,6 +296,16 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.ChineseNoSpace).onChange(async (value) => {
 					this.plugin.settings.ChineseNoSpace = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName(locale.settings.quoteSpace.name)
+			.setDesc(locale.settings.quoteSpace.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.QuoteSpace).onChange(async (value) => {
+					this.plugin.settings.QuoteSpace = value;
 					await this.plugin.saveSettings();
 				});
 			});

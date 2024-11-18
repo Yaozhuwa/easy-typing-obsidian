@@ -34,6 +34,7 @@ export default class EasyTypingPlugin extends Plugin {
 	IntrinsicAutoPairRulesPatch: ConvertRule[];
 	CurActiveMarkdown: string;
 
+	QuoteSpaceRules: ConvertRule[];
 	ExtraBasicConvRules: ConvertRule[];
 
 	UserDeleteRules: ConvertRule[];
@@ -72,8 +73,10 @@ export default class EasyTypingPlugin extends Plugin {
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		['\n》|', "\n> |"], ["\n、|", "\n/|"]];
 		let ExtraBasicConvRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>*) ?[>》]/|', '[[0]]> |']];
+		let QuoteSpaceRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>*)([^ >》]+)/|', '[[0]] [[1]]|']];
 		
 		this.ExtraBasicConvRules = ruleStringList2RuleList(ExtraBasicConvRuleStringList);
+		this.QuoteSpaceRules = ruleStringList2RuleList(QuoteSpaceRuleStringList);
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
 		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""], ["‘‘|’", "'|'"], ["‘’|’", "'|'"],
@@ -1450,12 +1453,10 @@ export default class EasyTypingPlugin extends Plugin {
     }
 
 	triggerCvtRule = (view: EditorView, cursor_pos: number):boolean => {
-		let rules = []
-		if (this.settings.BaseObEditEnhance){
-			rules = this.ExtraBasicConvRules.concat(this.UserConvertRules);
-		}else{
-			rules = this.UserConvertRules;
-		}
+		let rules: ConvertRule[] = [];
+		if (this.settings.BaseObEditEnhance) rules = rules.concat(this.ExtraBasicConvRules);
+		if (this.settings.QuoteSpace) rules = rules.concat(this.QuoteSpaceRules);
+		rules = rules.concat(this.UserConvertRules);
 		for (let rule of rules) {
 			let leftDocStr = view.state.doc.sliceString(0, cursor_pos);
 			let rightDocStr = view.state.doc.sliceString(cursor_pos);

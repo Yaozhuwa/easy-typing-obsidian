@@ -44,6 +44,10 @@ const locale = {
             name: "Space between English and Number",
             desc: "Insert space between English characters and numbers."
         },
+        quoteSpace: {
+            name: "Space between quote character > and text",
+            desc: "Insert space between quote character > and text."
+        },
         deleteSpaceBetweenChinese: {
             name: "Delete the Space between Chinese characters",
             desc: "Remove spaces between Chinese characters."
