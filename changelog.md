@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- V5.5.8 2024-11-19
+  - 紧急修复上次更新导致的一个输入问题
+  - Urgently fixed an input issue caused by the last update
 - V5.5.7 2024-11-19
   - 严格换行两次支持 quote 块 #254
   - 增加了引用符号 > 与文本之间自动空格的功能，默认开启，可以在设置中关闭
