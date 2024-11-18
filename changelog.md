@@ -3,6 +3,9 @@
   - 严格换行两次支持 quote 块 #254
   - 增加了引用符号 > 与文本之间自动空格的功能，默认开启，可以在设置中关闭
   - 优化了在基础输入增强中，在句首输入 》或者 > 的行为
+  - Added support for strict line breaks twice in quote blocks #254
+  - Added the function of automatically inserting a space between the quote symbol > and the text, enabled by default, can be turned off in the settings
+  - Optimized the behavior of inputting 》or > at the beginning of a sentence in basic input enhancement
 - V5.5.6 2024-11-14
   - 增加了 Ctrl/Cmd+A 增强功能，第一次选中当前行，第二次选中当前文本块，第三次选中全文 #255
     - (目前仅在纯文本块中生效，不包括引用和列表)
