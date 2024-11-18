@@ -73,7 +73,7 @@ export default class EasyTypingPlugin extends Plugin {
 		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
 		['\n》|', "\n> |"], ["\n、|", "\n/|"]];
 		let ExtraBasicConvRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>*) ?[>》]/|', '[[0]]> |']];
-		let QuoteSpaceRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>*)([^ >》]+)/|', '[[0]] [[1]]|']];
+		let QuoteSpaceRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>+)([^ >》]+)/|', '[[0]] [[1]]|']];
 		
 		this.ExtraBasicConvRules = ruleStringList2RuleList(ExtraBasicConvRuleStringList);
 		this.QuoteSpaceRules = ruleStringList2RuleList(QuoteSpaceRuleStringList);
