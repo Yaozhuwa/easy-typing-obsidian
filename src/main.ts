@@ -177,6 +177,14 @@ export default class EasyTypingPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "easy-typing-select-block",
+			name: command_name_map.get("select_block"),
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				this.selectBlockInCurser(editor.cm as EditorView);
+			},
+		});
+
+		this.addCommand({
 			id: "easy-typing-format-selection",
 			name: command_name_map.get("format_selection"),
 			editorCallback: (editor: Editor, view: MarkdownView) => {
@@ -989,7 +997,7 @@ export default class EasyTypingPlugin extends Plugin {
 		// 如下一行非空白行，不做处理
 		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)) return false;
 
-		if (getPosLineType2(state, pos) == LineType.text || (codeBlockInfo && pos == codeBlockInfo.end_pos)) {
+		if (getPosLineType2(state, pos) == LineType.text || (codeBlockInfo && pos == codeBlockInfo.end_pos && codeBlockInfo.indent == 0)) {
 			view.dispatch({
 				changes: {
 					from: pos,
@@ -1008,29 +1016,44 @@ export default class EasyTypingPlugin extends Plugin {
 	getBlockLinesInPos(state: EditorState, pos: number): [number, number] {
 		const strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
 		let line = state.doc.lineAt(pos);
-		if (!strictLineBreaks) {
-			return [line.number, line.number];
-		}
+		// if (!strictLineBreaks) {
+		// 	return [line.number, line.number];
+		// }
 
 		let block_start = line.number;
 		let block_end = line.number;
+		let reg_headings = /^#+ /;
 		for (let i = line.number-1; i >= 1; i--) {
-			if (getPosLineType2(state, state.doc.line(i).from) == LineType.text &&
-				state.doc.line(i).text !== ''){
+			let line = state.doc.line(i);
+			if (getPosLineType2(state, line.from) == LineType.text &&
+				line.text !== '' && !reg_headings.test(line.text)){
 				block_start = i;
 				continue;
 			}
 			break;
 		}
 		for (let i = line.number+1; i <= state.doc.lines; i++) {
-			if (getPosLineType2(state, state.doc.line(i).from) == LineType.text &&
-				state.doc.line(i).text !== ''){
+			let line = state.doc.line(i);
+			if (getPosLineType2(state, line.from) == LineType.text &&
+				line.text !== '' && !reg_headings.test(line.text)){
 				block_end = i;
 				continue;
 			}
 			break;
 		}
 		return [block_start, block_end];
+	}
+
+	selectBlockInCurser(view: EditorView): boolean {
+		let selection = view.state.selection.main;
+		let line = view.state.doc.lineAt(selection.head);
+		if (/^\s*$/.test(line.text)) return false;
+		let [block_start, block_end] = this.getBlockLinesInPos(view.state, selection.head);
+		view.dispatch({
+			selection: {anchor: view.state.doc.line(block_start).from, head: view.state.doc.line(block_end).to},
+			userEvent: "EasyTyping.selectBlockInCurser"
+		});
+		return true;
 	}
 
 	private readonly handleModA = (view: EditorView) => {
@@ -1911,6 +1934,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "Paste without format"],
 			["toggle_comment", "Toggle comment"],
 			["goto_new_line_after_cur_line", "Go to new line after current line"],
+			['select_block', "Select current text block"]
 
 		]);
 
@@ -1923,6 +1947,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "無格式化粘貼"],
 			["toggle_comment", "切換註釋"],
 			["goto_new_line_after_cur_line", "跳到當前行後的新行"],
+			['select_block', "選擇當前文本塊"]
 		]);
 
 		let command_name_map_zh = new Map([
@@ -1934,6 +1959,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "无格式化粘贴"],
 			["toggle_comment", "切换注释"],
 			["goto_new_line_after_cur_line", "跳到当前行后新行"],
+			['select_block', "选择当前文本块"]
 		]);
 
 		let command_name_map_ru = new Map([
@@ -1945,6 +1971,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "Вставить без форматирования"],
 			["toggle_comment", "Переключить комментарий"],
 			["goto_new_line_after_cur_line", "Перейти к новой строке после текущей"],
+			['select_block', "Выбрать текущий текстовый блок"]
 		]);
 
 		let command_name_map = command_name_map_en;
