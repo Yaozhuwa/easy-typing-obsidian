@@ -99,8 +99,8 @@ const locale: typeof enUS = {
             desc: "適配舊版微軟輸入法"
         },
         strictLineBreaks: {
-            name: "嚴格換行模式下按兩次回車",
-            desc: "嚴格換行的設置下，在普通文本行進行一次回車會產生兩個換行符"
+            name: "嚴格換行模式回車增強",
+            desc: "嚴格換行的設置下，在普通文本行進行一次回車會根據模式產生兩個換行符或者兩個空格和回車"
         },
         enhanceModA: {
             name: "增強 Mod+A 功能",
@@ -166,6 +166,9 @@ const locale: typeof enUS = {
         editSelectionReplaceRule: "編輯選中替換規則",
     },
     dropdownOptions: {
+        enterTwice: "兩次回車",
+        twoSpace: "加兩個空格",
+        mixMode: "混合模式",
         onlyWhenTyping: "輸入時生效",
         globally: "全局生效",
         noRequire: "無要求",

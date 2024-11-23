@@ -99,8 +99,8 @@ const locale: typeof enUS = {
             desc: "适配旧版微软输入法"
         },
         strictLineBreaks: {
-            name: "严格换行模式下按两次回车",
-            desc: "严格换行的设置下，在普通文本行进行一次回车会产生两个换行符"
+            name: "严格换行模式回车增强",
+            desc: "严格换行的设置下，在普通文本行进行一次回车会根据模式产生两个换行符或者两个空格和回车"
         },
         enhanceModA: {
             name: "增强 Ctrl/Cmd+A 功能",
@@ -166,6 +166,9 @@ const locale: typeof enUS = {
         editSelectionReplaceRule: "编辑选中替换规则",
     },
     dropdownOptions: {
+        enterTwice: "两次回车",
+        twoSpace: "加两个空格",
+        mixMode: "混合模式",
         onlyWhenTyping: "输入时生效",
         globally: "全局生效",
         noRequire: "无要求",

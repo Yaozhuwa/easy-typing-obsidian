@@ -98,8 +98,8 @@ const locale = {
             desc: "Adapt for older versions of Microsoft Input Method."
         },
         strictLineBreaks: {
-            name: "Strict Line breaks Mode Enter Twice",
-            desc: "In strict line breaks mode, pressing Enter once in normal text lines will produce two line breaks."
+            name: "Strict Line breaks Mode",
+            desc: "In strict line breaks mode, pressing Enter once in normal text lines will produce two line breaks or two spaces and Enter."
         },
         enhanceModA: {
             name: "Enhance Mod+A selection in text",
@@ -165,6 +165,9 @@ const locale = {
         editSelectionReplaceRule: "Edit Selection Replace Rule",
     },
     dropdownOptions: {
+        enterTwice: "Enter Twice",
+        twoSpace: "Two Space",
+        mixMode: "Mix Mode",
         onlyWhenTyping: "Only When Typing",
         globally: "Work Globally",
         noRequire: "No Require",

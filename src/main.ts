@@ -1,6 +1,6 @@
 import {Editor, MarkdownView, Menu, Notice, Platform, Plugin, WorkspaceLeaf} from 'obsidian';
 import {EditorSelection, EditorState, Prec, Transaction, TransactionSpec} from '@codemirror/state';
-import {ConvertRule, DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString} from "./settings"
+import {ConvertRule, DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString, StrictLineMode} from "./settings"
 import {EditorView, keymap, ViewUpdate} from '@codemirror/view';
 import {
 	getTypeStrOfTransac,
@@ -960,7 +960,7 @@ export default class EasyTypingPlugin extends Plugin {
 			return true;
 		}
 
-		if (!this.settings.EnterTwice) return false;
+		if (!this.settings.StrictModeEnter) return false;
 		let strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
 		if (!strictLineBreaks) return false;
 
@@ -985,7 +985,12 @@ export default class EasyTypingPlugin extends Plugin {
 
 			if (quote_content.trim() == '') return false;
 			else{
-				let inserted_str = '\n' + quote_match[0]+' \n' + quote_match[0]+' ';
+				let space_str = '  ';
+				if (quote_content.endsWith('  ')) space_str = '';
+				let inserted_str = space_str + '\n' + quote_match[0] + ' ';
+				if (this.settings.StrictLineMode == StrictLineMode.EnterTwice){
+					inserted_str = '\n' + quote_match[0]+' \n' + quote_match[0]+' ';
+				}
 				view.dispatch({
 					changes: {from: pos, to: pos, insert: inserted_str},
 					selection: {anchor: pos + inserted_str.length},
@@ -994,10 +999,27 @@ export default class EasyTypingPlugin extends Plugin {
 				return true;
 			}
 		}
-		// 如下一行非空白行，不做处理
-		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)) return false;
 
-		if (getPosLineType2(state, pos) == LineType.text || (codeBlockInfo && pos == codeBlockInfo.end_pos && codeBlockInfo.indent == 0)) {
+		let space_str = '  ';
+		if (line.text.endsWith('  ')) space_str = '';
+		// 如下一行非空白行，不做处理
+		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)){
+			if (this.settings.StrictLineMode != StrictLineMode.TwoSpace) return false;
+		}
+
+		if (this.settings.StrictLineMode == StrictLineMode.TwoSpace && 
+			getPosLineType2(state, pos) == LineType.text) {
+			let inserted_str = space_str + '\n';
+			view.dispatch({
+				changes: {from: pos, to: pos, insert: inserted_str},
+				selection: {anchor: pos + inserted_str.length, head: pos + inserted_str.length},
+				userEvent: "EasyTyping.handleEnter"
+			})
+			return true;
+		}
+
+		if (getPosLineType2(state, pos) == LineType.text || 
+			(codeBlockInfo && pos == codeBlockInfo.end_pos && codeBlockInfo.indent == 0)) {
 			view.dispatch({
 				changes: {
 					from: pos,
