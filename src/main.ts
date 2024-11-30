@@ -1168,26 +1168,47 @@ export default class EasyTypingPlugin extends Plugin {
         return true;
     }
 
-	toggleCodeBlockLineComment(from: number, to: number, text: string, commentSymbol: string): { from: number; to: number; insert: string } {
-        const trimmedText = text.trimStart();
-        if (trimmedText.startsWith(commentSymbol)) {
-            // 移除注释
-            const commentIndex = text.indexOf(commentSymbol);
-            return {
-                from: from + commentIndex,
-                to: from + commentIndex + commentSymbol.length + (trimmedText.startsWith(commentSymbol + ' ') ? 1 : 0),
-                insert: ''
-            };
-        } else {
-            // 添加注释
-            const indent = text.length - trimmedText.length;
-            return {
-                from: from + indent,
-                to: from + indent,
-                insert: commentSymbol + ' '
-            };
-        }
-    }
+	toggleCodeBlockLineComment(from: number, to: number, text: string, commentSymbol: string | { start: string; end: string }): { from: number; to: number; insert: string } {
+		if (typeof commentSymbol === 'string') {
+			// 处理单行注释符号
+			const trimmedText = text.trimStart();
+			if (trimmedText.startsWith(commentSymbol)) {
+				const commentIndex = text.indexOf(commentSymbol);
+				return {
+					from: from + commentIndex,
+					to: from + commentIndex + commentSymbol.length + (trimmedText.startsWith(commentSymbol + ' ') ? 1 : 0),
+					insert: ''
+				};
+			} else {
+				const indent = text.length - trimmedText.length;
+				return {
+					from: from + indent,
+					to: from + indent,
+					insert: commentSymbol + ' '
+				};
+			}
+		} else {
+			// 处理块注释符号（如CSS的 /* */）
+			const trimmedText = text.trim();
+			if (trimmedText.startsWith(commentSymbol.start) && trimmedText.endsWith(commentSymbol.end)) {
+				// 移除注释
+				const commentStartIndex = text.indexOf(commentSymbol.start);
+				return {
+					from: from + commentStartIndex,
+					to: to,
+					insert: trimmedText.slice(commentSymbol.start.length+1, -commentSymbol.end.length-1)
+				};
+			} else {
+				// 添加注释
+				const indent = text.length - text.trimStart().length;
+				return {
+					from: from + indent,
+					to: to,
+					insert: `${commentSymbol.start} ${trimmedText} ${commentSymbol.end}`
+				};
+			}
+		}
+	}
 	
 	toggleMarkdownComment(from: number, to: number, view: EditorView): boolean {
 		const state = view.state;
@@ -1251,36 +1272,38 @@ export default class EasyTypingPlugin extends Plugin {
 		return true;
 	}
 
-	getCommentSymbol(language: string): string | null {
-        const commentSymbols: { [key: string]: string } = {
-            'js': '//',
-            'javascript': '//',
-            'ts': '//',
-            'typescript': '//',
-            'py': '#',
-            'python': '#',
-            'rb': '#',
-            'ruby': '#',
-            'java': '//',
-            'c': '//',
-            'cpp': '//',
-            'cs': '//',
-            'go': '//',
-            'rust': '//',
-            'swift': '//',
-            'kotlin': '//',
-            'php': '//',
-            'css': '//',
-            'scss': '//',
-            'sql': '--',
-            'shell': '#',
-            'bash': '#',
-            'powershell': '#',
-            // 可以根据需要添加更多语言
-        };
-
-        return commentSymbols[language] || null;
-    }
+	getCommentSymbol(language: string): string | { start: string; end: string } | null {
+		const commentSymbols: { [key: string]: string | { start: string; end: string } } = {
+			'js': '//',
+			'javascript': '//',
+			'ts': '//',
+			'typescript': '//',
+			'py': '#',
+			'python': '#',
+			'rb': '#',
+			'ruby': '#',
+			'java': '//',
+			'c': '//',
+			'cpp': '//',
+			'cs': '//',
+			'go': '//',
+			'rust': '//',
+			'swift': '//',
+			'kotlin': '//',
+			'php': '//',
+			'css': { start: '/*', end: '*/' },
+			'scss': { start: '/*', end: '*/' },
+			'sql': '--',
+			'shell': '#',
+			'bash': '#',
+			'powershell': '#',
+			'html': { start: '<!--', end: '-->' },
+			'matlab': '%',
+			'markdown': { start: '%%', end: '%%' },
+		};
+	
+		return commentSymbols[language] || null;
+	}
 
 	handleShiftEnter(view: EditorView): boolean {
 		const state = view.state;
