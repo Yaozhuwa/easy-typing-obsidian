@@ -1153,14 +1153,31 @@ export default class EasyTypingPlugin extends Plugin {
         if (selection.from === selection.to) {
             // 没有选中文本，注释当前行
             const line = state.doc.lineAt(selection.from);
-            changes.push(this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol));
+            let change = this.toggleCodeBlockLineComment(line.from, line.to, 
+				state.doc.sliceString(line.from, line.to), commentSymbol, selection.from);
+			if (change && change.selection){
+				changes.push(change);
+				view.dispatch({
+					changes,
+					selection: change.selection,
+					userEvent: "EasyTyping.toggleComment"
+				});
+				return true;
+			}
+			else if (change){
+				changes.push(change);
+			}
+			
         } else {
             // 有选中文本，注释选中的行
             const fromLine = state.doc.lineAt(selection.from);
             const toLine = state.doc.lineAt(selection.to);
             for (let i = fromLine.number; i <= toLine.number; i++) {
                 const line = state.doc.line(i);
-                changes.push(this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol));
+                let change = this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol);
+				if (change){
+					changes.push(change);
+				}
             }
         }
 
@@ -1168,7 +1185,31 @@ export default class EasyTypingPlugin extends Plugin {
         return true;
     }
 
-	toggleCodeBlockLineComment(from: number, to: number, text: string, commentSymbol: string | { start: string; end: string }): { from: number; to: number; insert: string } {
+	toggleCodeBlockLineComment(from: number, to: number, text: string, 
+		commentSymbol: string | { start: string; end: string }, 
+		cursor_pos?: number): { from: number; to: number; insert: string, selection?: {anchor: number, head: number} } | null {
+		
+		if (text.trim() == '' && cursor_pos){
+			if (typeof commentSymbol === 'string'){
+				let new_pos = cursor_pos + commentSymbol.length + 1;
+				return {
+					from: cursor_pos,
+					to: cursor_pos,
+					insert: commentSymbol + ' ',
+					selection: {anchor: new_pos, head: new_pos}
+				}
+			}
+			else{
+				let new_pos = cursor_pos + commentSymbol.start.length + 1;
+				return {
+					from: cursor_pos,
+					to: cursor_pos,
+					insert: commentSymbol.start + '  ' + commentSymbol.end,
+					selection: {anchor: new_pos, head: new_pos}
+				}
+			}
+		}
+		if (text.trim() == '') return null;
 		if (typeof commentSymbol === 'string') {
 			// 处理单行注释符号
 			const trimmedText = text.trimStart();
