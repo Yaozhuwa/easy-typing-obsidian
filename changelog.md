@@ -1,4 +1,17 @@
 ## 更新日志 Changelog
+- V5.5.10 2024-12-01
+  - CMD/Ctrl+A 增强功能支持quote/callout，第一次选中当前引用行内容，第二次选中当前的整个引用 #260
+  - 切换代码块注释命令
+    - 修复对 CSS 代码块注释错误的问题 #259
+    - 增加了对 HTML、Markdown、Matlab 代码块注释的支持
+    - 优化该命令在空的代码行的表现
+  - 修复 MD 链接内部有小括号时会被错误格式化的问题 #178
+  - Enhanced functionality for CMD/Ctrl+A to support quote/callout, the first press selects the current quote line content, the second press selects the entire current quote #260
+  - Toggle code block comment command
+    - Fixed the issue of incorrect comments in CSS code blocks #259
+    - Added support for comments in HTML, Markdown, and Matlab code blocks
+    - Optimized the performance of this command on empty code lines
+  - Fixed the issue where MD links with parentheses inside would be incorrectly formatted #178
 - V5.5.9 2024-11-23
   - 严格换行模式支持三种模式（两次换行，两次空格+换行，混合模式）#193
     - 双空格模式：回车会变成两次空格+换行
