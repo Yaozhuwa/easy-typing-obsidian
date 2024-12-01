@@ -16,7 +16,7 @@ import {
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
-import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos } from './syntax';
+import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos, getQuoteInfoInPos } from './syntax';
 import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 
@@ -1081,9 +1081,14 @@ export default class EasyTypingPlugin extends Plugin {
 	private readonly handleModA = (view: EditorView) => {
 		let selection = view.state.selection.main;
 		let line = view.state.doc.lineAt(selection.head);
-		let [block_start, block_end] = this.getBlockLinesInPos(view.state, selection.head);
-
-		if (this.settings.EnhanceModA && getPosLineType2(view.state, selection.head) == LineType.text) {
+		let line_type = getPosLineType2(view.state, selection.head);
+		let is_in_code_block = isCodeBlockInPos(view.state, selection.head);
+		
+		if (this.settings.EnhanceModA && 
+			line_type == LineType.text &&
+			!is_in_code_block
+		) {
+			let [block_start, block_end] = this.getBlockLinesInPos(view.state, selection.head);
 			// // 检查是否已选中整个block
 			if (selection.anchor <= view.state.doc.line(block_start).from && selection.head >= view.state.doc.line(block_end).to) {
 				return false;
@@ -1110,8 +1115,35 @@ export default class EasyTypingPlugin extends Plugin {
 			});
 			return true;
 		}
+
+		let quote_info = getQuoteInfoInPos(view.state, selection.head);
+		if (this.settings.EnhanceModA && quote_info){
+			// 第一次，选中当前 quote 行内容；第二次选中整个 quote 块，第三次不处理
+			if (selection.anchor == quote_info.start_pos && selection.head == quote_info.end_pos){
+				return false;
+			}
+			else if (selection.anchor == quote_info.cur_start_pos && selection.head == quote_info.cur_end_pos){
+				view.dispatch({
+					selection: {anchor: quote_info.start_pos, head: quote_info.end_pos},
+					userEvent: "EasyTyping.handleModA"
+				});
+				return true;
+			}
+			else{
+				view.dispatch({
+					selection: {anchor: quote_info.cur_start_pos, head: quote_info.cur_end_pos},
+					userEvent: "EasyTyping.handleModA"
+				});
+				return true;
+			}
+		}
+
+		if (this.settings.EnhanceModA && line_type == LineType.list){
+			// 第一次，选中当前 list 内容；第二次选中整个 list 块，第三次不处理
+
+		}
+
 		if (!this.settings.BetterCodeEdit) return false;
-		let selected = false;
 		let mainSelection = view.state.selection.asSingle().main;
 
 		return selectCodeBlockInPos(view, mainSelection);
