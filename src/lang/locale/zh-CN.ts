@@ -46,6 +46,10 @@ const locale: typeof enUS = {
             name: "英文与数字之间的空格",
             desc: "在英文和数字之间插入空格，可撤销"
         },
+        quoteSpace: {
+            name: "引用符号 > 与文本之间自动空格",
+            desc: "在引用符号 > 与文本之间自动插入空格，不可撤销"
+        },
         deleteSpaceBetweenChinese: {
             name: "删除中文字符间的空格",
             desc: "去除中文字符之间的空格，不可撤销"
@@ -95,8 +99,8 @@ const locale: typeof enUS = {
             desc: "适配旧版微软输入法"
         },
         strictLineBreaks: {
-            name: "严格换行模式下按两次回车",
-            desc: "严格换行的设置下，在普通文本行进行一次回车会产生两个换行符"
+            name: "严格换行模式回车增强",
+            desc: "严格换行的设置下，在普通文本行进行一次回车会根据模式产生两个换行符或者两个空格和回车"
         },
         enhanceModA: {
             name: "增强 Ctrl/Cmd+A 功能",
@@ -162,6 +166,9 @@ const locale: typeof enUS = {
         editSelectionReplaceRule: "编辑选中替换规则",
     },
     dropdownOptions: {
+        enterTwice: "两次回车",
+        twoSpace: "加两个空格",
+        mixMode: "混合模式",
         onlyWhenTyping: "输入时生效",
         globally: "全局生效",
         noRequire: "无要求",

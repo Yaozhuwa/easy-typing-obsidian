@@ -19,6 +19,7 @@ export interface ConvertRule {
 
 export enum RuleType {delete= "Delete Rule", convert='Convert Rule'}
 export enum WorkMode { OnlyWhenTyping = "typing", Globally = "global" }
+export enum StrictLineMode { EnterTwice = "enter_twice", TwoSpace = "two_space", Mix = "mix_mode" }
 
 export interface EasyTypingSettings {
 	Tabout: boolean;
@@ -34,6 +35,7 @@ export interface EasyTypingSettings {
 	AutoCapitalMode: WorkMode;
 	ChineseEnglishSpace: boolean;
 	EnglishNumberSpace: boolean;
+	QuoteSpace: boolean;
 	ChineseNoSpace: boolean;
 	ChineseNumberSpace: boolean;
 	PunctuationSpace: boolean;
@@ -54,7 +56,8 @@ export interface EasyTypingSettings {
 	userDelRuleSettingsOpen: boolean;
 	userCvtRuleSettingsOpen: boolean;
 
-	EnterTwice: boolean;
+	StrictModeEnter: boolean;
+	StrictLineMode: StrictLineMode;
 	EnhanceModA: boolean;
 	PuncRectify: boolean;
 	TryFixChineseIM: boolean;
@@ -76,6 +79,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	ChineseNumberSpace: true,
 	EnglishNumberSpace: true,
 	ChineseNoSpace: true,
+	QuoteSpace: true,
 	PunctuationSpace: true,
 	AutoCapital: true,
 	AutoCapitalMode: WorkMode.OnlyWhenTyping,
@@ -100,7 +104,8 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	userDelRuleSettingsOpen: true,
 	userCvtRuleSettingsOpen: true,
 
-	EnterTwice: false,
+	StrictModeEnter: false,
+	StrictLineMode: StrictLineMode.EnterTwice,
 	EnhanceModA: false,
 	TryFixChineseIM: true,
 	PuncRectify: false,
@@ -299,6 +304,16 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
+			.setName(locale.settings.quoteSpace.name)
+			.setDesc(locale.settings.quoteSpace.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.QuoteSpace).onChange(async (value) => {
+					this.plugin.settings.QuoteSpace = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
 			.setName(locale.settings.capitalizeFirstLetter.name)
 			.setDesc(locale.settings.capitalizeFirstLetter.desc)
 			.addDropdown((dropdown) => {
@@ -451,9 +466,19 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName(locale.settings.strictLineBreaks.name)
 			.setDesc(locale.settings.strictLineBreaks.desc)
+			.addDropdown((dropdown) => {
+				dropdown.addOption(StrictLineMode.EnterTwice, locale.dropdownOptions.enterTwice);
+				dropdown.addOption(StrictLineMode.TwoSpace, locale.dropdownOptions.twoSpace);
+				dropdown.addOption(StrictLineMode.Mix, locale.dropdownOptions.mixMode);
+				dropdown.setValue(this.plugin.settings.StrictLineMode);
+				dropdown.onChange(async (v: StrictLineMode) => {
+					this.plugin.settings.StrictLineMode = v;
+					await this.plugin.saveSettings();
+				})
+			})
 			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.EnterTwice).onChange(async (value) => {
-					this.plugin.settings.EnterTwice = value;
+				toggle.setValue(this.plugin.settings.StrictModeEnter).onChange(async (value) => {
+					this.plugin.settings.StrictModeEnter = value;
 					await this.plugin.saveSettings();
 				});
 			});

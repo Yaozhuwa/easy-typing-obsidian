@@ -1,6 +1,7 @@
 import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
 import { EditorView } from '@codemirror/view';
 import { EditorState, SelectionRange } from '@codemirror/state';
+import { getPosLineType2 } from "./core";
 export interface CodeBlockInfo {
     start_pos: number;
     end_pos: number;
@@ -8,6 +9,14 @@ export interface CodeBlockInfo {
     code_end_pos: number;
     language: string;
     indent: number;
+}
+
+export interface QuoteInfo {
+    start_pos: number;
+    end_pos: number;
+    is_callout: boolean;
+    cur_start_pos: number;
+    cur_end_pos: number;
 }
 
 export function isCodeBlockInPos(state: EditorState, pos: number): boolean {
@@ -138,3 +147,50 @@ export function getCodeBlocksInfos(state: EditorState): CodeBlockInfo[]{
     return codeBlockInfos;
 }
 
+export function getQuoteInfoInPos(state: EditorState, pos: number): QuoteInfo | null {
+    let quote_regex = /^(\s*)(>+) ?/;
+    let callout_regex = /^(\s*)(>)+ \[![^\s]+\][+-]? ?/;
+    let cur_line = state.doc.lineAt(pos);
+    let match = cur_line.text.match(quote_regex);
+    let is_callout = false;
+    let cur_start_pos = -1;
+    let cur_end_pos = -1;
+    if (match){
+        let match_callout = cur_line.text.match(callout_regex);
+        cur_start_pos = cur_line.from + (match_callout ? match_callout[0].length : match[0].length);
+        cur_end_pos = cur_line.to;
+        let quote_start_line = cur_line.number;
+        let quote_end_line = quote_start_line;
+        for(let i=quote_start_line+1;i<=state.doc.lines;i+=1){
+            let line = state.doc.line(i);
+            if (line.text.match(quote_regex)){
+                quote_end_line = i;
+            }
+            else break;
+        }
+        for (let i=quote_start_line;i>=1;i-=1){
+            let line = state.doc.line(i);
+            let match_callout = line.text.match(callout_regex);
+            let match_quote = line.text.match(quote_regex);
+            if (match_callout){
+                is_callout = true;
+                quote_start_line = i;
+                // break;
+            }
+            else if (match_quote){
+                quote_start_line = i;
+            }
+            else break;
+        }
+        return {
+            start_pos: state.doc.line(quote_start_line).from,
+            end_pos: state.doc.line(quote_end_line).to,
+            is_callout: is_callout,
+            cur_start_pos: cur_start_pos,
+            cur_end_pos: cur_end_pos
+        };
+    }
+    else{
+        return null;
+    }
+}

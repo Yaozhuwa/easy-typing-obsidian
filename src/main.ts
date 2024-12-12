@@ -1,6 +1,6 @@
 import {Editor, MarkdownView, Menu, Notice, Platform, Plugin, WorkspaceLeaf} from 'obsidian';
 import {EditorSelection, EditorState, Prec, Transaction, TransactionSpec} from '@codemirror/state';
-import {ConvertRule, DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString} from "./settings"
+import {ConvertRule, DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString, StrictLineMode} from "./settings"
 import {EditorView, keymap, ViewUpdate} from '@codemirror/view';
 import {
 	getTypeStrOfTransac,
@@ -16,7 +16,7 @@ import {
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
-import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos } from './syntax';
+import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos, getQuoteInfoInPos } from './syntax';
 import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 
@@ -33,6 +33,9 @@ export default class EasyTypingPlugin extends Plugin {
 	IntrinsicDeleteRules: ConvertRule[];
 	IntrinsicAutoPairRulesPatch: ConvertRule[];
 	CurActiveMarkdown: string;
+
+	QuoteSpaceRules: ConvertRule[];
+	ExtraBasicConvRules: ConvertRule[];
 
 	UserDeleteRules: ConvertRule[];
 	UserConvertRules: ConvertRule[];
@@ -66,10 +69,15 @@ export default class EasyTypingPlugin extends Plugin {
 			['!', '！']
 		]);
 
-		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["！【【|】",'![[|]]'],['！【【|', '![[|]]'], 
-		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ["！「「|」",'![[|]]'],['！「「|', '![[|]]'], ["「「|」", "[[|]]"], ['「「|', "[[|]]"], 
+		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
+		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ["！「「|」",'![[|]]'],['！「「|', '![[|]]'], ["「「|」", "[[|]]"], ['「「|', "[[|]]"],
 		['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
-		[">》|", ">>|"], ['\n》|', "\n>|"], [" 》|", " >|"], ["\n、|", "\n/|"]];
+		['\n》|', "\n> |"], ["\n、|", "\n/|"]];
+		let ExtraBasicConvRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>*) ?[>》]/|', '[[0]]> |']];
+		let QuoteSpaceRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>+)([^ >》]+)/|', '[[0]] [[1]]|']];
+		
+		this.ExtraBasicConvRules = ruleStringList2RuleList(ExtraBasicConvRuleStringList);
+		this.QuoteSpaceRules = ruleStringList2RuleList(QuoteSpaceRuleStringList);
 		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
 		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
 		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""], ["‘‘|’", "'|'"], ["‘’|’", "'|'"],
@@ -167,6 +175,14 @@ export default class EasyTypingPlugin extends Plugin {
 				modifiers: ['Mod', 'Shift'],
 				key: "s"
 			}],
+		});
+
+		this.addCommand({
+			id: "easy-typing-select-block",
+			name: command_name_map.get("select_block"),
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				this.selectBlockInCurser(editor.cm as EditorView);
+			},
 		});
 
 		this.addCommand({
@@ -770,7 +786,7 @@ export default class EasyTypingPlugin extends Plugin {
 			// 判断每次输入结束
 			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
 				// 用户自定义转化规则
-				if (this.triggerUserCvtRule(update.view, mainSelection.anchor)) return;
+				if (this.triggerCvtRule(update.view, mainSelection.anchor)) return;
 				if (composeEnd && this.triggerPuncRectify(update.view, change_from)) return;
 
 				// 判断格式化文本
@@ -945,7 +961,7 @@ export default class EasyTypingPlugin extends Plugin {
 			return true;
 		}
 
-		if (!this.settings.EnterTwice) return false;
+		if (!this.settings.StrictModeEnter) return false;
 		let strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
 		if (!strictLineBreaks) return false;
 
@@ -960,10 +976,51 @@ export default class EasyTypingPlugin extends Plugin {
 		// 如果光标在当前行首，不做处理
 		if (pos==line.from) return false;
 
-		// 如下一行非空白行，不做处理
-		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)) return false;
+		if (getPosLineType2(state, pos) == LineType.quote){
+			let reg_quote = /^(\s*)(>+)/
+			let quote_match = line.text.match(reg_quote);
+			if (!quote_match) return false;
+			let quote_indent_str = quote_match?.[1] || '';
+			let quote_level = quote_match?.[2].length || 0;
+			let quote_content = line.text.slice(quote_match[0].length);
 
-		if (getPosLineType2(state, pos) == LineType.text || (codeBlockInfo && pos == codeBlockInfo.end_pos)) {
+			if (quote_content.trim() == '') return false;
+			else{
+				let space_str = '  ';
+				if (quote_content.endsWith('  ')) space_str = '';
+				let inserted_str = space_str + '\n' + quote_match[0] + ' ';
+				if (this.settings.StrictLineMode == StrictLineMode.EnterTwice){
+					inserted_str = '\n' + quote_match[0]+' \n' + quote_match[0]+' ';
+				}
+				view.dispatch({
+					changes: {from: pos, to: pos, insert: inserted_str},
+					selection: {anchor: pos + inserted_str.length},
+					userEvent: "EasyTyping.handleEnter"
+				})
+				return true;
+			}
+		}
+
+		let space_str = '  ';
+		if (line.text.endsWith('  ')) space_str = '';
+		// 如下一行非空白行，不做处理
+		if (line.number < doc.lines && !/^\s*$/.test(doc.line(line.number+1).text)){
+			if (this.settings.StrictLineMode != StrictLineMode.TwoSpace) return false;
+		}
+
+		if (this.settings.StrictLineMode == StrictLineMode.TwoSpace && 
+			getPosLineType2(state, pos) == LineType.text) {
+			let inserted_str = space_str + '\n';
+			view.dispatch({
+				changes: {from: pos, to: pos, insert: inserted_str},
+				selection: {anchor: pos + inserted_str.length, head: pos + inserted_str.length},
+				userEvent: "EasyTyping.handleEnter"
+			})
+			return true;
+		}
+
+		if (getPosLineType2(state, pos) == LineType.text || 
+			(codeBlockInfo && pos == codeBlockInfo.end_pos && codeBlockInfo.indent == 0)) {
 			view.dispatch({
 				changes: {
 					from: pos,
@@ -982,23 +1039,26 @@ export default class EasyTypingPlugin extends Plugin {
 	getBlockLinesInPos(state: EditorState, pos: number): [number, number] {
 		const strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
 		let line = state.doc.lineAt(pos);
-		if (!strictLineBreaks) {
-			return [line.number, line.number];
-		}
+		// if (!strictLineBreaks) {
+		// 	return [line.number, line.number];
+		// }
 
 		let block_start = line.number;
 		let block_end = line.number;
+		let reg_headings = /^#+ /;
 		for (let i = line.number-1; i >= 1; i--) {
-			if (getPosLineType2(state, state.doc.line(i).from) == LineType.text &&
-				state.doc.line(i).text !== ''){
+			let line = state.doc.line(i);
+			if (getPosLineType2(state, line.from) == LineType.text &&
+				line.text !== '' && !reg_headings.test(line.text)){
 				block_start = i;
 				continue;
 			}
 			break;
 		}
 		for (let i = line.number+1; i <= state.doc.lines; i++) {
-			if (getPosLineType2(state, state.doc.line(i).from) == LineType.text &&
-				state.doc.line(i).text !== ''){
+			let line = state.doc.line(i);
+			if (getPosLineType2(state, line.from) == LineType.text &&
+				line.text !== '' && !reg_headings.test(line.text)){
 				block_end = i;
 				continue;
 			}
@@ -1007,12 +1067,29 @@ export default class EasyTypingPlugin extends Plugin {
 		return [block_start, block_end];
 	}
 
+	selectBlockInCurser(view: EditorView): boolean {
+		let selection = view.state.selection.main;
+		let line = view.state.doc.lineAt(selection.head);
+		if (/^\s*$/.test(line.text)) return false;
+		let [block_start, block_end] = this.getBlockLinesInPos(view.state, selection.head);
+		view.dispatch({
+			selection: {anchor: view.state.doc.line(block_start).from, head: view.state.doc.line(block_end).to},
+			userEvent: "EasyTyping.selectBlockInCurser"
+		});
+		return true;
+	}
+
 	private readonly handleModA = (view: EditorView) => {
 		let selection = view.state.selection.main;
 		let line = view.state.doc.lineAt(selection.head);
-		let [block_start, block_end] = this.getBlockLinesInPos(view.state, selection.head);
-
-		if (this.settings.EnhanceModA && getPosLineType2(view.state, selection.head) == LineType.text) {
+		let line_type = getPosLineType2(view.state, selection.head);
+		let is_in_code_block = isCodeBlockInPos(view.state, selection.head);
+		
+		if (this.settings.EnhanceModA && 
+			line_type == LineType.text &&
+			!is_in_code_block
+		) {
+			let [block_start, block_end] = this.getBlockLinesInPos(view.state, selection.head);
 			// // 检查是否已选中整个block
 			if (selection.anchor <= view.state.doc.line(block_start).from && selection.head >= view.state.doc.line(block_end).to) {
 				return false;
@@ -1039,8 +1116,35 @@ export default class EasyTypingPlugin extends Plugin {
 			});
 			return true;
 		}
+
+		let quote_info = getQuoteInfoInPos(view.state, selection.head);
+		if (this.settings.EnhanceModA && quote_info){
+			// 第一次，选中当前 quote 行内容；第二次选中整个 quote 块，第三次不处理
+			if (selection.anchor == quote_info.start_pos && selection.head == quote_info.end_pos){
+				return false;
+			}
+			else if (selection.anchor == quote_info.cur_start_pos && selection.head == quote_info.cur_end_pos){
+				view.dispatch({
+					selection: {anchor: quote_info.start_pos, head: quote_info.end_pos},
+					userEvent: "EasyTyping.handleModA"
+				});
+				return true;
+			}
+			else{
+				view.dispatch({
+					selection: {anchor: quote_info.cur_start_pos, head: quote_info.cur_end_pos},
+					userEvent: "EasyTyping.handleModA"
+				});
+				return true;
+			}
+		}
+
+		if (this.settings.EnhanceModA && line_type == LineType.list){
+			// 第一次，选中当前 list 内容；第二次选中整个 list 块，第三次不处理
+
+		}
+
 		if (!this.settings.BetterCodeEdit) return false;
-		let selected = false;
 		let mainSelection = view.state.selection.asSingle().main;
 
 		return selectCodeBlockInPos(view, mainSelection);
@@ -1082,14 +1186,31 @@ export default class EasyTypingPlugin extends Plugin {
         if (selection.from === selection.to) {
             // 没有选中文本，注释当前行
             const line = state.doc.lineAt(selection.from);
-            changes.push(this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol));
+            let change = this.toggleCodeBlockLineComment(line.from, line.to, 
+				state.doc.sliceString(line.from, line.to), commentSymbol, selection.from);
+			if (change && change.selection){
+				changes.push(change);
+				view.dispatch({
+					changes,
+					selection: change.selection,
+					userEvent: "EasyTyping.toggleComment"
+				});
+				return true;
+			}
+			else if (change){
+				changes.push(change);
+			}
+			
         } else {
             // 有选中文本，注释选中的行
             const fromLine = state.doc.lineAt(selection.from);
             const toLine = state.doc.lineAt(selection.to);
             for (let i = fromLine.number; i <= toLine.number; i++) {
                 const line = state.doc.line(i);
-                changes.push(this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol));
+                let change = this.toggleCodeBlockLineComment(line.from, line.to, state.doc.sliceString(line.from, line.to), commentSymbol);
+				if (change){
+					changes.push(change);
+				}
             }
         }
 
@@ -1097,26 +1218,71 @@ export default class EasyTypingPlugin extends Plugin {
         return true;
     }
 
-	toggleCodeBlockLineComment(from: number, to: number, text: string, commentSymbol: string): { from: number; to: number; insert: string } {
-        const trimmedText = text.trimStart();
-        if (trimmedText.startsWith(commentSymbol)) {
-            // 移除注释
-            const commentIndex = text.indexOf(commentSymbol);
-            return {
-                from: from + commentIndex,
-                to: from + commentIndex + commentSymbol.length + (trimmedText.startsWith(commentSymbol + ' ') ? 1 : 0),
-                insert: ''
-            };
-        } else {
-            // 添加注释
-            const indent = text.length - trimmedText.length;
-            return {
-                from: from + indent,
-                to: from + indent,
-                insert: commentSymbol + ' '
-            };
-        }
-    }
+	toggleCodeBlockLineComment(from: number, to: number, text: string, 
+		commentSymbol: string | { start: string; end: string }, 
+		cursor_pos?: number): { from: number; to: number; insert: string, selection?: {anchor: number, head: number} } | null {
+		
+		if (text.trim() == '' && cursor_pos){
+			if (typeof commentSymbol === 'string'){
+				let new_pos = cursor_pos + commentSymbol.length + 1;
+				return {
+					from: cursor_pos,
+					to: cursor_pos,
+					insert: commentSymbol + ' ',
+					selection: {anchor: new_pos, head: new_pos}
+				}
+			}
+			else{
+				let new_pos = cursor_pos + commentSymbol.start.length + 1;
+				return {
+					from: cursor_pos,
+					to: cursor_pos,
+					insert: commentSymbol.start + '  ' + commentSymbol.end,
+					selection: {anchor: new_pos, head: new_pos}
+				}
+			}
+		}
+		if (text.trim() == '') return null;
+		if (typeof commentSymbol === 'string') {
+			// 处理单行注释符号
+			const trimmedText = text.trimStart();
+			if (trimmedText.startsWith(commentSymbol)) {
+				const commentIndex = text.indexOf(commentSymbol);
+				return {
+					from: from + commentIndex,
+					to: from + commentIndex + commentSymbol.length + (trimmedText.startsWith(commentSymbol + ' ') ? 1 : 0),
+					insert: ''
+				};
+			} else {
+				const indent = text.length - trimmedText.length;
+				return {
+					from: from + indent,
+					to: from + indent,
+					insert: commentSymbol + ' '
+				};
+			}
+		} else {
+			// 处理块注释符号（如CSS的 /* */）
+			const trimmedText = text.trim();
+			if (trimmedText.startsWith(commentSymbol.start) && trimmedText.endsWith(commentSymbol.end)) {
+				// 移除注释
+				const commentStartIndex = text.indexOf(commentSymbol.start);
+				return {
+					from: from + commentStartIndex,
+					to: to,
+					insert: trimmedText.slice(commentSymbol.start.length+1, -commentSymbol.end.length-1)
+				};
+			} else {
+				// 添加注释
+				const indent = text.length - text.trimStart().length;
+				return {
+					from: from + indent,
+					to: to,
+					insert: `${commentSymbol.start} ${trimmedText} ${commentSymbol.end}`
+				};
+			}
+		}
+	}
 	
 	toggleMarkdownComment(from: number, to: number, view: EditorView): boolean {
 		const state = view.state;
@@ -1180,36 +1346,38 @@ export default class EasyTypingPlugin extends Plugin {
 		return true;
 	}
 
-	getCommentSymbol(language: string): string | null {
-        const commentSymbols: { [key: string]: string } = {
-            'js': '//',
-            'javascript': '//',
-            'ts': '//',
-            'typescript': '//',
-            'py': '#',
-            'python': '#',
-            'rb': '#',
-            'ruby': '#',
-            'java': '//',
-            'c': '//',
-            'cpp': '//',
-            'cs': '//',
-            'go': '//',
-            'rust': '//',
-            'swift': '//',
-            'kotlin': '//',
-            'php': '//',
-            'css': '//',
-            'scss': '//',
-            'sql': '--',
-            'shell': '#',
-            'bash': '#',
-            'powershell': '#',
-            // 可以根据需要添加更多语言
-        };
-
-        return commentSymbols[language] || null;
-    }
+	getCommentSymbol(language: string): string | { start: string; end: string } | null {
+		const commentSymbols: { [key: string]: string | { start: string; end: string } } = {
+			'js': '//',
+			'javascript': '//',
+			'ts': '//',
+			'typescript': '//',
+			'py': '#',
+			'python': '#',
+			'rb': '#',
+			'ruby': '#',
+			'java': '//',
+			'c': '//',
+			'cpp': '//',
+			'cs': '//',
+			'go': '//',
+			'rust': '//',
+			'swift': '//',
+			'kotlin': '//',
+			'php': '//',
+			'css': { start: '/*', end: '*/' },
+			'scss': { start: '/*', end: '*/' },
+			'sql': '--',
+			'shell': '#',
+			'bash': '#',
+			'powershell': '#',
+			'html': { start: '<!--', end: '-->' },
+			'matlab': '%',
+			'markdown': { start: '%%', end: '%%' },
+		};
+	
+		return commentSymbols[language] || null;
+	}
 
 	handleShiftEnter(view: EditorView): boolean {
 		const state = view.state;
@@ -1300,27 +1468,50 @@ export default class EasyTypingPlugin extends Plugin {
 		const lineContent = line.text;
 
 		// 检查是否是空的列表项或引用项
-		const listMatch = lineContent.match(/^\s*([-*+]|\d+\.) $/);
-		const quoteMatch = lineContent.match(/^\s*(> )+$/);
+		const listMatchEmpty = lineContent.match(/^\s*([-*+]|\d+\.) $/);
+		const quoteMatchEmpty = lineContent.match(/^(\s*)(>+) ?$/);
 
-		if ((listMatch || quoteMatch) && selection.anchor == line.to) {
+		if ((listMatchEmpty || quoteMatchEmpty) && selection.anchor == line.to) {
 			let changes;
 			let newCursorPos;
 
-			if (quoteMatch) {
+			if (quoteMatchEmpty) {
 				// 处理引用项
-				const quoteLevel = (quoteMatch[0].match(/>/g) || []).length;
+				const quote_indent_str = quoteMatchEmpty[1]
+				const quoteLevel = quoteMatchEmpty[2].length;
 				if (quoteLevel > 1) {
-					// 多级引用，降低一级
-					const newQuotePrefix = '> ' .repeat(quoteLevel - 1);
-					changes = [{ from: line.from, to: line.to, insert: newQuotePrefix }];
-					newCursorPos = line.from + newQuotePrefix.length;
+					if (line.number > 1) {
+						const prevLine = doc.line(line.number - 1);
+						const prevLineContent = prevLine.text;
+						const prevQuoteMatchEmpty = prevLineContent.match(/^(\s*)(>+) ?$/);
+
+						if (prevQuoteMatchEmpty && 
+							prevQuoteMatchEmpty[1] == quote_indent_str && 
+							prevQuoteMatchEmpty[2].length == quoteLevel) {
+							let temp_line = quote_indent_str + '>'.repeat(quoteLevel - 1) + ' ';
+							let inseted = temp_line + '\n' + temp_line
+							changes = [{ from: prevLine.from, to: line.to, insert: inseted }];
+							newCursorPos = prevLine.from + inseted.length;
+						}
+						else{
+							// 多级引用，降低一级
+							const newQuotePrefix = '>' .repeat(quoteLevel - 1) + ' ';
+							changes = [{ from: line.from, to: line.to, insert: newQuotePrefix }];
+							newCursorPos = line.from + newQuotePrefix.length;
+						}
+					}else{
+						// 多级引用，降低一级
+						const newQuotePrefix = '>' .repeat(quoteLevel - 1) + ' ';
+						changes = [{ from: line.from, to: line.to, insert: newQuotePrefix }];
+						newCursorPos = line.from + newQuotePrefix.length;
+					}
+					
 				} else {
 					// 单级引用
 					if (line.number > 1) {
 						const prevLine = doc.line(line.number - 1);
 						const prevLineContent = prevLine.text;
-						const prevQuoteMatch = prevLineContent.match(/^\s*(> )+/);
+						const prevQuoteMatch = prevLineContent.match(/^\s*(>+)/);
 
 						if (prevQuoteMatch) {
 							// 上一行也是引用，删除当前行并将光标移到上一行末尾
@@ -1403,8 +1594,12 @@ export default class EasyTypingPlugin extends Plugin {
 		return false;
     }
 
-	triggerUserCvtRule = (view: EditorView, cursor_pos: number):boolean => {
-		for (let rule of this.UserConvertRules) {
+	triggerCvtRule = (view: EditorView, cursor_pos: number):boolean => {
+		let rules: ConvertRule[] = [];
+		if (this.settings.BaseObEditEnhance) rules = rules.concat(this.ExtraBasicConvRules);
+		if (this.settings.QuoteSpace) rules = rules.concat(this.QuoteSpaceRules);
+		rules = rules.concat(this.UserConvertRules);
+		for (let rule of rules) {
 			let leftDocStr = view.state.doc.sliceString(0, cursor_pos);
 			let rightDocStr = view.state.doc.sliceString(cursor_pos);
 			let leftRegexpStr = rule.before.left;
@@ -1488,7 +1683,7 @@ export default class EasyTypingPlugin extends Plugin {
 			let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
 			// console.log("inserted str", insertedStr);
 			this.compose_need_handle = false;
-			if (this.triggerUserCvtRule(view, cursor.anchor)) return;
+			if (this.triggerCvtRule(view, cursor.anchor)) return;
 			if (this.triggerPuncRectify(view, this.compose_begin_pos)) return;
 			if (this.settings.AutoFormat && !this.isCurrentFileExclude()){
 				if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
@@ -1858,6 +2053,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "Paste without format"],
 			["toggle_comment", "Toggle comment"],
 			["goto_new_line_after_cur_line", "Go to new line after current line"],
+			['select_block', "Select current text block"]
 
 		]);
 
@@ -1870,6 +2066,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "無格式化粘貼"],
 			["toggle_comment", "切換註釋"],
 			["goto_new_line_after_cur_line", "跳到當前行後的新行"],
+			['select_block', "選擇當前文本塊"]
 		]);
 
 		let command_name_map_zh = new Map([
@@ -1881,6 +2078,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "无格式化粘贴"],
 			["toggle_comment", "切换注释"],
 			["goto_new_line_after_cur_line", "跳到当前行后新行"],
+			['select_block', "选择当前文本块"]
 		]);
 
 		let command_name_map_ru = new Map([
@@ -1892,6 +2090,7 @@ export default class EasyTypingPlugin extends Plugin {
 			["paste_wo_format", "Вставить без форматирования"],
 			["toggle_comment", "Переключить комментарий"],
 			["goto_new_line_after_cur_line", "Перейти к новой строке после текущей"],
+			['select_block', "Выбрать текущий текстовый блок"]
 		]);
 
 		let command_name_map = command_name_map_en;
