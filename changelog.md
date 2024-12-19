@@ -1,4 +1,14 @@
 ## 更新日志 Changelog
+- V5.5.11 2024-12-20
+  - 基础编辑增强：支持粘贴多行内容到列表或者引用块时，自动添加列表或者引用前缀 #262, #263
+  - 基础编辑增强：支持粘贴多级列表项内容到列表
+  - 修复：修复 CMD+Enter 新建多级引用行时错误添加空格的问题
+  - Enhanced basic editing: Automatically add list or quote prefixes when pasting multiple lines of content into lists or quote blocks #262, #263
+  - Enhanced basic editing: Support pasting multi-level list items into lists
+  - Fix: Fixed the issue of incorrectly adding spaces when creating multi-level quote lines with CMD+Enter
+  
+  ![](/assets/enhance-paste.gif)
+
 - V5.5.10 2024-12-01
   - CMD/Ctrl+A 增强功能支持quote/callout，第一次选中当前引用行内容，第二次选中当前的整个引用 #260
   - 切换代码块注释命令
