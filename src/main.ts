@@ -390,6 +390,78 @@ export default class EasyTypingPlugin extends Plugin {
 				}				
 			}
 
+			// 在引用块或者列表块中粘贴时，自动添加缩进和引用/列表符号
+			if (this.settings.BaseObEditEnhance && changeTypeStr.contains('paste') && fromA==fromB && fromA == tr.startState.doc.lineAt(toA).to){
+				// 检查是否在列表或引用块中
+				const lineContent = tr.startState.doc.lineAt(toA).text;
+				const listMatch = lineContent.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/);
+				const quoteMatch = lineContent.match(/^(\s*)(>+)(\s)?/);
+				if (listMatch || quoteMatch){
+					let prefix = listMatch ? listMatch[1]+listMatch[2]+' ' : quoteMatch[1]+quoteMatch[2]+' ';
+					let indent_num = listMatch ? listMatch[1].length : quoteMatch[1].length;
+					let indent_str = indent_num==0 ? '' : ' '.repeat(indent_num);
+					let inserted_lines = insertedStr.split('\n');
+					// 找出所有行的最小共同缩进
+					let min_indent_space = Infinity;
+					for (let line of inserted_lines){
+						if (!/^\s*$/.test(line)) {  // 忽略空行
+							let indent = line.match(/^\s*/)[0].length;
+							min_indent_space = Math.min(min_indent_space, indent);
+						}
+					}
+					// 考虑粘贴列表时
+					let paste_list = true;
+					for (let line of inserted_lines){
+						if (line.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/) || /^\s*$/.test(line)){
+							continue;
+						}
+						else {
+							let indent = line.match(/^\s*/)[0].length;
+							if (indent < min_indent_space+2){
+								paste_list = false;
+								break;
+							}
+						}
+					}
+
+					let adjusted_lines:string[] = [];
+					if (paste_list && listMatch){
+						adjusted_lines = inserted_lines.map((line:string, index:number) => {
+							let trimmed_line = line.substring(min_indent_space);
+							trimmed_line = trimmed_line.replace(/[\t]/g, this.getDefaultIndentChar())
+							if (index === 0) {
+								trimmed_line = trimmed_line.replace(/^([-*+] \[.\]|[-*+]|\d+\.)\s/, '');
+								return trimmed_line;  // 第一行不添加额外缩进
+							} else {
+								return indent_str + trimmed_line;  // 其他行添加基础缩进
+							}
+						});
+					}
+					else {
+						// 删除每行的最小缩进，并给除第一行以外的行添加基础缩进
+						adjusted_lines = inserted_lines.map((line:string, index:number) => {
+							let trimmed_line = line.substring(min_indent_space);
+							trimmed_line = trimmed_line.replace(/[\t]/g, this.getDefaultIndentChar())
+							if (index === 0) {
+								return trimmed_line;  // 第一行不添加额外缩进
+							} else {
+								return prefix + trimmed_line;  // 其他行添加基础缩进
+							}
+						});
+					}
+
+					let new_insertedStr = adjusted_lines.join('\n');
+					changes.push({
+						changes: {from: fromA, to: toA, insert: new_insertedStr},
+						selection: {anchor: fromA+new_insertedStr.length},
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
+				}
+			}
+			
+
 			if (selected) return tr;
 
 			// let test_s = "¥"
@@ -934,7 +1006,6 @@ export default class EasyTypingPlugin extends Plugin {
 			}
 		}
 
-
 		return false;
 	}
 
@@ -1416,7 +1487,7 @@ export default class EasyTypingPlugin extends Plugin {
 	
 		// 检查是否在列表或引用块中
 		const listMatch = lineContent.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/);
-		const quoteMatch = lineContent.match(/^(\s*>)+(\s)?/);
+		const quoteMatch = lineContent.match(/^(\s*)(>+)(\s)?/);
 	
 		let changes;
 		let newCursorPos;
@@ -1438,7 +1509,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		} else if (quoteMatch) {
 			// 继续引用，保持相同的引用级别，确保每个 > 后有一个空格
-			prefix = quoteMatch[0].replace(/>\s*/g, '> ');
+			prefix = quoteMatch[1]+quoteMatch[2]+' ';
 		}
 	
 		changes = [{from: line.to, insert: '\n' + prefix}];
