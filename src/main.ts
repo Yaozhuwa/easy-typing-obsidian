@@ -1047,7 +1047,7 @@ export default class EasyTypingPlugin extends Plugin {
 		if (pos==line.from) return false;
 
 		if (getPosLineType2(state, pos) == LineType.quote){
-			let reg_quote = /^(\s*)(>+)/
+			let reg_quote = /^(\s*)(>+ ?)/
 			let quote_match = line.text.match(reg_quote);
 			if (!quote_match) return false;
 			let quote_indent_str = quote_match?.[1] || '';
@@ -1058,9 +1058,9 @@ export default class EasyTypingPlugin extends Plugin {
 			else{
 				let space_str = '  ';
 				if (quote_content.endsWith('  ')) space_str = '';
-				let inserted_str = space_str + '\n' + quote_match[0] + ' ';
+				let inserted_str = space_str + '\n' + quote_match[0];
 				if (this.settings.StrictLineMode == StrictLineMode.EnterTwice){
-					inserted_str = '\n' + quote_match[0]+' \n' + quote_match[0]+' ';
+					inserted_str = '\n' + quote_match[0]+'\n' + quote_match[0];
 				}
 				view.dispatch({
 					changes: {from: pos, to: pos, insert: inserted_str},
@@ -1487,7 +1487,7 @@ export default class EasyTypingPlugin extends Plugin {
 	
 		// 检查是否在列表或引用块中
 		const listMatch = lineContent.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/);
-		const quoteMatch = lineContent.match(/^(\s*)(>+)(\s)?/);
+		const quoteMatch = lineContent.match(/^(\s*)(>+ ?)/);
 	
 		let changes;
 		let newCursorPos;
@@ -1509,7 +1509,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 		} else if (quoteMatch) {
 			// 继续引用，保持相同的引用级别，确保每个 > 后有一个空格
-			prefix = quoteMatch[1]+quoteMatch[2]+' ';
+			prefix = quoteMatch[1]+quoteMatch[2];
 		}
 	
 		changes = [{from: line.to, insert: '\n' + prefix}];
@@ -1666,7 +1666,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 	triggerCvtRule = (view: EditorView, cursor_pos: number):boolean => {
 		let rules: ConvertRule[] = [];
-		if (this.settings.BaseObEditEnhance) rules = rules.concat(this.ExtraBasicConvRules);
+		if (this.settings.QuoteSpace) rules = rules.concat(this.ExtraBasicConvRules);
 		if (this.settings.QuoteSpace) rules = rules.concat(this.QuoteSpaceRules);
 		rules = rules.concat(this.UserConvertRules);
 		for (let rule of rules) {
