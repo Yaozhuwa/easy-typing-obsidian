@@ -17,7 +17,7 @@ import {
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
 import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos, getQuoteInfoInPos } from './syntax';
-import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop } from './tabstops_state_field';
+import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop, hasTabstops } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 
 
@@ -796,10 +796,10 @@ export default class EasyTypingPlugin extends Plugin {
 		let cursor_changed = update.transactions.find(tr => tr.selection) != null;
 		// console.log('cursor_changed', cursor_changed)
 		
-		if ((update.docChanged || cursor_changed) && !update.view.composing && !isInsideCurTabstop(update.view)) {
+		if (hasTabstops(update.view) && (update.docChanged || cursor_changed) && !update.view.composing && !isInsideCurTabstop(update.view)) {
 			removeAllTabstops(update.view);
 		}
-		if (update.transactions.find(tr => tr.isUserEvent("undo"))){
+		if (hasTabstops(update.view) && update.transactions.find(tr => tr.isUserEvent("undo"))){
 			removeAllTabstops(update.view);
 		}
 

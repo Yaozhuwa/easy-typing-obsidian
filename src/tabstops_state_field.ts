@@ -54,6 +54,10 @@ export function getTabstopGroupsFromView(view: EditorView) {
 	return currentTabstopGroups;
 }
 
+export function hasTabstops(view: EditorView) {
+	return getTabstopGroupsFromView(view).length > 0;
+}
+
 export function addTabstops(view: EditorView, tabstopGroups: TabstopGroup[]) {
 	view.dispatch({
 		effects: [addTabstopsEffect.of(tabstopGroups)],
