@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- V5.5.12 2025-04-09
+  - 新增功能：标题折叠回车保序：折叠标题后回车不触发展开，直接添加同级标题行。默认关闭，需要在设置中打开。#274
+  - 修复 #267，#275
+  - New Feature: Pressing Enter on collapsed headers now adds a same-level header line without expanding (disabled by default, enable in settings) #274
+  - Bug Fixes: Resolved folding interaction issues #267 and #275
 - V5.5.11 2024-12-20
   - 基础编辑增强：支持粘贴多行内容到列表或者引用块时，自动添加列表或者引用前缀 #262, #263
   - 基础编辑增强：支持粘贴多级列表项内容到列表
