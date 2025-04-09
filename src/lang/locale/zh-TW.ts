@@ -106,6 +106,10 @@ const locale: typeof enUS = {
             name: "增強 Mod+A 功能",
             desc: "第一次選中當前行，第二次選中當前文本塊，第三次選中全文。"
         },
+        collapsePersistentEnter: {
+            name: "標題折叠保序",
+            desc: "在折叠的同级標題行按回車不會展開，直接添加同級標題行"
+        },
         puncRectify: {
             name: "標點矫正",
             desc: "僅在輸入過程中，中文間的英文標點（,.?!）自動轉換為全角（可取消）"

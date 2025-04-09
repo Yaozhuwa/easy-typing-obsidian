@@ -13,7 +13,7 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@codemirror/language": "^6.2.1",
-		"@types/node": "^16.11.6",
+		"@types/node": "^20.10.7",
 		"@types/obsidian-typings": "npm:obsidian-typings@^1.1.1",
 		"@types/sprintf-js": "^1.1.4",
 		"@typescript-eslint/eslint-plugin": "5.29.0",

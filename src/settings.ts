@@ -63,6 +63,7 @@ export interface EasyTypingSettings {
 	TryFixChineseIM: boolean;
 	FixMacOSContextMenu: boolean;
 	TryFixMSIME: boolean;
+	CollapsePersistentEnter: boolean;
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
@@ -111,6 +112,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	PuncRectify: false,
 	FixMacOSContextMenu: false,
 	TryFixMSIME: false,
+	CollapsePersistentEnter: false,
 }
 
 var locale = enUS;
@@ -489,6 +491,16 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.EnhanceModA).onChange(async (value) => {
 					this.plugin.settings.EnhanceModA = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName(locale.settings.collapsePersistentEnter.name)
+			.setDesc(locale.settings.collapsePersistentEnter.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.CollapsePersistentEnter).onChange(async (value) => {
+					this.plugin.settings.CollapsePersistentEnter = value;
 					await this.plugin.saveSettings();
 				});
 			});

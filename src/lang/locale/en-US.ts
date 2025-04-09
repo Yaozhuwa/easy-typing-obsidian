@@ -105,6 +105,10 @@ const locale = {
             name: "Enhance Mod+A selection in text",
             desc: "First select the current line, second select the current text block, third select the entire text."
         },
+        collapsePersistentEnter: {
+            name: "Collapse Persistent Enter",
+            desc: "Adds same-level header line without expanding when pressing Enter on a collapsed header."
+        },
         puncRectify: {
             name: "Punc rectify",
             desc: "Automatically convert English punctuation (, . ? !) between Chinese characters to full-width punctuation during typing (reversible)."

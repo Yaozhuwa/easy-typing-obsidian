@@ -106,6 +106,10 @@ const locale: typeof enUS = {
             name: "增强 Ctrl/Cmd+A 功能",
             desc: "第一次选中当前行，第二次选中当前文本块，第三次选中全文。"
         },
+        collapsePersistentEnter: {
+            name: "标题折叠保序",
+            desc: "在折叠的同级标题行按回车不会展开，直接添加同级标题行"
+        },
         puncRectify: {
             name: "标点矫正",
             desc: "仅在输入过程中，中文间的英文标点（,.?!）自动转换为全角（可撤销）"

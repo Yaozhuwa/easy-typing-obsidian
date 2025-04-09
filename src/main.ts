@@ -1020,6 +1020,50 @@ export default class EasyTypingPlugin extends Plugin {
 		let line = doc.lineAt(pos);
 		let codeBlockInfo = getCodeBlockInfoInPos(state, pos);
 
+		if (this.settings.CollapsePersistentEnter){
+			// console.log('handleEnter', pos, line.text);
+			const editor = this.app.workspace.getActiveViewOfType(MarkdownView).editor;
+			let fold_offsets: Set<number> = editor.getFoldOffsets();
+			let all_foldable_lines: {from: number, to: number}[] = editor.getAllFoldableLines();
+
+			let folded_lines: {from: number, to: number}[] = [];
+			for (let offset of fold_offsets){
+				let folded = all_foldable_lines.find(l => l.from == offset);
+				if (folded){
+					folded_lines.push(folded);
+				}
+			}
+			// 判断当前 cursor pos 是否在 folded_lines 中，如果有找到该范围，否则不处理
+			// let folded_line = folded_lines.find(l => pos > l.from - doc.lineAt(l.from).text.length && pos <= l.to);
+			let folded_line = folded_lines.find(l => pos >= l.from && pos <= l.to);
+			if (folded_line){
+				let folded_first_line = doc.lineAt(folded_line.from).text;
+				// 判断是不是 Markdown 标题行，如果是则新建同级标题行，如果不是标题行则不处理
+				let reg_headings = /^#+ /;
+				if (reg_headings.test(folded_first_line)){
+					let heading_level = folded_first_line.match(/^#+/)?.[0].length;
+					let new_heading_level = heading_level;
+					let new_heading_line = '\n' + '#'.repeat(new_heading_level) + ' ';
+					let folded_last_line = doc.lineAt(folded_line.to).text;
+					let folded_last_line_is_blank = /^\s*$/.test(folded_last_line);
+
+					let new_heading_line_pos = editor.offsetToPos(folded_line.to);
+					let new_cursor_pos = {line: new_heading_line_pos.line+1, ch: new_heading_level+1};
+
+					if(this.settings.StrictModeEnter && !folded_last_line_is_blank && (this.app.vault.config.strictLineBreaks || false)){
+						new_heading_line = '\n\n' + '#'.repeat(new_heading_level) + ' ';
+						new_cursor_pos = {line: new_heading_line_pos.line+2, ch: new_heading_level+1};
+					}
+
+					editor.replaceRange(new_heading_line, new_heading_line_pos);
+					editor.setCursor(editor.offsetToPos(folded_line.from));
+					editor.exec('toggleFold');
+					editor.setCursor(new_cursor_pos);				
+					return true;
+				}
+			}
+		}
+
 		if (this.settings.BetterCodeEdit && codeBlockInfo && codeBlockInfo.code_start_pos !== doc.lineAt(codeBlockInfo.start_pos).to 
 			&& pos >= codeBlockInfo.code_start_pos && pos <= codeBlockInfo.code_end_pos ){
 			let line_indent_str = line.text.match(/^\s*/)?.[0] || '';
