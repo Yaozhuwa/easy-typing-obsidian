@@ -171,6 +171,7 @@ export class LineFormater {
     // prevCh: 光标在前一时刻在当前行的位置
     formatLine(state: EditorState, lineNum:number, settings: EasyTypingSettings, curCh: number, prevCh?: number): [string, number, InlineChange[]] | null {
         // new Notice("format-now");
+        // print("formatLine", lineNum, curCh, prevCh)
         let line = state.doc.line(lineNum).text;
         let regNull = /^\s*$/g;
         if (regNull.test(line)) return [line, curCh, []];
@@ -262,7 +263,7 @@ export class LineFormater {
                                 content = lineParts[i].content;
                             }
                         }
-                    }   
+                    }
 
                     function insertSpace(content: string, reg: RegExp, prevCh: number, curCh: number, offset: number): [string, number] {
                         while (true) {
@@ -283,6 +284,7 @@ export class LineFormater {
                         let reg2 = /([\u4e00-\u9fa5])([A-Za-z])/gi;
                         [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
                         [content, curCh] = insertSpace(content, reg2, prevCh, curCh, offset);
+                        lineParts[i].content = content;
                     }
 
                     if (settings.ChineseNumberSpace){
@@ -290,6 +292,7 @@ export class LineFormater {
                         let reg1 = /([\u4e00-\u9fa5])([0-9])/g;
                         [content, curCh] = insertSpace(content, reg, prevCh, curCh, offset);
                         [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
+                        lineParts[i].content = content;
                     }
 
                     if (settings.EnglishNumberSpace){
@@ -297,6 +300,7 @@ export class LineFormater {
                         let reg1 = /(\d)([A-Za-z])/g;
                         [content, curCh] = insertSpace(content, reg, prevCh, curCh, offset);
                         [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
+                        lineParts[i].content = content;
                     }
 
                     // Text.2 处理中文间无空格
@@ -870,6 +874,7 @@ export class LineFormater {
         }
     
         inlineChangeList = inlineChangeList.sort((a, b):number=>a.begin-b.begin);
+        console.log('resultLine', resultLine)
         return [resultLine, resultCursorCh, inlineChangeList];
     }
     

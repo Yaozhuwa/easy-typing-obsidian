@@ -336,8 +336,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName(locale.settings.smartInsertSpace.name)
-			.setDesc(locale.settings.smartInsertSpace.desc)
+			.setName(locale.settings.textPunctuationSpace.name)
+			.setDesc(locale.settings.textPunctuationSpace.desc)
 			.addDropdown((dropdown) => {
 				dropdown.addOption(WorkMode.OnlyWhenTyping, locale.dropdownOptions.onlyWhenTyping);
 				dropdown.addOption(WorkMode.Globally, locale.dropdownOptions.globally);

@@ -56,7 +56,7 @@ const locale = {
             name: "Capitalize the first letter of every sentence",
             desc: "Capitalize the first letter of each sentence in English."
         },
-        smartInsertSpace: {
+        textPunctuationSpace: {
             name: "Smartly insert space between text and punctuation",
             desc: "Insert space between text and punctuation intelligently."
         },

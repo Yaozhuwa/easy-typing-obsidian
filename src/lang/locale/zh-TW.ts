@@ -59,7 +59,7 @@ const locale: typeof enUS = {
             desc: "英文每個句首字母大寫，可取消"
         },
         smartInsertSpace: {
-            name: "智能插入空格",
+            name: "文本和標點間空格",
             desc: "在文本和標點之間智能插入空格"
         },
         spaceStrategyInlineCode: {
