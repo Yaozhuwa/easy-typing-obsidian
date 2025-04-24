@@ -1020,6 +1020,13 @@ export default class EasyTypingPlugin extends Plugin {
 		let line = doc.lineAt(pos);
 		let codeBlockInfo = getCodeBlockInfoInPos(state, pos);
 
+		// console.log(line.text, getPosLineType2(state, pos))
+		// for (let p=line.from; p<=line.to; p+=1){
+		// 	const token = tree.resolve(p, 1).name
+		// 	console.log(p-line.from, token)
+		// }
+		// return true;
+
 		if (this.settings.CollapsePersistentEnter){
 			// console.log('handleEnter', pos, line.text);
 			const editor = this.app.workspace.getActiveViewOfType(MarkdownView).editor;
@@ -1079,11 +1086,6 @@ export default class EasyTypingPlugin extends Plugin {
 		let strictLineBreaks = this.app.vault.config.strictLineBreaks || false;
 		if (!strictLineBreaks) return false;
 
-		// console.log(line.text, getPosLineType2(state, pos))
-		// for (let p=line.from; p<=line.to; p+=1){
-		// 	const token = tree.resolve(p, 1).name
-		// 	console.log(p-line.from, token)
-		// }
 		// 如果当前行为空白行，不做处理
 		if (/^\s*$/.test(line.text)) return false;
 
@@ -1195,9 +1197,9 @@ export default class EasyTypingPlugin extends Plugin {
 
 	private readonly handleModA = (view: EditorView) => {
 		let selection = view.state.selection.main;
-		let line = view.state.doc.lineAt(selection.head);
-		let line_type = getPosLineType2(view.state, selection.head);
-		let is_in_code_block = isCodeBlockInPos(view.state, selection.head);
+		let line = view.state.doc.lineAt(selection.anchor);
+		let line_type = getPosLineType2(view.state, selection.anchor);
+		let is_in_code_block = isCodeBlockInPos(view.state, selection.anchor);
 		
 		if (this.settings.EnhanceModA && 
 			line_type == LineType.text &&
@@ -1254,8 +1256,107 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 
 		if (this.settings.EnhanceModA && line_type == LineType.list){
-			// 第一次，选中当前 list 内容；第二次选中整个 list 块，第三次不处理
+			// 第一次 Mod+A 选中当前列表行的内容（不包括indent），
+			// 第二次选中当前列表行及其子列表，
+			// 第三次选中整个列表
+			// 第四次选中全文
+			const reg_list = /^(\s*)([-*+] \[[^\]]\]|[-*+]|\d+\.)\s/;
+			let reg_code_block = /^\s+```/;
+			const listMatch = line.text.match(reg_list);
+			if (!listMatch) {
+				if (!reg_code_block.test(line.text)){
+					let cur_indent = line.text.match(/^\s*/)?.[0].length || 0;
+					let selection_list: {anchor: number, head: number}[] = [];
+					selection_list.push({anchor: line.from+cur_indent, head: line.to});
+					let list_start_line = line.number;
+					for (let i = line.number - 1; i >= 1; i--) {
+						const prevLine = view.state.doc.line(i);
+						if (getPosLineType2(view.state, prevLine.from) == LineType.list){
+							list_start_line = i;
+							break;
+						}
+					}
+					let list_s_match = view.state.doc.line(list_start_line).text.match(reg_list);
+					let list_s_start_idx = list_s_match?.[0].length || 0;
+					selection_list.push({anchor: view.state.doc.line(list_start_line).from+list_s_start_idx, head: line.to});
 
+					if (selection.anchor <= selection_list[0].anchor && selection.head >= selection_list[0].head){
+						view.dispatch({selection: selection_list[1], userEvent: "EasyTyping.handleModA"});
+						return true;
+					}
+					else{
+						view.dispatch({selection: selection_list[0], userEvent: "EasyTyping.handleModA"});
+						return true;
+					}
+				}
+			}
+			else{
+				const cur_indent = listMatch[1].length;
+				let selection_list: {anchor: number, head: number}[] = [];
+				// selection_list.push({anchor: 0, head: view.state.doc.length});
+				// 当前行内容
+				const contentStart = line.from + listMatch[0].length;
+				selection_list.push({anchor: contentStart, head: line.to});
+
+				// 当前行及其子列表
+				let endLine = line.number;
+				for (let i = line.number + 1; i <= view.state.doc.lines; i++) {
+					const nextLine = view.state.doc.line(i);
+					const nextMatch = nextLine.text.match(/^(\s*)/);
+					if (!nextMatch || nextMatch[0].length <= cur_indent) break;
+					endLine = i;
+				}
+				let list_block_selection = {anchor: line.from, head: view.state.doc.line(endLine).to};
+				selection_list.push(list_block_selection);
+
+				// 整个列表
+				let list_start_line = line.number;
+				for (let i = line.number - 1; i >= 1; i--) {
+					const prevLine = view.state.doc.line(i);
+					const prevMatch = prevLine.text.match(/^(\s*)/);
+					if (getPosLineType2(view.state, prevLine.from) == LineType.list || (prevMatch && prevMatch[0].length >= 2)) {
+						list_start_line = i;
+					}
+					else{
+						break;
+					}
+				}
+				let list_end_line = line.number;
+				for (let i = line.number + 1; i <= view.state.doc.lines; i++) {
+					const nextLine = view.state.doc.line(i);
+					const nextMatch = nextLine.text.match(/^(\s*)/);
+					if (getPosLineType2(view.state, nextLine.from) == LineType.list|| (nextMatch && nextMatch[0].length >= 2)) {
+						list_end_line = i;
+					}
+					else{
+						break;
+					}
+				}
+				let list_all_selection = {anchor: view.state.doc.line(list_start_line).from, head: view.state.doc.line(list_end_line).to};
+				if (list_all_selection.anchor != list_block_selection.anchor || list_all_selection.head != list_block_selection.head){
+					selection_list.push(list_all_selection);
+				}
+
+				// 选中全文
+				selection_list.push({anchor: 0, head: view.state.doc.length});
+				
+				// 从后往前，依次检查 selection_list 中的 selection 是否被选中
+				// 如果被选中，则 dispatch 下一个索引的selection
+				let hit_idx = -1;
+				for (let i = selection_list.length - 1; i >= 0; i--) {
+					const sel = selection_list[i];
+					if (selection.anchor <= sel.anchor && selection.head >= sel.head) {
+						hit_idx = i;
+						break;
+					}
+				}
+				hit_idx += 1;
+				if (hit_idx < selection_list.length){
+					view.dispatch({selection: selection_list[hit_idx], userEvent: "EasyTyping.handleModA"});
+					return true;
+				}
+				return false;
+			}
 		}
 
 		if (!this.settings.BetterCodeEdit) return false;
