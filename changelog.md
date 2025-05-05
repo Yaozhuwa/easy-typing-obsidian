@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- V5.5.13 2025-05-05
+  - 修复 #184
+  - CMD+A 增强功能在列表项中也有效了，第一次选中当前列表项，第二次选中当前列表项及其子项，第三次选中整个列表，最后选中全文。
+  - Bug Fix: Resolved issue #184
+  - Enhanced functionality for CMD+A now works in list items: the first press selects the current list item, the second press selects the current list item and its sub-items, the third press selects the entire list, and finally selects the entire document.
 - V5.5.12 2025-04-09
   - 新增功能：标题折叠回车保序：折叠标题后回车不触发展开，直接添加同级标题行。默认关闭，需要在设置中打开。#274
   - 修复 #267，#275
