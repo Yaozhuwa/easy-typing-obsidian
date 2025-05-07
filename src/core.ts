@@ -874,7 +874,7 @@ export class LineFormater {
         }
     
         inlineChangeList = inlineChangeList.sort((a, b):number=>a.begin-b.begin);
-        console.log('resultLine', resultLine)
+        // console.log('resultLine', resultLine)
         return [resultLine, resultCursorCh, inlineChangeList];
     }
     
