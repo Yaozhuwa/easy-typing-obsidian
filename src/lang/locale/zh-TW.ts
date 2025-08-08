@@ -58,7 +58,7 @@ const locale: typeof enUS = {
             name: "句首字母大寫",
             desc: "英文每個句首字母大寫，可取消"
         },
-        smartInsertSpace: {
+        textPunctuationSpace: {
             name: "文本和標點間空格",
             desc: "在文本和標點之間智能插入空格"
         },
