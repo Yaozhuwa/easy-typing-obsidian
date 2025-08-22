@@ -110,6 +110,12 @@ export default class EasyTypingPlugin extends Plugin {
 
 		this.onFormatArticle = false;
 
+		// 确保 settings 已正确加载
+		if (!this.settings) {
+			console.error('EasyTyping: Settings not loaded properly, using defaults');
+			this.settings = Object.assign({}, DEFAULT_SETTINGS);
+		}
+		
 		setDebug(this.settings.debug);
 
 		this.registerEditorExtension([
@@ -267,7 +273,7 @@ export default class EasyTypingPlugin extends Plugin {
 				let file = this.app.workspace.getActiveFile();
 				if (file != null && this.CurActiveMarkdown != file.path) {
 					this.CurActiveMarkdown = file.path;
-					if (this.settings.debug)
+					if (this.settings?.debug)
 						new Notice('new md-file open: ' + file.path)
 				}
 			}
@@ -295,7 +301,7 @@ export default class EasyTypingPlugin extends Plugin {
 		// 		let editor = this.getEditor();
 		// 		if (editor === null) return;
 		// 		this.ContentParser.parseNewArticle(editor.getValue());
-		// 		if (this.settings.debug) {
+		// 		if (this.settings?.debug) {
 		// 			new Notice("EasyTyping: Parse New Article: " + file.vault.getName() + '/' + file.path);
 		// 			// if (this.settings.debug) this.ContentParser.print();
 		// 		}
@@ -327,7 +333,7 @@ export default class EasyTypingPlugin extends Plugin {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
 			let changestr_ = changedStr.replace(/\s/g, '0')
 			let insertedStr = inserted.sliceString(0);
-			if (this.settings.debug)
+			if (this.settings?.debug)
 			{
 				console.log("[TransactionFilter] type, fromA, toA, changed, fromB, toB, inserted");
 				console.log(changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr);
@@ -780,7 +786,7 @@ export default class EasyTypingPlugin extends Plugin {
 		let clipboardText = await navigator.clipboard.readText();
 		if (clipboardText === null || clipboardText === "") return;
 
-		if (this.settings.debug) console.log("Normal Paste!!")
+		if (this.settings?.debug) console.log("Normal Paste!!")
 		const editorView = editor.cm as EditorView;
 		let mainSelection = editorView.state.selection.asSingle().main;
 		editorView.dispatch({
@@ -818,7 +824,7 @@ export default class EasyTypingPlugin extends Plugin {
 		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
 			let insertedStr = inserted.sliceString(0);
 			let changedStr = tr.startState.doc.sliceString(fromA, toA);
-			if (this.settings.debug){
+			if (this.settings?.debug){
 				console.log("[ViewUpdate] type, fromA, toA, changed, fromB, toB, inserted");
 				console.log(changeType, fromA, toA, changedStr, fromB, toB, insertedStr)
 				console.log("==>[Composing]", update.view.composing)
@@ -1366,7 +1372,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	private readonly onKeyup = (event: KeyboardEvent, view: EditorView) => {
-		if (this.settings.debug) {
+		if (this.settings?.debug) {
 			// console.log("Keyup:", event.key, event.shiftKey, event.ctrlKey||event.metaKey);
 			console.log("Keyup:", event.key);
 		}
@@ -2039,7 +2045,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	deleteBlankLines = (editor: Editor): void => {
-		if (this.settings.debug) {
+		if (this.settings?.debug) {
 			console.log('config.strictLineBreaks', this.app.vault.getConfig("strictLineBreaks"));
 			// return;
 		}
@@ -2144,7 +2150,7 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	convert2CodeBlock(editor: Editor) {
-		if (this.settings.debug) console.log("----- EasyTyping: insert code block-----");
+		if (this.settings?.debug) console.log("----- EasyTyping: insert code block-----");
 		if (editor.somethingSelected && editor.getSelection() != "") {
 			let selected = editor.getSelection();
 			let selectedRange = editor.listSelections()[0];
@@ -2340,7 +2346,13 @@ export default class EasyTypingPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		try {
+			const userData = await this.loadData();
+			this.settings = Object.assign({}, DEFAULT_SETTINGS, userData || {});
+		} catch (error) {
+			console.error('EasyTyping: Failed to load settings, using defaults:', error);
+			this.settings = Object.assign({}, DEFAULT_SETTINGS);
+		}
 	}
 
 	async saveSettings() {

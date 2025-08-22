@@ -1008,9 +1008,8 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
             }
             catch (error) {
                 isValidReg = false;
-                if(this.settings.debug){
-                    new Notice("EasuTyping: Bad RegExp:\n" + regItem);
-                }
+                // 记录正则表达式错误到控制台，而不依赖于设置
+                console.error("EasyTyping: Invalid RegExp:", regItem, error);
             }
 
             if (isValidReg) {
