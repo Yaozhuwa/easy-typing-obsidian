@@ -17,7 +17,7 @@ function getMarkerDecoration(from: number, to: number) {
     if (from==to){
         return Decoration.widget({
             widget: new CursorWidget(),
-            side: 1,
+            side: 0,
         }).range(from);
     }
 
@@ -145,7 +145,7 @@ class CursorWidget extends WidgetType {
     toDOM(view: EditorView): HTMLElement {
         const cursorEl = document.createElement("span");
         cursorEl.className = `${CURSOR_WIDGET_CLASS}`;
-        cursorEl.textContent = '|';
+        cursorEl.textContent = '';  // 不使用文本内容，避免占用空间
         return cursorEl;
     }
 }

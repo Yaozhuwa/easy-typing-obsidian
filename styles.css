@@ -5,13 +5,17 @@ span[class="easy-typing-tabstops"] {
 }
 
 span[class="easy-typing-cursor-widget"] {
-    color: #1364ce6e;
-    /* animation: blink 1s step-start 0s infinite; */
-    display: inline;
-    position: absolute;
-    white-space: pre;
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background-color: #1364ceaa;
+    position: relative;
+    margin: 0;
+    vertical-align: text-bottom;
+    border-radius: 1px;
+    animation: blink 1s step-start 0s infinite;
 }
 
-/* @keyframes blink {
+@keyframes blink {
     50% { opacity: 0; }
-} */
+}
