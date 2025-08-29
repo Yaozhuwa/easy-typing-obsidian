@@ -419,7 +419,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		containerEl.createEl("p", { text: locale.headers.aboutRegexp.header }).createEl("a", {
 			text: locale.headers.aboutRegexp.text,
-			href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#",
+			href: "https://wangdoc.com/javascript/stdlib/regexp",
 		});
 
 		containerEl.createEl("p", { text: locale.headers.instructionsRegexp.header }).createEl("a", {
