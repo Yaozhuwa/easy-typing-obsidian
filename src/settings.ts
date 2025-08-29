@@ -424,7 +424,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		containerEl.createEl("p", { text: locale.headers.instructionsRegexp.header }).createEl("a", {
 			text: locale.headers.instructionsRegexp.text,
-			href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md",
+			href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/Doc/UserDefinedRegExp.md",
 		});
 
 		const regContentAreaSetting = new Setting(containerEl);
