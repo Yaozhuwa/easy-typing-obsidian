@@ -168,6 +168,12 @@ const locale: typeof enUS = {
         customizeDeleteRule: "自定义删除编辑增强规则",
         customizeConvertRule: "自定义编辑转换规则",
         editSelectionReplaceRule: "编辑选中替换规则",
+        tabs: {
+            editEnhance: "编辑增强",
+            autoFormat: "自动格式化",
+            customRules: "自定义规则",
+            other: "其他设置",
+        },
     },
     dropdownOptions: {
         enterTwice: "两次回车",

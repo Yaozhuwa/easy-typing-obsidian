@@ -19,3 +19,50 @@ span[class="easy-typing-cursor-widget"] {
 @keyframes blink {
     50% { opacity: 0; }
 }
+
+/* ========== Settings Tab Navigation ========== */
+.et-settings-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--background-modifier-border);
+    margin-bottom: 20px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.et-settings-tab-btn {
+    padding: 8px 18px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    border-radius: 4px 4px 0 0;
+}
+
+.et-settings-tab-btn:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+}
+
+.et-settings-tab-btn.et-settings-tab-active {
+    color: var(--text-accent);
+    border-bottom-color: var(--text-accent);
+    font-weight: var(--font-semibold);
+}
+
+.et-settings-tab-panel.et-settings-tab-hidden {
+    display: none;
+}
+
+.et-settings-tab-panel h3 {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-size: var(--font-ui-medium);
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--background-modifier-border);
+    padding-bottom: 6px;
+}

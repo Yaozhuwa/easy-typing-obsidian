@@ -167,6 +167,12 @@ const locale = {
         customizeDeleteRule: "Customize Delete Rule",
         customizeConvertRule: "Customize Convert Rule",
         editSelectionReplaceRule: "Edit Selection Replace Rule",
+        tabs: {
+            editEnhance: "Edit Enhance",
+            autoFormat: "Auto Format",
+            customRules: "Custom Rules",
+            other: "Other",
+        },
     },
     dropdownOptions: {
         enterTwice: "Enter Twice",

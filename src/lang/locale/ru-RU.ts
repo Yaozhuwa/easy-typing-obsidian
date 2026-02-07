@@ -170,6 +170,12 @@ const locale: typeof enUS = {
         customizeDeleteRule: "Настройка правила удаления",
         customizeConvertRule: "Настройка правила преобразования",
         editSelectionReplaceRule: "Редактирование правила замены выделенного текста",
+        tabs: {
+            editEnhance: "Редактирование",
+            autoFormat: "Автоформат",
+            customRules: "Правила",
+            other: "Прочее",
+        },
     },
     dropdownOptions: {
         enterTwice: "Дважды нажмите Enter",

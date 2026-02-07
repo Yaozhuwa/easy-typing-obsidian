@@ -119,6 +119,8 @@ var locale = enUS;
 
 export class EasyTypingSettingTab extends PluginSettingTab {
 	plugin: EasyTypingPlugin;
+	// 记住当前激活的 Tab，避免 display() 刷新时重置
+	activeTab: string = "edit-enhance";
 
 	constructor(app: App, plugin: EasyTypingPlugin) {
 		super(app, plugin);
@@ -128,8 +130,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 
-		// new Notice("moment.locale() "+moment.locale())
-
+		// 根据系统语言选择对应的语言包
 		if (moment.locale() == "zh" || moment.locale() == "zh-cn") {
 			locale = zhCN;
 		}
@@ -142,15 +143,66 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		// ========== 顶部标题 ==========
 		containerEl.createEl("h1", { text: locale.headers.main });
 		containerEl.createEl("p", { text: locale.headers.githubDetail }).createEl("a", {
 			text: "easy-typing-obsidian",
 			href: "https://github.com/Yaozhuwa/easy-typing-obsidian",
 		});
 
-		containerEl.createEl('h2', { text: locale.headers.enhancedEditing });
+		// ========== Tab 导航栏 ==========
+		const navEl = containerEl.createEl("nav", { cls: "et-settings-nav" });
+		const contentEl = containerEl.createEl("div", { cls: "et-settings-content" });
 
-		new Setting(containerEl)
+		// 定义 4 个 Tab 页
+		const tabs = [
+			{ id: "edit-enhance", label: locale.headers.tabs.editEnhance },
+			{ id: "auto-format", label: locale.headers.tabs.autoFormat },
+			{ id: "custom-rules", label: locale.headers.tabs.customRules },
+			{ id: "other", label: locale.headers.tabs.other },
+		];
+
+		const tabPanels: Record<string, HTMLElement> = {};
+		const tabButtons: HTMLElement[] = [];
+
+		tabs.forEach((tab) => {
+			// 创建导航按钮
+			const isActive = tab.id === this.activeTab;
+			const btn = navEl.createEl("button", {
+				text: tab.label,
+				cls: `et-settings-tab-btn ${isActive ? "et-settings-tab-active" : ""}`,
+			});
+			tabButtons.push(btn);
+
+			// 创建内容面板
+			const panel = contentEl.createEl("div", {
+				cls: `et-settings-tab-panel ${isActive ? "" : "et-settings-tab-hidden"}`,
+			});
+			tabPanels[tab.id] = panel;
+
+			// 点击切换 Tab
+			btn.addEventListener("click", () => {
+				this.activeTab = tab.id;
+				// 取消所有按钮的激活状态
+				tabButtons.forEach(b => b.removeClass("et-settings-tab-active"));
+				// 隐藏所有面板
+				Object.values(tabPanels).forEach(p => p.addClass("et-settings-tab-hidden"));
+				// 激活当前 Tab
+				btn.addClass("et-settings-tab-active");
+				panel.removeClass("et-settings-tab-hidden");
+			});
+		});
+
+		// ========== 填充各 Tab 的内容 ==========
+		this.buildEditEnhanceTab(tabPanels["edit-enhance"]);
+		this.buildAutoFormatTab(tabPanels["auto-format"]);
+		this.buildCustomRulesTab(tabPanels["custom-rules"]);
+		this.buildOtherTab(tabPanels["other"]);
+	}
+
+	// ==================== Tab 1: 编辑增强 ====================
+	buildEditEnhanceTab(el: HTMLElement): void {
+		new Setting(el)
 			.setName(locale.settings.symbolAutoPair.name)
 			.setDesc(locale.settings.symbolAutoPair.desc)
 			.addToggle((toggle) => {
@@ -161,7 +213,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.selectionReplace.name)
 			.setDesc(locale.settings.selectionReplace.desc)
 			.addToggle((toggle) => {
@@ -172,7 +224,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.fullWidthToHalfWidth.name)
 			.setDesc(locale.settings.fullWidthToHalfWidth.desc)
 			.addToggle((toggle) => {
@@ -183,7 +235,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.basicInputEnhance.name)
 			.setDesc(locale.settings.basicInputEnhance.desc)
 			.addToggle((toggle) => {
@@ -194,7 +246,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.codeblockEdit.name)
 			.setDesc(locale.settings.codeblockEdit.desc)
 			.addToggle((toggle) => {
@@ -205,7 +257,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.backspaceEdit.name)
 			.setDesc(locale.settings.backspaceEdit.desc)
 			.addToggle((toggle) => {
@@ -216,8 +268,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.tabOut.name)
 			.setDesc(locale.settings.tabOut.desc)
 			.addToggle((toggle) => {
@@ -227,33 +278,12 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+	}
 
-		containerEl.createEl('h2', { text: locale.headers.customizeEditRule });
-		this.buildUserSelRepRuleSetting(this.containerEl.createEl("details", {
-			cls: "easytyping-nested-settings",
-			attr: {
-				...(this.plugin.settings.userSelRuleSettingsOpen?{ open: true }:{})
-			}
-		}))
-
-		this.buildUserDeleteRuleSetting(this.containerEl.createEl("details", {
-			cls: "easytyping-nested-settings",
-			attr: {
-				...(this.plugin.settings.userDelRuleSettingsOpen?{ open: true }:{})
-			}
-		}))
-
-		this.buildUserConvertRuleSetting(this.containerEl.createEl("details", {
-			cls: "easytyping-nested-settings",
-			attr: {
-				...(this.plugin.settings.userCvtRuleSettingsOpen?{ open: true }:{})
-			}
-		}))
-		
-
-		containerEl.createEl('h2', { text: locale.headers.autoformatSetting });
-
-		new Setting(containerEl)
+	// ==================== Tab 2: 自动格式化 ====================
+	buildAutoFormatTab(el: HTMLElement): void {
+		// 主开关
+		new Setting(el)
 			.setName(locale.settings.autoFormatting.name)
 			.setDesc(locale.settings.autoFormatting.desc)
 			.addToggle((toggle) => {
@@ -263,9 +293,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
-		containerEl.createEl('p', { text: locale.headers.detailedSetting });
 
-		new Setting(containerEl)
+		// 空格策略分组标题
+		el.createEl('h3', { text: locale.headers.detailedSetting });
+
+		new Setting(el)
 			.setName(locale.settings.spaceBetweenChineseEnglish.name)
 			.setDesc(locale.settings.spaceBetweenChineseEnglish.desc)
 			.addToggle((toggle) => {
@@ -275,7 +307,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.spaceBetweenChineseNumber.name)
 			.setDesc(locale.settings.spaceBetweenChineseNumber.desc)
 			.addToggle((toggle) => {
@@ -284,8 +316,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-		
-		new Setting(containerEl)
+
+		new Setting(el)
 			.setName(locale.settings.spaceBetweenEnglishNumber.name)
 			.setDesc(locale.settings.spaceBetweenEnglishNumber.desc)
 			.addToggle((toggle) => {
@@ -295,7 +327,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.deleteSpaceBetweenChinese.name)
 			.setDesc(locale.settings.deleteSpaceBetweenChinese.desc)
 			.addToggle((toggle) => {
@@ -305,7 +337,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.quoteSpace.name)
 			.setDesc(locale.settings.quoteSpace.desc)
 			.addToggle((toggle) => {
@@ -315,7 +347,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.capitalizeFirstLetter.name)
 			.setDesc(locale.settings.capitalizeFirstLetter.desc)
 			.addDropdown((dropdown) => {
@@ -335,7 +367,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.textPunctuationSpace.name)
 			.setDesc(locale.settings.textPunctuationSpace.desc)
 			.addDropdown((dropdown) => {
@@ -354,7 +386,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.spaceStrategyInlineCode.name)
 			.setDesc(locale.settings.spaceStrategyInlineCode.desc)
 			.addDropdown((dropdown) => {
@@ -368,7 +400,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.spaceStrategyInlineFormula.name)
 			.setDesc(locale.settings.spaceStrategyInlineFormula.desc)
 			.addDropdown((dropdown) => {
@@ -382,7 +414,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.spaceStrategyLinkText.name)
 			.setDesc(locale.settings.spaceStrategyLinkText.desc)
 			.addDropdown((dropdown) => {
@@ -391,7 +423,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				dropdown.setValue(this.plugin.settings.InlineLinkSmartSpace ? "smart" : "dummy");
 				dropdown.onChange(async (v: string) => {
 					this.plugin.settings.InlineLinkSmartSpace = v == "smart" ? true : false;
-					// new Notice(String(this.plugin.settings.InlineLinkSmartSpace));
 					await this.plugin.saveSettings();
 				})
 			})
@@ -404,10 +435,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					this.plugin.settings.InlineLinkSpaceMode = string2SpaceState(v);
 					await this.plugin.saveSettings();
 				})
-			})
+			});
 
-		containerEl.createEl('h2', { text: locale.headers.customRegexpBlock });
-		new Setting(containerEl)
+		// 自定义正则区块
+		el.createEl('h3', { text: locale.headers.customRegexpBlock });
+		new Setting(el)
 			.setName(locale.settings.userDefinedRegexpSwitch.name)
 			.setDesc(locale.settings.userDefinedRegexpSwitch.desc)
 			.addToggle((toggle) => {
@@ -417,17 +449,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		containerEl.createEl("p", { text: locale.headers.aboutRegexp.header }).createEl("a", {
+		el.createEl("p", { text: locale.headers.aboutRegexp.header }).createEl("a", {
 			text: locale.headers.aboutRegexp.text,
 			href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#",
 		});
 
-		containerEl.createEl("p", { text: locale.headers.instructionsRegexp.header }).createEl("a", {
+		el.createEl("p", { text: locale.headers.instructionsRegexp.header }).createEl("a", {
 			text: locale.headers.instructionsRegexp.text,
 			href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md",
 		});
 
-		const regContentAreaSetting = new Setting(containerEl);
+		const regContentAreaSetting = new Setting(el);
 		regContentAreaSetting.settingEl.setAttribute(
 			"style",
 			"display: grid; grid-template-columns: 1fr;"
@@ -441,7 +473,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		setAttributes(regContentArea.inputEl, {
 			style: "margin-top: 12px; width: 100%;  height: 30vh;",
-			// class: "ms-css-editor",
 		});
 		regContentArea
 			.setValue(this.plugin.settings.UserDefinedRegExp)
@@ -450,8 +481,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				this.plugin.saveSettings();
 			});
 
-		containerEl.createEl('h2', { text: locale.headers.excludeFoldersFiles });
-		new Setting(containerEl)
+		// 排除文件/文件夹
+		el.createEl('h3', { text: locale.headers.excludeFoldersFiles });
+		new Setting(el)
 			.setName(locale.settings.excludeFoldersFiles.name)
 			.setDesc(locale.settings.excludeFoldersFiles.desc)
 			.addTextArea((text) =>
@@ -462,10 +494,37 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					})
 			);
-		
-		containerEl.createEl('h2', { text: locale.headers.experimentalFeatures });
-		
-		new Setting(containerEl)
+	}
+
+	// ==================== Tab 3: 自定义规则 ====================
+	buildCustomRulesTab(el: HTMLElement): void {
+		this.buildUserSelRepRuleSetting(el.createEl("details", {
+			cls: "easytyping-nested-settings",
+			attr: {
+				...(this.plugin.settings.userSelRuleSettingsOpen ? { open: true } : {})
+			}
+		}));
+
+		this.buildUserDeleteRuleSetting(el.createEl("details", {
+			cls: "easytyping-nested-settings",
+			attr: {
+				...(this.plugin.settings.userDelRuleSettingsOpen ? { open: true } : {})
+			}
+		}));
+
+		this.buildUserConvertRuleSetting(el.createEl("details", {
+			cls: "easytyping-nested-settings",
+			attr: {
+				...(this.plugin.settings.userCvtRuleSettingsOpen ? { open: true } : {})
+			}
+		}));
+	}
+
+	// ==================== Tab 4: 其他设置 ====================
+	buildOtherTab(el: HTMLElement): void {
+		el.createEl('h3', { text: locale.headers.experimentalFeatures });
+
+		new Setting(el)
 			.setName(locale.settings.strictLineBreaks.name)
 			.setDesc(locale.settings.strictLineBreaks.desc)
 			.addDropdown((dropdown) => {
@@ -485,7 +544,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.enhanceModA.name)
 			.setDesc(locale.settings.enhanceModA.desc)
 			.addToggle((toggle) => {
@@ -495,7 +554,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.collapsePersistentEnter.name)
 			.setDesc(locale.settings.collapsePersistentEnter.desc)
 			.addToggle((toggle) => {
@@ -505,7 +564,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.fixMicrosoftIME.name)
 			.setDesc(locale.settings.fixMicrosoftIME.desc)
 			.addToggle((toggle) => {
@@ -514,8 +573,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-		
-		new Setting(containerEl)
+
+		new Setting(el)
 			.setName(locale.settings.fixMacOSContextMenu.name)
 			.setDesc(locale.settings.fixMacOSContextMenu.desc)
 			.addToggle((toggle) => {
@@ -524,8 +583,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-		
-		new Setting(containerEl)
+
+		new Setting(el)
 			.setName(locale.settings.puncRectify.name)
 			.setDesc(locale.settings.puncRectify.desc)
 			.addToggle((toggle) => {
@@ -535,7 +594,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
+		new Setting(el)
 			.setName(locale.settings.printDebugInfo.name)
 			.setDesc(locale.settings.printDebugInfo.desc)
 			.addToggle((toggle) => {
