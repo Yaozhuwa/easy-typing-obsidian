@@ -19,6 +19,8 @@ import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos, getQuoteInfoInPos } from './syntax';
 import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop, hasTabstops } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
+import { RuleEngine, SimpleRule } from './rule_engine';
+import { DEFAULT_BUILTIN_RULES } from './default_rules';
 
 
 export default class EasyTypingPlugin extends Plugin {
@@ -47,10 +49,14 @@ export default class EasyTypingPlugin extends Plugin {
 
 	onFormatArticle: boolean;
 	TaboutPairStrs: PairString[];
+	ruleEngine: RuleEngine;
+	private readonly BUILTIN_RULES_FILE = 'builtin-rules.json';
+	private readonly USER_RULES_FILE = 'user-rules.json';
 
 
 	async onload() {
 		await this.loadSettings();
+		await this.initRuleEngine();
 		this.selectionReplaceMapInitalData = [
 			["【", { left: "[", right: "]" }], ["￥", { left: "$", right: "$" }], ["·", { left: "`", right: "`" }], ['¥', { left: "$", right: "$" }],
 			["《", { left: "《", right: "》" }], ["“", { left: "“", right: "”" }], ["”", { left: "“", right: "”" }], ["（", { left: "（", right: "）" }],
@@ -2260,6 +2266,88 @@ export default class EasyTypingPlugin extends Plugin {
 		if (idx >= this.settings.userConvertRulesStrList.length || idx < 0) return;
 		this.settings.userConvertRulesStrList.splice(idx, 1);
 		this.refreshUserConvertRule();
+	}
+
+	// ===== RuleEngine File I/O =====
+
+	private pluginPath(filename: string): string {
+		return `${this.manifest.dir}/${filename}`;
+	}
+
+	async loadRulesFile(filename: string): Promise<SimpleRule[]> {
+		const path = this.pluginPath(filename);
+		try {
+			const content = await this.app.vault.adapter.read(path);
+			return JSON.parse(content);
+		} catch {
+			return [];
+		}
+	}
+
+	async saveRulesFile(filename: string, rules: SimpleRule[]): Promise<void> {
+		const path = this.pluginPath(filename);
+		await this.app.vault.adapter.write(path, JSON.stringify(rules, null, 2));
+	}
+
+	async mergeBuiltinRules(): Promise<void> {
+		const currentRules = await this.loadRulesFile(this.BUILTIN_RULES_FILE);
+		const existingIds = new Set(currentRules.map(r => r.id).filter(Boolean));
+		const deletedIds = new Set(this.settings.deletedBuiltinRuleIds);
+
+		const newRules = DEFAULT_BUILTIN_RULES.filter(
+			r => !existingIds.has(r.id) && !deletedIds.has(r.id)
+		);
+		if (newRules.length === 0) return;
+
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, [...currentRules, ...newRules]);
+	}
+
+	async initRuleEngine(): Promise<void> {
+		this.ruleEngine = new RuleEngine();
+
+		const builtinPath = this.pluginPath(this.BUILTIN_RULES_FILE);
+		const userPath = this.pluginPath(this.USER_RULES_FILE);
+
+		if (!await this.app.vault.adapter.exists(builtinPath)) {
+			await this.saveRulesFile(this.BUILTIN_RULES_FILE, DEFAULT_BUILTIN_RULES);
+		} else {
+			await this.mergeBuiltinRules();
+		}
+
+		if (!await this.app.vault.adapter.exists(userPath)) {
+			await this.saveRulesFile(this.USER_RULES_FILE, []);
+		}
+
+		const builtinRules = await this.loadRulesFile(this.BUILTIN_RULES_FILE);
+		const userRules = await this.loadRulesFile(this.USER_RULES_FILE);
+		this.ruleEngine.loadFromFiles(builtinRules, userRules);
+	}
+
+	async deleteBuiltinRule(id: string): Promise<void> {
+		this.ruleEngine.removeRule(id);
+		const rules = await this.loadRulesFile(this.BUILTIN_RULES_FILE);
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, rules.filter(r => r.id !== id));
+		this.settings.deletedBuiltinRuleIds.push(id);
+		await this.saveSettings();
+	}
+
+	async restoreBuiltinRule(id: string): Promise<void> {
+		const defaultRule = DEFAULT_BUILTIN_RULES.find(r => r.id === id);
+		if (!defaultRule) return;
+		this.ruleEngine.addSimpleRule(defaultRule);
+		const rules = await this.loadRulesFile(this.BUILTIN_RULES_FILE);
+		rules.push(defaultRule);
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, rules);
+		this.settings.deletedBuiltinRuleIds = this.settings.deletedBuiltinRuleIds.filter(i => i !== id);
+		await this.saveSettings();
+	}
+
+	async resetAllBuiltinRules(): Promise<void> {
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, DEFAULT_BUILTIN_RULES);
+		this.settings.deletedBuiltinRuleIds = [];
+		await this.saveSettings();
+		const userRules = await this.loadRulesFile(this.USER_RULES_FILE);
+		this.ruleEngine.loadFromFiles(DEFAULT_BUILTIN_RULES, userRules);
 	}
 
 	getCommandNameMap(): Map<string, string> {

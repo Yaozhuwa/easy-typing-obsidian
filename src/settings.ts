@@ -64,6 +64,7 @@ export interface EasyTypingSettings {
 	FixMacOSContextMenu: boolean;
 	TryFixMSIME: boolean;
 	CollapsePersistentEnter: boolean;
+	deletedBuiltinRuleIds: string[];
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
@@ -113,6 +114,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	FixMacOSContextMenu: false,
 	TryFixMSIME: false,
 	CollapsePersistentEnter: false,
+	deletedBuiltinRuleIds: [],
 }
 
 var locale = enUS;
