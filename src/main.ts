@@ -1,15 +1,13 @@
 import {Editor, MarkdownView, Menu, Notice, Platform, Plugin, WorkspaceLeaf} from 'obsidian';
 import {EditorSelection, EditorState, Prec, Transaction, TransactionSpec} from '@codemirror/state';
-import {ConvertRule, DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString, StrictLineMode} from "./settings"
+import {DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString, StrictLineMode} from "./settings"
 import {EditorView, keymap, ViewUpdate} from '@codemirror/view';
 import {
 	getTypeStrOfTransac,
 	offsetToPos,
 	print,
 	setDebug,
-	ruleStringList2RuleList,
 	string2pairstring,
-	isRegexp,
 	taboutCursorInPairedString,
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
@@ -23,15 +21,11 @@ import { DEFAULT_BUILTIN_RULES } from './default_rules';
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
-	selectionReplaceMapInitalData: [string, PairString][];
-	SelectionReplaceMap: Map<string, PairString>;
 	SymbolPairsMap: Map<string, string>;
 	halfToFullSymbolMap: Map<string, string>;
 	Formater: LineFormater;
 	CurActiveMarkdown: string;
 
-	UserDeleteRules: ConvertRule[];
-	UserConvertRules: ConvertRule[];
 	lang: string;
 
 	compose_begin_pos: number;
@@ -41,6 +35,8 @@ export default class EasyTypingPlugin extends Plugin {
 	onFormatArticle: boolean;
 	TaboutPairStrs: PairString[];
 	ruleEngine: RuleEngine;
+	cachedBuiltinRules: SimpleRule[] = [];
+	cachedUserRules: SimpleRule[] = [];
 	private readonly BUILTIN_RULES_FILE = 'builtin-rules.json';
 	private readonly USER_RULES_FILE = 'user-rules.json';
 
@@ -48,13 +44,6 @@ export default class EasyTypingPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		await this.initRuleEngine();
-		this.selectionReplaceMapInitalData = [
-			["【", { left: "[", right: "]" }], ["￥", { left: "$", right: "$" }], ["·", { left: "`", right: "`" }], ['¥', { left: "$", right: "$" }],
-			["《", { left: "《", right: "》" }], ["“", { left: "“", right: "”" }], ["”", { left: "“", right: "”" }], ["（", { left: "（", right: "）" }],
-			["<", { left: "<", right: ">" }], ["\"", { left: "\"", right: "\"" }], ["'", { left: "'", right: "'" }],
-			['「', { left: '「', right: '」' }], ['『', { left: '『', right: '』' }],
-		];
-		this.refreshSelectionReplaceRule();
 		this.SymbolPairsMap = new Map<string, string>();
 		let SymbolPairs = ["【】", "（）", "《》", "“”", "‘’", "「」", "『』", '[]', '()', '{}', '""', "''"]
 		for (let pairStr of SymbolPairs) this.SymbolPairsMap.set(pairStr.charAt(0), pairStr.charAt(1));
@@ -70,9 +59,6 @@ export default class EasyTypingPlugin extends Plugin {
 						   "「|」", "『|』", "'|'", "\"|\"", "$$|$$", '$|$', '__|__', '_|_',
 							"==|==", "~~|~~", "**|**", '*|*', "[[|]]", '[|]',"{|}", "(|)", "<|>"];
 		this.TaboutPairStrs = TaboutPairStrs.map((s:string)=>string2pairstring(s));
-
-		this.refreshUserDeleteRule();
-		this.refreshUserConvertRule();
 
 		this.CurActiveMarkdown = "";
 
@@ -634,11 +620,17 @@ export default class EasyTypingPlugin extends Plugin {
 							: inputResult.matchRange.from - insertLen;
 						const oldTo = inputResult.matchRange.to - insertLen;
 
-						// Adjust tabstop positions to old doc coordinates
+						// Tabstop/cursor positions are offsets within the replacement text,
+						// anchored at matchRange.from in the intermediate doc.
+						// In the dispatch result doc, the replacement starts at oldFrom,
+						// so the correct mapping is: oldFrom + (pos - matchRange.from).
+						const mapPos = (pos: number) =>
+							oldFrom + (pos - inputResult.matchRange.from);
+
 						const adjustedTabstops = inputResult.tabstops.map(t => ({
 							...t,
-							from: t.from <= fromA ? t.from : t.from - insertLen,
-							to: t.to <= fromA ? t.to : t.to - insertLen,
+							from: mapPos(t.from),
+							to: mapPos(t.to),
 						}));
 						const tabstopGroups = tabstopSpecsToTabstopGroups(adjustedTabstops);
 
@@ -650,9 +642,7 @@ export default class EasyTypingPlugin extends Plugin {
 								userEvent: "EasyTyping.change"
 							});
 						} else {
-							const adjustedCursor = inputResult.cursor <= fromA
-								? inputResult.cursor
-								: inputResult.cursor - insertLen;
+							const adjustedCursor = mapPos(inputResult.cursor);
 							changes.push({
 								changes: { from: oldFrom, to: oldTo, insert: inputResult.newText },
 								selection: { anchor: adjustedCursor },
@@ -2084,76 +2074,6 @@ export default class EasyTypingPlugin extends Plugin {
 
 	}
 
-	refreshSelectionReplaceRule() {
-		this.SelectionReplaceMap = new Map(this.selectionReplaceMapInitalData);
-		for (let i = 0; i < this.settings.userSelRepRuleTrigger.length; i++) {
-			let trigger = this.settings.userSelRepRuleTrigger[i];
-			let lefts = this.settings.userSelRepRuleValue[i].left;
-			let rights = this.settings.userSelRepRuleValue[i].right;
-
-			this.SelectionReplaceMap.set(trigger, { left: lefts, right: rights });
-		}
-	}
-
-	addUserSelectionRepRule(trigger: string, left: string, right: string): boolean {
-		if (this.settings.userSelRepRuleTrigger.includes(trigger)) return false;
-		this.settings.userSelRepRuleTrigger.push(trigger)
-		this.settings.userSelRepRuleValue.push({ left: left, right: right });
-		this.refreshSelectionReplaceRule();
-		return true;
-	}
-
-	deleteUserSelectionRepRule(idx: number): void {
-		if (idx < 0 || idx >= this.settings.userSelRepRuleTrigger.length) return;
-		this.settings.userSelRepRuleTrigger.splice(idx, 1);
-		this.settings.userSelRepRuleValue.splice(idx, 1);
-		this.refreshSelectionReplaceRule();
-	}
-
-	updateUserSelectionRepRule(idx: number, left: string, right: string) {
-		if (idx < 0 || idx >= this.settings.userSelRepRuleTrigger.length) return;
-		this.settings.userSelRepRuleValue[idx].left = left;
-		this.settings.userSelRepRuleValue[idx].right = right;
-		this.refreshSelectionReplaceRule();
-	}
-
-	refreshUserDeleteRule() {
-		this.UserDeleteRules = ruleStringList2RuleList(this.settings.userDeleteRulesStrList);
-	}
-
-	addUserDeleteRule(before: string, after: string) {
-		this.settings.userDeleteRulesStrList.push([before, after]);
-		this.refreshUserDeleteRule();
-	}
-
-	deleteUserDeleteRule(idx: number) {
-		if (idx >= this.settings.userDeleteRulesStrList.length || idx < 0) return;
-		this.settings.userDeleteRulesStrList.splice(idx, 1);
-		this.refreshUserDeleteRule();
-	}
-
-	updateUserDeleteRule(idx: number, before: string, after: string) {
-		if (idx >= this.settings.userDeleteRulesStrList.length || idx < 0) return;
-		this.settings.userDeleteRulesStrList[idx][0] = before;
-		this.settings.userDeleteRulesStrList[idx][1] = after;
-		this.refreshUserDeleteRule();
-	}
-
-	refreshUserConvertRule() {
-		this.UserConvertRules = ruleStringList2RuleList(this.settings.userConvertRulesStrList);
-	}
-
-	addUserConvertRule(before: string, after: string) {
-		this.settings.userConvertRulesStrList.push([before, after]);
-		this.refreshUserConvertRule();
-	}
-
-	deleteUserConvertRule(idx: number) {
-		if (idx >= this.settings.userConvertRulesStrList.length || idx < 0) return;
-		this.settings.userConvertRulesStrList.splice(idx, 1);
-		this.refreshUserConvertRule();
-	}
-
 	// ===== RuleEngine File I/O =====
 
 	private pluginPath(filename: string): string {
@@ -2206,13 +2126,15 @@ export default class EasyTypingPlugin extends Plugin {
 
 		const builtinRules = await this.loadRulesFile(this.BUILTIN_RULES_FILE);
 		const userRules = await this.loadRulesFile(this.USER_RULES_FILE);
+		this.cachedBuiltinRules = builtinRules;
+		this.cachedUserRules = userRules;
 		this.ruleEngine.loadFromFiles(builtinRules, userRules);
 	}
 
 	async deleteBuiltinRule(id: string): Promise<void> {
 		this.ruleEngine.removeRule(id);
-		const rules = await this.loadRulesFile(this.BUILTIN_RULES_FILE);
-		await this.saveRulesFile(this.BUILTIN_RULES_FILE, rules.filter(r => r.id !== id));
+		this.cachedBuiltinRules = this.cachedBuiltinRules.filter(r => r.id !== id);
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, this.cachedBuiltinRules);
 		this.settings.deletedBuiltinRuleIds.push(id);
 		await this.saveSettings();
 	}
@@ -2221,19 +2143,63 @@ export default class EasyTypingPlugin extends Plugin {
 		const defaultRule = DEFAULT_BUILTIN_RULES.find(r => r.id === id);
 		if (!defaultRule) return;
 		this.ruleEngine.addSimpleRule(defaultRule);
-		const rules = await this.loadRulesFile(this.BUILTIN_RULES_FILE);
-		rules.push(defaultRule);
-		await this.saveRulesFile(this.BUILTIN_RULES_FILE, rules);
+		this.cachedBuiltinRules.push(defaultRule);
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, this.cachedBuiltinRules);
 		this.settings.deletedBuiltinRuleIds = this.settings.deletedBuiltinRuleIds.filter(i => i !== id);
 		await this.saveSettings();
 	}
 
 	async resetAllBuiltinRules(): Promise<void> {
-		await this.saveRulesFile(this.BUILTIN_RULES_FILE, DEFAULT_BUILTIN_RULES);
+		this.cachedBuiltinRules = [...DEFAULT_BUILTIN_RULES];
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, this.cachedBuiltinRules);
 		this.settings.deletedBuiltinRuleIds = [];
 		await this.saveSettings();
-		const userRules = await this.loadRulesFile(this.USER_RULES_FILE);
-		this.ruleEngine.loadFromFiles(DEFAULT_BUILTIN_RULES, userRules);
+		this.ruleEngine.loadFromFiles(this.cachedBuiltinRules, this.cachedUserRules);
+	}
+
+	async addUserRule(rule: SimpleRule): Promise<string> {
+		const id = `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+		rule.id = id;
+		this.cachedUserRules.push(rule);
+		await this.saveRulesFile(this.USER_RULES_FILE, this.cachedUserRules);
+		this.ruleEngine.addSimpleRule(rule);
+		return id;
+	}
+
+	async updateUserRule(id: string, rule: SimpleRule): Promise<void> {
+		const idx = this.cachedUserRules.findIndex(r => r.id === id);
+		if (idx === -1) return;
+		rule.id = id;
+		this.cachedUserRules[idx] = rule;
+		await this.saveRulesFile(this.USER_RULES_FILE, this.cachedUserRules);
+		this.ruleEngine.removeRule(id);
+		this.ruleEngine.addSimpleRule(rule);
+	}
+
+	async deleteUserRule(id: string): Promise<void> {
+		this.cachedUserRules = this.cachedUserRules.filter(r => r.id !== id);
+		await this.saveRulesFile(this.USER_RULES_FILE, this.cachedUserRules);
+		this.ruleEngine.removeRule(id);
+	}
+
+	async updateBuiltinRule(id: string, rule: SimpleRule): Promise<void> {
+		const idx = this.cachedBuiltinRules.findIndex(r => r.id === id);
+		if (idx === -1) return;
+		rule.id = id;
+		this.cachedBuiltinRules[idx] = rule;
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, this.cachedBuiltinRules);
+		this.ruleEngine.removeRule(id);
+		this.ruleEngine.addSimpleRule(rule);
+	}
+
+	async toggleRuleEnabled(id: string, isBuiltin: boolean, enabled: boolean): Promise<void> {
+		const cache = isBuiltin ? this.cachedBuiltinRules : this.cachedUserRules;
+		const file = isBuiltin ? this.BUILTIN_RULES_FILE : this.USER_RULES_FILE;
+		const rule = cache.find(r => r.id === id);
+		if (!rule) return;
+		rule.enabled = enabled;
+		await this.saveRulesFile(file, cache);
+		this.ruleEngine.setEnabled(id, enabled);
 	}
 
 	getCommandNameMap(): Map<string, string> {
@@ -2300,13 +2266,6 @@ export default class EasyTypingPlugin extends Plugin {
 		}
 
 		return command_name_map;
-	}
-
-	updateUserConvertRule(idx: number, before: string, after: string) {
-		if (idx >= this.settings.userConvertRulesStrList.length || idx < 0) return;
-		this.settings.userConvertRulesStrList[idx][0] = before;
-		this.settings.userConvertRulesStrList[idx][1] = after;
-		this.refreshUserConvertRule();
 	}
 
 	getEditor = (): Editor | null => {

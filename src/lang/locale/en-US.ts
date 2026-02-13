@@ -143,7 +143,25 @@ const locale = {
         },
         newPattern: {
             name: "New Pattern"
-        }
+        },
+        ruleEditModal: {
+            addTitle: "Add Rule",
+            editTitle: "Edit Rule",
+            fieldType: "Type",
+            fieldTrigger: "Trigger (left pattern)",
+            fieldTriggerRight: "Trigger Right (right pattern)",
+            fieldReplacement: "Replacement",
+            fieldIsRegex: "Is Regex",
+            fieldScope: "Scope",
+            fieldPriority: "Priority",
+            fieldDescription: "Description",
+            buttonSave: "Save",
+        },
+        ruleType: {
+            input: "Input",
+            delete: "Delete",
+            selectKey: "SelectKey",
+        },
     },
     headers: {
         main: "Obsidian EasyTyping Plugin",
@@ -167,10 +185,14 @@ const locale = {
         customizeDeleteRule: "Customize Delete Rule",
         customizeConvertRule: "Customize Convert Rule",
         editSelectionReplaceRule: "Edit Selection Replace Rule",
+        builtinRulesSection: "Built-in Rules",
+        userRulesSection: "User Rules",
+        deletedRulesSection: "Deleted Built-in Rules",
         tabs: {
             editEnhance: "Edit Enhance",
             autoFormat: "Auto Format",
-            customRules: "Custom Rules",
+            builtinRules: "Built-in Rules",
+            userRules: "User Rules",
             other: "Other",
         },
     },
@@ -184,13 +206,23 @@ const locale = {
         softSpace: "Soft Space",
         strictSpace: "Strict Space",
         dummy: "Dummy",
-        smart: "Smart"
+        smart: "Smart",
+        scopeAll: "All",
+        scopeText: "Text",
+        scopeFormula: "Formula",
+        scopeCode: "Code",
+        ruleTypeInput: "Input",
+        ruleTypeDelete: "Delete",
+        ruleTypeSelectKey: "SelectKey",
     },
     toolTip: {
         switch: "Switch",
         editRule: "Edit rule",
         removeRule: "Remove rule",
         addRule: "Add Rule",
+        enableRule: "Enable/Disable rule",
+        restoreRule: "Restore this rule",
+        resetAllRules: "Reset all built-in rules to defaults",
     },
     placeHolder: {
         triggerSymbol: "Trigger Symbol",

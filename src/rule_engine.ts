@@ -122,6 +122,28 @@ export class RuleEngine {
 		return { type, triggerMode, isRegex, scope };
 	}
 
+	/**
+	 * Convert escape sequences in user-entered text: \n → newline, \t → tab, \r → CR, \\\\ → \\
+	 * Strings from TypeScript source already contain real newlines and are unaffected.
+	 */
+	static unescapeText(text: string): string {
+		let result = '';
+		for (let i = 0; i < text.length; i++) {
+			if (text[i] === '\\' && i + 1 < text.length) {
+				switch (text[i + 1]) {
+					case 'n': result += '\n'; i++; break;
+					case 't': result += '\t'; i++; break;
+					case 'r': result += '\r'; i++; break;
+					case '\\': result += '\\'; i++; break;
+					default: result += text[i]; break;
+				}
+			} else {
+				result += text[i];
+			}
+		}
+		return result;
+	}
+
 	static parseTriggerKeys(pattern: string): string[] {
 		if (pattern.startsWith('[') && pattern.endsWith(']')) {
 			const inner = pattern.slice(1, -1);
@@ -260,7 +282,13 @@ export class RuleEngine {
 	// ===== Template Expansion =====
 
 	private expandVariables(text: string, match: MatchInfo): string {
-		// [[n]] → regex capture group
+		// [[Rn]] → right regex capture group (must come before [[n]])
+		text = text.replace(/\[\[R(\d+)\]\]/g, (_, n) => {
+			const idx = parseInt(n);
+			return match.rightMatches[idx] ?? '';
+		});
+
+		// [[n]] → left regex capture group, fallback to right
 		text = text.replace(/\[\[(\d+)\]\]/g, (_, n) => {
 			const idx = parseInt(n);
 			return match.leftMatches[idx] ?? match.rightMatches[idx] ?? '';
@@ -356,8 +384,8 @@ export class RuleEngine {
 			if (rule.type !== ctx.kind) continue;
 			if (rule.triggerMode === RuleTriggerMode.Tab && ctx.changeType !== 'tab') continue;
 
-			// Scope check
-			if (!rule.scope.includes(RuleScope.All) && !rule.scope.includes(ctx.scopeHint)) continue;
+			// Scope check: RuleScope.All on either side means "no restriction"
+			if (ctx.scopeHint !== RuleScope.All && !rule.scope.includes(RuleScope.All) && !rule.scope.includes(ctx.scopeHint)) continue;
 
 			switch (ctx.kind) {
 				case RuleType.SelectKey: {
@@ -445,6 +473,9 @@ export class RuleEngine {
 		} else {
 			text = rule.replacement;
 		}
+
+		// Unescape \n, \t, \r, \\ in replacement text
+		text = RuleEngine.unescapeText(text);
 
 		// Expand [[n]], standalone ${SELECTION}, ${KEY}
 		text = this.expandVariables(text, match);

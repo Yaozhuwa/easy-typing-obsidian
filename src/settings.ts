@@ -1,23 +1,17 @@
 import { SpaceState, string2SpaceState } from 'src/core';
 import { App, TextComponent, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TextAreaComponent, moment } from 'obsidian';
 import EasyTypingPlugin from './main';
-import { showString, findFirstPipeNotPrecededByBackslash } from './utils';
 import { enUS, ruRU, zhCN, zhTW } from './lang/locale';
 import {sprintf} from "sprintf-js";
 import { setDebug } from './utils';
+import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleScope } from './rule_engine';
+import { DEFAULT_BUILTIN_RULES } from './default_rules';
 
 export interface PairString {
 	left: string;
 	right: string;
 }
 
-export interface ConvertRule {
-	before: PairString;
-	after: PairString;
-	after_pattern?: string;
-}
-
-export enum RuleType {delete= "Delete Rule", convert='Convert Rule'}
 export enum WorkMode { OnlyWhenTyping = "typing", Globally = "global" }
 export enum StrictLineMode { EnterTwice = "enter_twice", TwoSpace = "two_space", Mix = "mix_mode" }
 
@@ -47,14 +41,6 @@ export interface EasyTypingSettings {
 	UserDefinedRegSwitch: boolean;
 	UserDefinedRegExp: string;
 	debug: boolean;
-
-	userSelRepRuleTrigger: string[];
-	userSelRepRuleValue: PairString[];
-	userDeleteRulesStrList: [string, string][];
-	userConvertRulesStrList: [string, string][];
-	userSelRuleSettingsOpen: boolean;
-	userDelRuleSettingsOpen: boolean;
-	userCvtRuleSettingsOpen: boolean;
 
 	StrictModeEnter: boolean;
 	StrictLineMode: StrictLineMode;
@@ -98,13 +84,6 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 		"\n[a-zA-Z0-9_\\-.]+@[a-zA-Z0-9_\\-.]+|++\n"+
 		"(?<!#)#[\\u4e00-\\u9fa5\\w-\\/]+|++",
 	debug: false,
-	userSelRepRuleTrigger: ["-", "#"],
-	userSelRepRuleValue: [{left:"~~", right:"~~"}, {left:"#", right:" "}],
-	userDeleteRulesStrList: [["demo|", "|"]],
-	userConvertRulesStrList: [[":)|","😀|"]],
-	userSelRuleSettingsOpen: true,
-	userDelRuleSettingsOpen: true,
-	userCvtRuleSettingsOpen: true,
 
 	StrictModeEnter: false,
 	StrictLineMode: StrictLineMode.EnterTwice,
@@ -160,7 +139,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const tabs = [
 			{ id: "edit-enhance", label: locale.headers.tabs.editEnhance },
 			{ id: "auto-format", label: locale.headers.tabs.autoFormat },
-			{ id: "custom-rules", label: locale.headers.tabs.customRules },
+			{ id: "builtin-rules", label: locale.headers.tabs.builtinRules },
+			{ id: "user-rules", label: locale.headers.tabs.userRules },
 			{ id: "other", label: locale.headers.tabs.other },
 		];
 
@@ -198,7 +178,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		// ========== 填充各 Tab 的内容 ==========
 		this.buildEditEnhanceTab(tabPanels["edit-enhance"]);
 		this.buildAutoFormatTab(tabPanels["auto-format"]);
-		this.buildCustomRulesTab(tabPanels["custom-rules"]);
+		this.buildBuiltinRulesSection(tabPanels["builtin-rules"]);
+		this.buildUserRulesSection(tabPanels["user-rules"]);
 		this.buildOtherTab(tabPanels["other"]);
 	}
 
@@ -498,31 +479,147 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			);
 	}
 
-	// ==================== Tab 3: 自定义规则 ====================
-	buildCustomRulesTab(el: HTMLElement): void {
-		this.buildUserSelRepRuleSetting(el.createEl("details", {
-			cls: "easytyping-nested-settings",
-			attr: {
-				...(this.plugin.settings.userSelRuleSettingsOpen ? { open: true } : {})
-			}
-		}));
+	// ==================== Tab 3: 内置规则 ====================
+	buildBuiltinRulesSection(el: HTMLElement): void {
+		const headerEl = el.createDiv({ cls: 'setting-item' });
+		const infoEl = headerEl.createDiv({ cls: 'setting-item-info' });
+		infoEl.createEl('h3', { text: locale.headers.builtinRulesSection });
+		const controlEl = headerEl.createDiv({ cls: 'setting-item-control' });
+		const resetBtn = controlEl.createEl('button', { text: locale.toolTip.resetAllRules });
+		resetBtn.addEventListener('click', async () => {
+			await this.plugin.resetAllBuiltinRules();
+			this.display();
+		});
 
-		this.buildUserDeleteRuleSetting(el.createEl("details", {
-			cls: "easytyping-nested-settings",
-			attr: {
-				...(this.plugin.settings.userDelRuleSettingsOpen ? { open: true } : {})
-			}
-		}));
+		for (const rule of this.plugin.cachedBuiltinRules) {
+			this.buildRuleItem(el, rule, true);
+		}
 
-		this.buildUserConvertRuleSetting(el.createEl("details", {
-			cls: "easytyping-nested-settings",
-			attr: {
-				...(this.plugin.settings.userCvtRuleSettingsOpen ? { open: true } : {})
+		// Deleted built-in rules section
+		const deletedIds = this.plugin.settings.deletedBuiltinRuleIds || [];
+		if (deletedIds.length > 0) {
+			const details = el.createEl('details', { cls: 'et-deleted-rules' });
+			details.createEl('summary', { text: `${locale.headers.deletedRulesSection} (${deletedIds.length})` });
+			for (const id of deletedIds) {
+				const defaultRule = DEFAULT_BUILTIN_RULES.find(r => r.id === id);
+				if (!defaultRule) continue;
+				const opts = RuleEngine.parseOptions(defaultRule.options);
+				const typeLabel = this.getRuleTypeLabel(opts.type);
+				const typeCls = this.getRuleTypeCls(opts.type);
+				const preview = defaultRule.description || `${defaultRule.trigger} → ${typeof defaultRule.replacement === 'string' ? defaultRule.replacement : '(fn)'}`;
+				new Setting(details)
+					.setName(createFragment(f => {
+						f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
+						f.createSpan({ text: preview });
+					}))
+					.addButton(button => {
+						button.setButtonText(locale.toolTip.restoreRule)
+							.onClick(async () => {
+								await this.plugin.restoreBuiltinRule(id);
+								this.display();
+							});
+					});
 			}
-		}));
+		}
 	}
 
-	// ==================== Tab 4: 其他设置 ====================
+	// ==================== Tab 4: 自定义规则 ====================
+	buildUserRulesSection(el: HTMLElement): void {
+		const headerEl = el.createDiv({ cls: 'setting-item' });
+		const infoEl = headerEl.createDiv({ cls: 'setting-item-info' });
+		infoEl.createEl('h3', { text: locale.headers.userRulesSection });
+		const controlEl = headerEl.createDiv({ cls: 'setting-item-control' });
+		const addBtn = controlEl.createEl('button', { text: '+' });
+		addBtn.addEventListener('click', () => {
+			new RuleEditModal(this.app, 'create', {}, async (rule) => {
+				await this.plugin.addUserRule(rule);
+				this.display();
+			}).open();
+		});
+
+		for (const rule of this.plugin.cachedUserRules) {
+			this.buildRuleItem(el, rule, false);
+		}
+	}
+
+	buildRuleItem(container: HTMLElement, rule: SimpleRule, isBuiltin: boolean): void {
+		const opts = RuleEngine.parseOptions(rule.options);
+		const typeLabel = this.getRuleTypeLabel(opts.type);
+		const typeCls = this.getRuleTypeCls(opts.type);
+		const enabled = rule.enabled !== false;
+
+		let preview: string;
+		if (rule.description) {
+			preview = rule.description;
+		} else {
+			const repl = typeof rule.replacement === 'string' ? rule.replacement : '(fn)';
+			preview = `${rule.trigger}${rule.trigger_right ? ' … ' + rule.trigger_right : ''} → ${repl}`;
+		}
+		// Truncate long previews
+		if (preview.length > 60) preview = preview.substring(0, 57) + '...';
+
+		const setting = new Setting(container)
+			.setClass('et-rule-item')
+			.setName(createFragment(f => {
+				f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
+				f.createSpan({ text: preview });
+			}))
+			.addToggle(toggle => {
+				toggle.setValue(enabled)
+					.setTooltip(locale.toolTip.enableRule)
+					.onChange(async (value) => {
+						await this.plugin.toggleRuleEnabled(rule.id!, isBuiltin, value);
+					});
+			})
+			.addExtraButton(button => {
+				button.setIcon('gear')
+					.setTooltip(locale.toolTip.editRule)
+					.onClick(() => {
+						new RuleEditModal(this.app, 'edit', rule, async (updated) => {
+							if (isBuiltin) {
+								await this.plugin.updateBuiltinRule(rule.id!, updated);
+							} else {
+								await this.plugin.updateUserRule(rule.id!, updated);
+							}
+							this.display();
+						}).open();
+					});
+			})
+			.addExtraButton(button => {
+				button.setIcon('trash')
+					.setTooltip(locale.toolTip.removeRule)
+					.onClick(async () => {
+						if (isBuiltin) {
+							await this.plugin.deleteBuiltinRule(rule.id!);
+						} else {
+							await this.plugin.deleteUserRule(rule.id!);
+						}
+						this.display();
+					});
+			});
+
+		if (!enabled) {
+			setting.settingEl.style.opacity = '0.5';
+		}
+	}
+
+	getRuleTypeLabel(type: EngineRuleType): string {
+		switch (type) {
+			case EngineRuleType.Input: return locale.settings.ruleType.input;
+			case EngineRuleType.Delete: return locale.settings.ruleType.delete;
+			case EngineRuleType.SelectKey: return locale.settings.ruleType.selectKey;
+		}
+	}
+
+	getRuleTypeCls(type: EngineRuleType): string {
+		switch (type) {
+			case EngineRuleType.Input: return 'et-rule-type-input';
+			case EngineRuleType.Delete: return 'et-rule-type-delete';
+			case EngineRuleType.SelectKey: return 'et-rule-type-selectkey';
+		}
+	}
+
+	// ==================== Tab 5: 其他设置 ====================
 	buildOtherTab(el: HTMLElement): void {
 		el.createEl('h3', { text: locale.headers.experimentalFeatures });
 
@@ -608,244 +705,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 	}
 
-	buildUserSelRepRuleSetting(containerEl: HTMLDetailsElement){
-		containerEl.empty();
-        containerEl.ontoggle = async () => {
-			this.plugin.settings.userSelRuleSettingsOpen = containerEl.open;
-			await this.plugin.saveSettings();
-        };
-		
-		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
-		summary.setText(locale.headers.customizeSelectionRule)
-
-        // summary.setHeading().setName("User defined Selection Replace Rule");
-        // summary.createDiv("collapser").createDiv("handle");
-
-		const selectionRuleSetting = new Setting(containerEl);
-		selectionRuleSetting
-			.setName(locale.settings.selectionReplaceRule.name)
-			// .setDesc(locale.settings.selectionReplaceRule.desc)
-
-		const replaceRuleTrigger = new TextComponent(selectionRuleSetting.controlEl);
-		replaceRuleTrigger.setPlaceholder(locale.placeHolder.triggerSymbol);
-
-		const replaceLeftString = new TextComponent(selectionRuleSetting.controlEl);
-		replaceLeftString.setPlaceholder(locale.placeHolder.newLeftSideString);
-
-		const replaceRightString = new TextComponent(selectionRuleSetting.controlEl);
-		replaceRightString.setPlaceholder(locale.placeHolder.newRightSideString);
-
-		selectionRuleSetting
-			.addButton((button) => {
-				button
-					.setButtonText("+")
-					.setTooltip(locale.placeHolder.addRule)
-					.onClick(async (buttonEl: any) => {
-						let trigger = replaceRuleTrigger.inputEl.value;
-						let left = replaceLeftString.inputEl.value;
-						let right = replaceRightString.inputEl.value;
-						if (trigger && (left || right)) {
-							if(trigger.length!=1 && trigger!="——" && trigger!="……"){
-								new Notice(locale.placeHolder.noticeInvaidTrigger);
-								return;
-							}
-							if (this.plugin.addUserSelectionRepRule(trigger, left, right)){
-								await this.plugin.saveSettings();
-								this.display();
-							}
-							else{
-								new Notice(sprintf(locale.placeHolder.noticeWarnTriggerExists, trigger))
-							}
-						}
-						else {
-							new Notice(locale.placeHolder.noticeMissingInput);
-						}
-					});
-			});
-
-		// const selRepRuleContainer = containerEl.createEl("div");
-		for (let i = 0; i < this.plugin.settings.userSelRepRuleTrigger.length; i++) {
-			let trigger = this.plugin.settings.userSelRepRuleTrigger[i];
-			let left_s = this.plugin.settings.userSelRepRuleValue[i].left;
-			let right_s = this.plugin.settings.userSelRepRuleValue[i].right;
-			let showStr = "Trigger: " + trigger + " → " + showString(left_s) + "selected" + showString(right_s);
-			// const settingItem = selRepRuleContainer.createEl("div");
-			new Setting(containerEl)
-				.setName(showStr)
-				.addExtraButton(button => {
-					button.setIcon("gear")
-						.setTooltip(locale.toolTip.editRule)
-						.onClick(() => {
-							new SelectRuleEditModal(this.app, trigger,left_s, right_s, async (new_left, new_right) => {
-								this.plugin.updateUserSelectionRepRule(i, new_left, new_right);
-								await this.plugin.saveSettings();
-								this.display();
-							}).open();
-						})
-				})
-				.addExtraButton(button => {
-					button.setIcon("trash")
-						.setTooltip(locale.toolTip.removeRule)
-						.onClick(async () => {
-							this.plugin.deleteUserSelectionRepRule(i);
-							await this.plugin.saveSettings();
-							this.display();
-						})
-				});
-		}
-
-
-	}
-
-	buildUserDeleteRuleSetting(containerEl: HTMLDetailsElement){
-		containerEl.empty();
-        containerEl.ontoggle = async () => {
-			this.plugin.settings.userDelRuleSettingsOpen = containerEl.open;
-			await this.plugin.saveSettings();
-        };
-		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
-		summary.setText(locale.headers.customizeDeleteRule)
-
-		const deleteRuleSetting = new Setting(containerEl);
-		deleteRuleSetting
-			.setName(locale.settings.deleteRule.name)
-			.setDesc(locale.settings.deleteRule.desc)
-
-		const patternBefore = new TextAreaComponent(deleteRuleSetting.controlEl);
-		patternBefore.setPlaceholder(locale.placeHolder.beforeDelete);
-
-		const patternAfter = new TextAreaComponent(deleteRuleSetting.controlEl);
-		patternAfter.setPlaceholder(locale.placeHolder.newPattern);
-
-		deleteRuleSetting
-			.addButton((button) => {
-				button
-					.setButtonText("+")
-					.setTooltip(locale.toolTip.addRule)
-					.onClick(async (buttonEl: any) => {
-						let before = patternBefore.inputEl.value;
-						let after = patternAfter.inputEl.value;
-						if (before && after) {
-							if(findFirstPipeNotPrecededByBackslash(before)==-1){
-								new Notice(locale.placeHolder.noticeInvaidTriggerPatternContainSymbol);
-								return;
-							}
-							else{
-								this.plugin.addUserDeleteRule(before, after);
-								await this.plugin.saveSettings();
-								this.display();
-							}
-						}
-						else {
-							new Notice(locale.placeHolder.noticeMissingInput);
-						}
-					});
-			});
-
-		for (let i = 0; i < this.plugin.settings.userDeleteRulesStrList.length; i++){
-			let before = this.plugin.settings.userDeleteRulesStrList[i][0];
-			let after = this.plugin.settings.userDeleteRulesStrList[i][1];
-			let showStr = "\"" + showString(before) + "\"  delete.backwards  → \""+ showString(after)+"\""; 
-			new Setting(containerEl)
-				.setName(showStr)
-				.addExtraButton(button => {
-					button.setIcon("gear")
-						.setTooltip(locale.toolTip.editRule)
-						.onClick(() => {
-							new EditConvertRuleModal(this.app, RuleType.delete, before, after, async (new_before, new_after) => {
-								this.plugin.updateUserDeleteRule(i, new_before, new_after);
-								await this.plugin.saveSettings();
-								this.display();
-							}).open();
-						})
-				})
-				.addExtraButton(button => {
-					button.setIcon("trash")
-						.setTooltip(locale.toolTip.removeRule)
-						.onClick(async () => {
-							this.plugin.deleteUserDeleteRule(i);
-							await this.plugin.saveSettings();
-							this.display();
-						})
-				});
-		}
-
-	}
-
-	buildUserConvertRuleSetting(containerEl: HTMLDetailsElement){
-		containerEl.empty();
-        containerEl.ontoggle = async () => {
-			this.plugin.settings.userCvtRuleSettingsOpen = containerEl.open;
-			await this.plugin.saveSettings();
-        };
-		const summary = containerEl.createEl("summary", {cls: "easytyping-nested-settings"});
-		summary.setText(locale.headers.customizeConvertRule)
-
-		const convertRuleSetting = new Setting(containerEl);
-		convertRuleSetting
-			.setName(locale.settings.convertRule.name)
-			.setDesc(locale.settings.convertRule.desc)
-
-		const patternBefore = new TextAreaComponent(convertRuleSetting.controlEl);
-		patternBefore.setPlaceholder(locale.placeHolder.beforeConvert);
-
-		const patternAfter = new TextAreaComponent(convertRuleSetting.controlEl);
-		patternAfter.setPlaceholder(locale.placeHolder.newPattern);
-
-		convertRuleSetting
-			.addButton((button) => {
-				button
-					.setButtonText("+")
-					.setTooltip(locale.toolTip.addRule)
-					.onClick(async (buttonEl: any) => {
-						let before = patternBefore.inputEl.value;
-						let after = patternAfter.inputEl.value;
-						if (before && after) {
-							if(findFirstPipeNotPrecededByBackslash(before)==-1){
-								new Notice(locale.placeHolder.noticeInvaidTriggerPatternContainSymbol);
-								return;
-							}
-							else{
-								this.plugin.addUserConvertRule(before, after);
-								await this.plugin.saveSettings();
-								this.display();
-							}
-						}
-						else {
-							new Notice(locale.placeHolder.noticeMissingInput);
-						}
-					});
-			});
-
-		for (let i = 0; i < this.plugin.settings.userConvertRulesStrList.length; i++){
-			let before = this.plugin.settings.userConvertRulesStrList[i][0];
-			let after = this.plugin.settings.userConvertRulesStrList[i][1];
-			let showStr = "\"" + showString(before) + "\"  auto convert to \""+ showString(after)+"\""; 
-			new Setting(containerEl)
-				.setName(showStr)
-				.addExtraButton(button => {
-					button.setIcon("gear")
-						.setTooltip(locale.toolTip.editRule)
-						.onClick(() => {
-							new EditConvertRuleModal(this.app, RuleType.convert, before, after, async (new_before, new_after) => {
-								this.plugin.updateUserConvertRule(i, new_before, new_after);
-								await this.plugin.saveSettings();
-								this.display();
-							}).open();
-						})
-				})
-				.addExtraButton(button => {
-					button.setIcon("trash")
-						.setTooltip(locale.toolTip.removeRule)
-						.onClick(async () => {
-							this.plugin.deleteUserConvertRule(i);
-							await this.plugin.saveSettings();
-							this.display();
-						})
-				});
-		}
-	}
-
 }
 
 
@@ -856,142 +715,178 @@ function setAttributes(element: any, attributes: any) {
 }
 
 
-export class SelectRuleEditModal extends Modal {
-	trigger: string;
-	old_left: string;
-	old_right: string;
-	new_left: string;
-	new_right: string;
-	onSubmit: (new_left: string, new_right:string) => void;
+export class RuleEditModal extends Modal {
+	mode: 'create' | 'edit';
+	initial: Partial<SimpleRule>;
+	onSubmit: (rule: SimpleRule) => void;
 
-	constructor(app: App, trigger: string, left: string, right: string, onSubmit: (new_left: string, new_right:string) => void) {
+	// Form state
+	ruleType: EngineRuleType = EngineRuleType.Input;
+	trigger: string = '';
+	triggerRight: string = '';
+	replacement: string = '';
+	isRegex: boolean = false;
+	ruleScope: RuleScope = RuleScope.All;
+	priority: number = 100;
+	description: string = '';
+	enabled: boolean = true;
+
+	constructor(
+		app: App,
+		mode: 'create' | 'edit',
+		initial: Partial<SimpleRule>,
+		onSubmit: (rule: SimpleRule) => void
+	) {
 		super(app);
-		this.trigger = trigger;
-		this.old_left = left;
-		this.old_right = right;
-		this.new_left = left;
-		this.new_right = right;
-
+		this.mode = mode;
+		this.initial = initial;
 		this.onSubmit = onSubmit;
+
+		// Parse initial values
+		if (initial.options !== undefined || initial.trigger !== undefined) {
+			const opts = RuleEngine.parseOptions(initial.options);
+			this.ruleType = opts.type;
+			this.isRegex = opts.isRegex;
+			this.ruleScope = opts.scope[0] || RuleScope.All;
+		}
+		if (initial.trigger !== undefined) this.trigger = initial.trigger;
+		if (initial.trigger_right !== undefined) this.triggerRight = initial.trigger_right;
+		if (typeof initial.replacement === 'string') this.replacement = initial.replacement;
+		if (initial.priority !== undefined) this.priority = initial.priority;
+		if (initial.description !== undefined) this.description = initial.description;
+		if (initial.enabled !== undefined) this.enabled = initial.enabled;
 	}
 
 	onOpen() {
 		const { contentEl } = this;
+		const title = this.mode === 'create'
+			? locale.settings.ruleEditModal.addTitle
+			: locale.settings.ruleEditModal.editTitle;
+		contentEl.createEl('h2', { text: title });
 
-		contentEl.createEl("h1", { text: locale.headers.editSelectionReplaceRule });
-
+		// Type dropdown
 		new Setting(contentEl)
-			.setName(locale.settings.trigger.name)
-			.addText((text) => {
-				text.setValue(this.trigger);
-				text.setDisabled(true);
-			})
-		
-		new Setting(contentEl)
-			.setName(locale.settings.left.name)
-			.addTextArea((text) => {
-				text.setValue(this.old_left);
-				text.onChange((value) => {
-					this.new_left = value
-				})
-			})
-		new Setting(contentEl)
-			.setName(locale.settings.right.name)
-			.addTextArea((text) => {
-				text.setValue(this.old_right);
-				text.onChange((value) => {
-					this.new_right = value
-				})
+			.setName(locale.settings.ruleEditModal.fieldType)
+			.addDropdown(dropdown => {
+				dropdown.addOption(EngineRuleType.Input, locale.dropdownOptions.ruleTypeInput);
+				dropdown.addOption(EngineRuleType.Delete, locale.dropdownOptions.ruleTypeDelete);
+				dropdown.addOption(EngineRuleType.SelectKey, locale.dropdownOptions.ruleTypeSelectKey);
+				dropdown.setValue(this.ruleType);
+				dropdown.onChange((v: string) => {
+					this.ruleType = v as EngineRuleType;
+					this.refreshVisibility(contentEl);
+				});
 			});
 
-
+		// Trigger
 		new Setting(contentEl)
-			.addButton((btn) =>
-				btn
-					.setButtonText(locale.button.update)
+			.setName(locale.settings.ruleEditModal.fieldTrigger)
+			.addText(text => {
+				text.setValue(this.trigger);
+				text.onChange(v => this.trigger = v);
+			});
+
+		// Trigger Right (hidden for SelectKey)
+		const triggerRightSetting = new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldTriggerRight)
+			.addText(text => {
+				text.setValue(this.triggerRight);
+				text.onChange(v => this.triggerRight = v);
+			});
+		triggerRightSetting.settingEl.dataset.field = 'triggerRight';
+
+		// Replacement
+		const replacementSetting = new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldReplacement);
+		replacementSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
+		const replacementArea = new TextAreaComponent(replacementSetting.controlEl);
+		replacementArea.inputEl.setAttribute('style', 'width: 100%; min-height: 60px;');
+		replacementArea.setValue(this.replacement);
+		replacementArea.onChange(v => this.replacement = v);
+
+		// Is Regex
+		new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldIsRegex)
+			.addToggle(toggle => {
+				toggle.setValue(this.isRegex);
+				toggle.onChange(v => this.isRegex = v);
+			});
+
+		// Scope
+		new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldScope)
+			.addDropdown(dropdown => {
+				dropdown.addOption(RuleScope.All, locale.dropdownOptions.scopeAll);
+				dropdown.addOption(RuleScope.Text, locale.dropdownOptions.scopeText);
+				dropdown.addOption(RuleScope.Formula, locale.dropdownOptions.scopeFormula);
+				dropdown.addOption(RuleScope.Code, locale.dropdownOptions.scopeCode);
+				dropdown.setValue(this.ruleScope);
+				dropdown.onChange((v: string) => this.ruleScope = v as RuleScope);
+			});
+
+		// Priority
+		new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldPriority)
+			.addText(text => {
+				text.setValue(String(this.priority));
+				text.inputEl.type = 'number';
+				text.onChange(v => {
+					const n = parseInt(v);
+					if (!isNaN(n)) this.priority = n;
+				});
+			});
+
+		// Description
+		new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldDescription)
+			.addText(text => {
+				text.setValue(this.description);
+				text.onChange(v => this.description = v);
+			});
+
+		// Save button
+		new Setting(contentEl)
+			.addButton(btn => {
+				btn.setButtonText(locale.settings.ruleEditModal.buttonSave)
 					.setCta()
 					.onClick(() => {
 						this.close();
-						this.onSubmit(this.new_left, this.new_right);
-					}));
-	}
-
-	onClose() {
-		let { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
-
-
-export class EditConvertRuleModal extends Modal {
-	type: RuleType;
-	old_before: string;
-	old_after: string;
-	new_before: string;
-	new_after: string;
-	onSubmit: (new_before: string, new_after:string) => void;
-
-	constructor(app: App, type: RuleType, before: string, after: string, onSubmit: (new_before: string, new_after:string) => void) {
-		super(app);
-		this.type = type;
-		this.old_before = before;
-		this.old_after = after;
-		this.new_before = before;
-		this.new_after = after;
-
-		this.onSubmit = onSubmit;
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-
-		contentEl.createEl("h1", { text: "Edit " + this.type});
-		
-		new Setting(contentEl)
-			.setName(locale.settings.oldPattern.name)
-			.addTextArea((text) => {
-				text.setValue(this.old_before);
-				text.onChange((value) => {
-					this.new_before = value
-				})
-			})
-		new Setting(contentEl)
-			.setName(locale.settings.newPattern.name)
-			.addTextArea((text) => {
-				text.setValue(this.old_after);
-				text.onChange((value) => {
-					this.new_after = value
-				})
+						this.onSubmit(this.buildSimpleRule());
+					});
 			});
 
-
-		new Setting(contentEl)
-			.addButton((btn) =>
-				btn
-					.setButtonText(locale.button.update)
-					.setCta()
-					.onClick(() => {
-						if (this.checkConvertPatternString(this.new_before, this.new_after))
-						{
-							this.close();
-							this.onSubmit(this.new_before, this.new_after);
-						}
-						else{
-							new Notice(locale.placeHolder.noticeInvalidPatternString);
-						}
-						
-					}));
+		this.refreshVisibility(contentEl);
 	}
 
-	checkConvertPatternString(before: string, after:string):boolean{
-		if(findFirstPipeNotPrecededByBackslash(before)==-1) return false;
-		return true;
+	refreshVisibility(contentEl: HTMLElement) {
+		const triggerRightEl = contentEl.querySelector('[data-field="triggerRight"]') as HTMLElement;
+		if (triggerRightEl) {
+			triggerRightEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
+		}
+	}
+
+	buildSimpleRule(): SimpleRule {
+		let options = '';
+		if (this.ruleType === EngineRuleType.Delete) options += 'd';
+		else if (this.ruleType === EngineRuleType.SelectKey) options += 's';
+		if (this.isRegex) options += 'r';
+		if (this.ruleScope === RuleScope.Text) options += 't';
+		else if (this.ruleScope === RuleScope.Formula) options += 'f';
+		else if (this.ruleScope === RuleScope.Code) options += 'c';
+
+		return {
+			trigger: this.trigger,
+			trigger_right: this.triggerRight || undefined,
+			replacement: this.replacement,
+			options: options || undefined,
+			priority: this.priority,
+			description: this.description || undefined,
+			enabled: this.enabled,
+		};
 	}
 
 	onClose() {
-		let { contentEl } = this;
-		contentEl.empty();
+		this.contentEl.empty();
 	}
 }
 

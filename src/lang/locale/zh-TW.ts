@@ -144,7 +144,25 @@ const locale: typeof enUS = {
         },
         newPattern: {
             name: "新模式"
-        }
+        },
+        ruleEditModal: {
+            addTitle: "新增規則",
+            editTitle: "編輯規則",
+            fieldType: "類型",
+            fieldTrigger: "觸發器（左側模式）",
+            fieldTriggerRight: "觸發器右側（右側模式）",
+            fieldReplacement: "替換內容",
+            fieldIsRegex: "正則表達式",
+            fieldScope: "作用域",
+            fieldPriority: "優先級",
+            fieldDescription: "描述",
+            buttonSave: "儲存",
+        },
+        ruleType: {
+            input: "輸入",
+            delete: "刪除",
+            selectKey: "選中替換",
+        },
     },
     headers: {
         main: "Obsidian EasyTyping 插件",
@@ -168,10 +186,14 @@ const locale: typeof enUS = {
         customizeDeleteRule: "自定義刪除編輯增强規則",
         customizeConvertRule: "自定義編輯轉換規則",
         editSelectionReplaceRule: "編輯選中替換規則",
+        builtinRulesSection: "內建規則",
+        userRulesSection: "使用者規則",
+        deletedRulesSection: "已刪除的內建規則",
         tabs: {
             editEnhance: "編輯增強",
             autoFormat: "自動格式化",
-            customRules: "自訂規則",
+            builtinRules: "內建規則",
+            userRules: "自訂規則",
             other: "其他設定",
         },
     },
@@ -185,13 +207,23 @@ const locale: typeof enUS = {
         softSpace: "軟空格",
         strictSpace: "嚴格空格",
         dummy: "呆空格",
-        smart: "智能空格"
+        smart: "智能空格",
+        scopeAll: "全部",
+        scopeText: "文本",
+        scopeFormula: "公式",
+        scopeCode: "程式碼",
+        ruleTypeInput: "輸入",
+        ruleTypeDelete: "刪除",
+        ruleTypeSelectKey: "選中替換",
     },
     toolTip: {
         switch: "功能開關",
         editRule: "編輯規則",
         removeRule: "刪除規則",
         addRule: "添加規則",
+        enableRule: "啟用/停用規則",
+        restoreRule: "恢復此規則",
+        resetAllRules: "重置所有內建規則為預設值",
     },
     placeHolder: {
         triggerSymbol: "觸發符",

@@ -66,3 +66,49 @@ span[class="easy-typing-cursor-widget"] {
     border-bottom: 1px solid var(--background-modifier-border);
     padding-bottom: 6px;
 }
+
+/* ========== Rule Type Tags ========== */
+.et-rule-type-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.et-rule-type-input {
+    background-color: rgba(76, 175, 80, 0.15);
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.et-rule-type-delete {
+    background-color: rgba(244, 67, 54, 0.15);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.et-rule-type-selectkey {
+    background-color: rgba(33, 150, 243, 0.15);
+    color: #2196f3;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.et-rule-item .setting-item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-deleted-rules summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    margin-top: 8px;
+}
+
+.et-deleted-rules .setting-item {
+    opacity: 0.7;
+}

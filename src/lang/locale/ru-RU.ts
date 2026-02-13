@@ -146,7 +146,25 @@ const locale: typeof enUS = {
         },
         newPattern: {
             name: "Новый шаблон"
-        }
+        },
+        ruleEditModal: {
+            addTitle: "Добавить правило",
+            editTitle: "Редактировать правило",
+            fieldType: "Тип",
+            fieldTrigger: "Триггер (левый шаблон)",
+            fieldTriggerRight: "Триггер правый (правый шаблон)",
+            fieldReplacement: "Замена",
+            fieldIsRegex: "Регулярное выражение",
+            fieldScope: "Область",
+            fieldPriority: "Приоритет",
+            fieldDescription: "Описание",
+            buttonSave: "Сохранить",
+        },
+        ruleType: {
+            input: "Ввод",
+            delete: "Удаление",
+            selectKey: "Замена выбора",
+        },
     },
     headers: {
         main: "Плагин Obsidian EasyTyping",
@@ -170,10 +188,14 @@ const locale: typeof enUS = {
         customizeDeleteRule: "Настройка правила удаления",
         customizeConvertRule: "Настройка правила преобразования",
         editSelectionReplaceRule: "Редактирование правила замены выделенного текста",
+        builtinRulesSection: "Встроенные правила",
+        userRulesSection: "Пользовательские правила",
+        deletedRulesSection: "Удалённые встроенные правила",
         tabs: {
             editEnhance: "Редактирование",
             autoFormat: "Автоформат",
-            customRules: "Правила",
+            builtinRules: "Встроенные",
+            userRules: "Пользовательские",
             other: "Прочее",
         },
     },
@@ -187,13 +209,23 @@ const locale: typeof enUS = {
         softSpace: "Мягкий пробел",
         strictSpace: "Строгий пробел",
         dummy: "Фиктивный",
-        smart: "Умный"
+        smart: "Умный",
+        scopeAll: "Все",
+        scopeText: "Текст",
+        scopeFormula: "Формула",
+        scopeCode: "Код",
+        ruleTypeInput: "Ввод",
+        ruleTypeDelete: "Удаление",
+        ruleTypeSelectKey: "Замена выбора",
     },
     toolTip: {
         switch: "Переключить",
         editRule: "Редактировать правило",
         removeRule: "Удалить правило",
         addRule: "Добавить правило",
+        enableRule: "Включить/Выключить правило",
+        restoreRule: "Восстановить это правило",
+        resetAllRules: "Сбросить все встроенные правила к значениям по умолчанию",
     },
     placeHolder: {
         triggerSymbol: "Символ триггера",

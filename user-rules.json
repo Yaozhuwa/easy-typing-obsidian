@@ -1,0 +1,65 @@
+[
+  {
+    "trigger": "-",
+    "replacement": "~~${0:${SELECTION}}~~",
+    "options": "s",
+    "priority": 100,
+    "description": "-添加删除线",
+    "enabled": true,
+    "id": "user-migrated-sel-0"
+  },
+  {
+    "trigger": "([-+*]) \\[.\\] ",
+    "replacement": "[[1]] ",
+    "options": "dr",
+    "priority": 100,
+    "description": "任务删除转列表项",
+    "enabled": true,
+    "id": "user-migrated-del-0"
+  },
+  {
+    "id": "user-migrated-del-1",
+    "trigger": "%%",
+    "trigger_right": "%%",
+    "replacement": "",
+    "options": "d",
+    "priority": 100,
+    "description": "快速删除空 markdown 注释"
+  },
+  {
+    "id": "user-migrated-del-3",
+    "trigger": " ?!?\\[\\[[^\\n\\[\\]]*\\]\\]",
+    "trigger_right": "",
+    "replacement": "",
+    "options": "dr",
+    "priority": 100,
+    "description": "Migrated delete rule"
+  },
+  {
+    "trigger": "```ts",
+    "trigger_right": "```",
+    "replacement": "```TypeScript\n$0\n```",
+    "options": "r",
+    "priority": 100,
+    "description": "TS 代码块",
+    "enabled": true,
+    "id": "user-migrated-cvt-2"
+  },
+  {
+    "trigger": "(?<=^|\\n)([\\w-]+)-call",
+    "replacement": "> [![[0]]] $0\\n> $1",
+    "options": "rt",
+    "priority": 100,
+    "description": "快捷 Callout",
+    "enabled": true,
+    "id": "user-migrated-cvt-14"
+  },
+  {
+    "trigger": "- 【",
+    "replacement": "- [ ] ",
+    "priority": 100,
+    "description": "快速任务",
+    "enabled": true,
+    "id": "user-1770958043933-igpb"
+  }
+]

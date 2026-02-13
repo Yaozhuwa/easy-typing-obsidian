@@ -1,5 +1,5 @@
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text} from '@codemirror/state';
-import { EasyTypingSettingTab, EasyTypingSettings, PairString, ConvertRule} from "./settings"
+import { EasyTypingSettingTab, EasyTypingSettings, PairString} from "./settings"
 import { App, Plugin, Platform } from 'obsidian'
 import { TabstopSpec } from './tabstop';
 
@@ -133,14 +133,6 @@ function convertEscapeChar(s: string):string{
 			.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t')
 			.replace(/\\\n/g, '\\n').replace(/\\\r/g, '\\r').replace(/\\\t/g, '\\t')
 			.replace(/\\\\/g, "\\");
-}
-
-export function ruleStringList2RuleList(list: Array<[string, string]>):ConvertRule[] {
-	let res:ConvertRule[] = [];
-	for (let i in list){
-		res[i] = {before: string2pairstring(list[i][0]), after: string2pairstring(list[i][1]), after_pattern: list[i][1]}
-	}
-	return res;
 }
 
 export function findFirstPipeNotPrecededByBackslash(s: string): number {
