@@ -10,8 +10,6 @@ import {
 	ruleStringList2RuleList,
 	string2pairstring,
 	isRegexp,
-	replacePlaceholders,
-	parseTheAfterPattern,
 	taboutCursorInPairedString,
 } from './utils'
 import {getPosLineType, getPosLineType2, LineFormater, LineType} from './core'
@@ -29,15 +27,8 @@ export default class EasyTypingPlugin extends Plugin {
 	SelectionReplaceMap: Map<string, PairString>;
 	SymbolPairsMap: Map<string, string>;
 	halfToFullSymbolMap: Map<string, string>;
-	BasicConvRules: ConvertRule[];
-	FW2HWSymbolRules: ConvertRule[];
 	Formater: LineFormater;
-	IntrinsicDeleteRules: ConvertRule[];
-	IntrinsicAutoPairRulesPatch: ConvertRule[];
 	CurActiveMarkdown: string;
-
-	QuoteSpaceRules: ConvertRule[];
-	ExtraBasicConvRules: ConvertRule[];
 
 	UserDeleteRules: ConvertRule[];
 	UserConvertRules: ConvertRule[];
@@ -75,32 +66,7 @@ export default class EasyTypingPlugin extends Plugin {
 			['!', '！']
 		]);
 
-		let BasicConvRuleStringList: Array<[string, string]> = [['··|', '`|`'], ["！【【|】",'![[|]]'],['！【【|', '![[|]]'],
-		["【【|】", "[[|]]"], ['【【|', "[[|]]"], ['￥￥|', '$|$'], ['$￥|$', "$$\n|\n$$"],['¥¥|','$|$'], ['$¥|$', "$$\n|\n$$"],["$$|$", "$$\n|\n$$"], ['$$|', "$|$"],
-		['\n》|', "\n> |"], ["\n、|", "\n/|"]];
-		let ExtraBasicConvRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>*) ?[>》]/|', '[[0]]> |']];
-		let QuoteSpaceRuleStringList: Array<[string, string]> = [['r/(?<=^|\\n)(\\s*>+)([^ >》]+)/|', '[[0]] [[1]]|']];
-		
-		this.ExtraBasicConvRules = ruleStringList2RuleList(ExtraBasicConvRuleStringList);
-		this.QuoteSpaceRules = ruleStringList2RuleList(QuoteSpaceRuleStringList);
-		this.BasicConvRules = ruleStringList2RuleList(BasicConvRuleStringList);
-		let FW2HWSymbolRulesStrList: Array<[string, string]> = [["。。|", ".|"], ["！！|", "!|"], ["；；|", ";|"], ["，，|", ",|"],
-		["：：|", ":|"], ['？？|', '?|'], ['（（|）', "(|)"], ['（（|', '(|)'], ["““|”", "\"|\""], ["“”|”", "\"|\""], ["‘‘|’", "'|'"], ["‘’|’", "'|'"],
-		["》》|", ">|"], ["《《|》", "<|"], ['《《|', "<|"]];
-		this.FW2HWSymbolRules = ruleStringList2RuleList(FW2HWSymbolRulesStrList);
-		let fw2hw_rule_0: ConvertRule = {before:{left:'｜｜', right:''}, after:{left:'|', right:''}};
-		this.FW2HWSymbolRules.push(fw2hw_rule_0)
-
-		let DeleteRulesStrList: Array<[string, string]> = [["$|$", "|"], ['==|==', '|'], ['$$\n|\n$$', "|"]];
-		this.IntrinsicDeleteRules = ruleStringList2RuleList(DeleteRulesStrList);
-
-		let autoPairRulesPatchStrList: Array<[string, string]> = [["【】|】", "【】|"], ["（）|）", "（）|"],
-		["<>|>", "<>|"], ["《》|》", "《》|"], ["「」|」", "「」|"], ["『』|』", "『』|"], ["()|)", "()|"], ['[]|]', '[]|'],
-		["{}|}", "{}|"], ["''|'", "''|"], ['""|"', '""|'],
-		];
-		this.IntrinsicAutoPairRulesPatch = ruleStringList2RuleList(autoPairRulesPatchStrList);
-
-		let TaboutPairStrs = ["【|】", "（|）", "《|》", "“|”", "‘|’", 
+		let TaboutPairStrs = ["【|】", "（|）", "《|》", "\u201C|\u201D", "\u2018|\u2019",
 						   "「|」", "『|』", "'|'", "\"|\"", "$$|$$", '$|$', '__|__', '_|_',
 							"==|==", "~~|~~", "**|**", '*|*', "[[|]]", '[|]',"{|}", "(|)", "<|>"];
 		this.TaboutPairStrs = TaboutPairStrs.map((s:string)=>string2pairstring(s));
