@@ -19,7 +19,7 @@ import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos, getQuoteInfoInPos } from './syntax';
 import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop, hasTabstops } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
-import { RuleEngine, SimpleRule } from './rule_engine';
+import { RuleEngine, SimpleRule, TxContext, RuleType, RuleScope } from './rule_engine';
 import { DEFAULT_BUILTIN_RULES } from './default_rules';
 
 
@@ -351,9 +351,33 @@ export default class EasyTypingPlugin extends Plugin {
 			// ========== Selection Replace ============
 			if (this.settings.SelectionEnhance) {
 				if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB)||insertedStr=='——'||insertedStr=='……')) {
-					if (this.SelectionReplaceMap.has(insertedStr)) {
-						changes.push({ changes: { from: fromA, insert: this.SelectionReplaceMap.get(insertedStr)?.left }, userEvent: "EasyTyping.change" })
-						changes.push({ changes: { from: toA, insert: this.SelectionReplaceMap.get(insertedStr)?.right }, userEvent: "EasyTyping.change" })
+					const selCtx: TxContext = {
+						kind: RuleType.SelectKey,
+						docText: tr.startState.doc.toString(),
+						selection: { from: fromA, to: toA },
+						inserted: insertedStr,
+						changeType: changeTypeStr,
+						scopeHint: RuleScope.All,
+						key: insertedStr,
+						debug: this.settings?.debug,
+					};
+					const selResult = this.ruleEngine.process(selCtx);
+					if (selResult) {
+						const tabstopGroups = tabstopSpecsToTabstopGroups(selResult.tabstops);
+						if (tabstopGroups.length > 0) {
+							changes.push({
+								changes: { from: selResult.matchRange.from, to: selResult.matchRange.to, insert: selResult.newText },
+								selection: tabstopGroups[0].toEditorSelection(),
+								effects: [addTabstopsEffect.of(tabstopGroups)],
+								userEvent: "EasyTyping.change"
+							});
+						} else {
+							changes.push({
+								changes: { from: selResult.matchRange.from, to: selResult.matchRange.to, insert: selResult.newText },
+								selection: { anchor: selResult.cursor },
+								userEvent: "EasyTyping.change"
+							});
+						}
 						tr = tr.startState.update(...changes);
 						return tr;
 					}
@@ -527,7 +551,7 @@ export default class EasyTypingPlugin extends Plugin {
 				if (/^\s*```$/.test(line_content) && '\n'+line_content==next_line_content) {
 					changes.push({
 						changes:{
-							from: toA-3, 
+							from: toA-3,
 							to: toA+line_content.length+1,
 							insert: ''
 						},
@@ -537,82 +561,38 @@ export default class EasyTypingPlugin extends Plugin {
 					tr = tr.startState.update(...changes);
 					return tr;
 				}
-
-				for (let rule of this.IntrinsicDeleteRules) {
-					let left = tr.startState.doc.sliceString(toA - rule.before.left.length, toA);
-					let right = tr.startState.doc.sliceString(toA, toA + rule.before.right.length);
-					if (left === rule.before.left && right === rule.before.right) {
-						changes.push({
-							changes: {
-								from: toA - rule.before.left.length,
-								to: toA + rule.before.right.length,
-								insert: rule.after.left + rule.after.right
-							},
-							selection: { anchor: toA - rule.before.left.length + rule.after.left.length },
-							userEvent: "EasyTyping.change"
-						});
-						tr = tr.startState.update(...changes);
-						return tr;
-					}
-				}
 			}
 
-			// UserDefined Delete Rule
-			if (changeTypeStr == "delete.backward") {
-				for (let rule of this.UserDeleteRules) {
-					let leftDocStr = tr.startState.doc.sliceString(0, toA);
-					let rightDocStr = tr.startState.doc.sliceString(toA);
-					let leftRegexpStr = rule.before.left;
-					if (isRegexp(rule.before.left)){
-						leftRegexpStr = leftRegexpStr.slice(2, -1);
-					}else{
-						leftRegexpStr = leftRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			// Unified delete rules (intrinsic + user) via RuleEngine
+			if (changeTypeStr === "delete.backward") {
+				const delCtx: TxContext = {
+					kind: RuleType.Delete,
+					docText: tr.startState.doc.toString(),
+					selection: { from: toA, to: toA },
+					inserted: '',
+					changeType: changeTypeStr,
+					scopeHint: RuleScope.All,
+					debug: this.settings?.debug,
+				};
+				const delResult = this.ruleEngine.process(delCtx);
+				if (delResult) {
+					const tabstopGroups = tabstopSpecsToTabstopGroups(delResult.tabstops);
+					if (tabstopGroups.length > 0) {
+						changes.push({
+							changes: { from: delResult.matchRange.from, to: delResult.matchRange.to, insert: delResult.newText },
+							selection: tabstopGroups[0].toEditorSelection(),
+							effects: [addTabstopsEffect.of(tabstopGroups)],
+							userEvent: "EasyTyping.change"
+						});
+					} else {
+						changes.push({
+							changes: { from: delResult.matchRange.from, to: delResult.matchRange.to, insert: delResult.newText },
+							selection: { anchor: delResult.cursor },
+							userEvent: "EasyTyping.change"
+						});
 					}
-					
-					let leftRegexp = new RegExp(leftRegexpStr+"$");
-					let leftMatch = leftDocStr.match(leftRegexp);
-					if (leftMatch){
-						let leftMatchStr = leftMatch[0];
-						// 选择 leftMatch[0] 之后的所有匹配
-						let matchList = leftMatch.slice(1);
-						let matchPosBegin = toA - leftMatchStr.length;
-						let rightRegexpStr = rule.before.right;
-						if (isRegexp(rule.before.right)){
-							rightRegexpStr = rightRegexpStr.slice(2, -1);
-						}else{
-							// $& 表示匹配的子串
-							rightRegexpStr = rightRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-						}
-						let rightRegexp = new RegExp('^'+rightRegexpStr);
-						let rightMatch = rightDocStr.match(rightRegexp);
-						if(rightMatch){
-							let rightMatchStr = rightMatch[0];
-							let matchPosEnd = toA + rightMatchStr.length;
-							matchList.push(...rightMatch.slice(1));
-							// 左右都匹配成功，开始替换字符串
-							// let replaceLeft = replacePlaceholders(rule.after.left, matchList);
-							// let replaceRight = replacePlaceholders(rule.after.right, matchList);
-							let [new_string, tabstops] = parseTheAfterPattern(rule.after_pattern, matchList);
-							const updatedTabstops = tabstops.map(tabstop => ({
-								...tabstop, // 展开现有的属性
-								from: tabstop.from + matchPosBegin, // 增加from属性的值
-								to: tabstop.to + matchPosBegin // 增加to属性的值
-							}));
-							let tabstopGroups = tabstopSpecsToTabstopGroups(updatedTabstops);
-							changes.push({
-								changes: {
-									from: matchPosBegin,
-									to: matchPosEnd,
-									insert: new_string
-								},
-								selection: tabstopGroups[0].toEditorSelection(),
-								effects:  [addTabstopsEffect.of(tabstopGroups)],
-								userEvent: "EasyTyping.change"
-							});
-							tr = tr.startState.update(...changes);
-							return tr;
-						}
-					}
+					tr = tr.startState.update(...changes);
+					return tr;
 				}
 			}
 
@@ -663,125 +643,96 @@ export default class EasyTypingPlugin extends Plugin {
 							return tr;
 						}
 					}
-
-					for (let rule of this.BasicConvRules) {
-						if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
-						// 处理文档第 0 行
-						if (rule.before.left.charAt(0) === '\n' && offsetToPos(tr.state.doc, fromA).line === 0 && toB - rule.before.left.length + 1 === 0) {
-							let left = tr.state.doc.sliceString(toB - rule.before.left.length + 1, toB);
-							let right = tr.state.doc.sliceString(toB, toB + rule.before.right.length);
-							if (left === rule.before.left.substring(1) && right === rule.before.right) {
-								changes.push({
-									changes: {
-										from: toA - rule.before.left.length + 2,
-										to: toA + rule.before.right.length,
-										insert: rule.after.left.substring(1) + rule.after.right
-									},
-									selection: { anchor: toA - rule.before.left.length + rule.after.left.length + 1 },
-									userEvent: "EasyTyping.change"
-								});
-								tr = tr.startState.update(...changes);
-								return tr;
-							}
-						}
-						// 通常情况处理
-						else {
-							let left = tr.state.doc.sliceString(toB - rule.before.left.length, toB);
-							let right = tr.state.doc.sliceString(toB, toB + rule.before.right.length);
-							if (left === rule.before.left && right === rule.before.right) {
-								changes.push({
-									changes: {
-										from: toA - rule.before.left.length + 1,
-										to: toA + rule.before.right.length,
-										insert: rule.after.left + rule.after.right
-									},
-									selection: { anchor: toA - rule.before.left.length + rule.after.left.length + 1 },
-									userEvent: "EasyTyping.change"
-								});
-								tr = tr.startState.update(...changes);
-								return tr;
-							}
-						}
-					}
 				}
 
-				if (this.settings.FW2HWEnhance) {
-					for (let rule of this.FW2HWSymbolRules) {
-						if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
-						let left = tr.state.doc.sliceString(toB - rule.before.left.length, toB);
-						let right = tr.state.doc.sliceString(toB, toB + rule.before.right.length);
-						if (left === rule.before.left && right === rule.before.right) {
+				// Unified input rules (BasicConv + FW2HW + AutoPairPatch) via RuleEngine
+				// Rules are matched against the NEW doc state (tr.state, after insert)
+				// Results are mapped back to OLD doc coordinates for the TransactionSpec
+				{
+					const inputCtx: TxContext = {
+						kind: RuleType.Input,
+						docText: tr.state.doc.toString(),
+						selection: { from: toB, to: toB },
+						inserted: insertedStr,
+						changeType: changeTypeStr,
+						scopeHint: RuleScope.All,
+						debug: this.settings?.debug,
+					};
+					const inputResult = this.ruleEngine.process(inputCtx);
+					if (inputResult) {
+						// Map positions from new doc back to old doc
+						// The insert added (toB - toA) characters at fromA
+						const insertLen = toB - toA;
+						const oldFrom = inputResult.matchRange.from <= fromA
+							? inputResult.matchRange.from
+							: inputResult.matchRange.from - insertLen;
+						const oldTo = inputResult.matchRange.to - insertLen;
+
+						// Adjust tabstop positions to old doc coordinates
+						const adjustedTabstops = inputResult.tabstops.map(t => ({
+							...t,
+							from: t.from <= fromA ? t.from : t.from - insertLen,
+							to: t.to <= fromA ? t.to : t.to - insertLen,
+						}));
+						const tabstopGroups = tabstopSpecsToTabstopGroups(adjustedTabstops);
+
+						if (tabstopGroups.length > 0) {
 							changes.push({
-								changes: {
-									from: toA - rule.before.left.length + 1,
-									to: toA + rule.before.right.length,
-									insert: rule.after.left + rule.after.right
-								},
-								selection: { anchor: toA - rule.before.left.length + rule.after.left.length + 1 },
+								changes: { from: oldFrom, to: oldTo, insert: inputResult.newText },
+								selection: tabstopGroups[0].toEditorSelection(),
+								effects: [addTabstopsEffect.of(tabstopGroups)],
 								userEvent: "EasyTyping.change"
 							});
-							tr = tr.startState.update(...changes);
-							return tr;
+						} else {
+							const adjustedCursor = inputResult.cursor <= fromA
+								? inputResult.cursor
+								: inputResult.cursor - insertLen;
+							changes.push({
+								changes: { from: oldFrom, to: oldTo, insert: inputResult.newText },
+								selection: { anchor: adjustedCursor },
+								userEvent: "EasyTyping.change"
+							});
 						}
+						tr = tr.startState.update(...changes);
+						return tr;
 					}
 				}
+			}
 
-				// ================ auto pair =================
-				// let PairValidSet = new Set(["", " ","\n"])
-				// let charAfterCursor = tr.startState.sliceDoc(toA, toA+1);
-				if (this.settings.IntrinsicSymbolPairs) {
-					for (let rule of this.IntrinsicAutoPairRulesPatch) {
-						if (insertedStr != rule.before.left.charAt(rule.before.left.length - 1)) continue;
-						let left = tr.state.doc.sliceString(toB - rule.before.left.length, toB);
-						let right = tr.state.doc.sliceString(toB, toB + rule.before.right.length);
-						if (left === rule.before.left && right === rule.before.right) {
-							changes.push({
-								changes: {
-									from: toA - rule.before.left.length + 1,
-									to: toA + rule.before.right.length,
-									insert: rule.after.left + rule.after.right
-								},
-								selection: { anchor: toA - rule.before.left.length + rule.after.left.length + 1 },
-								userEvent: "EasyTyping.change"
-							});
-							tr = tr.startState.update(...changes);
-							return tr;
-						}
-					}
-
-					if (this.SymbolPairsMap.has(insertedStr) && insertedStr!="'") {
+			// ================ auto pair =================
+			if (this.settings.IntrinsicSymbolPairs) {
+				if (this.SymbolPairsMap.has(insertedStr) && insertedStr!="'") {
+					changes.push({
+						changes: { from: fromA, to: toA, insert: insertedStr + this.SymbolPairsMap.get(insertedStr) },
+						selection: { anchor: fromA + 1 },
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
+				}
+				else if (insertedStr === "'") {
+					let charBeforeCursor = tr.startState.sliceDoc(fromA - 1, fromA);
+					if (['', ' ', '\n'].includes(charBeforeCursor)) {
 						changes.push({
-							changes: { from: fromA, to: toA, insert: insertedStr + this.SymbolPairsMap.get(insertedStr) },
+							changes: { from: fromA, to: toA, insert: "''" },
 							selection: { anchor: fromA + 1 },
 							userEvent: "EasyTyping.change"
 						});
 						tr = tr.startState.update(...changes);
 						return tr;
 					}
-					else if (insertedStr === "'") {
-						let charBeforeCursor = tr.startState.sliceDoc(fromA - 1, fromA);
-						if (['', ' ', '\n'].includes(charBeforeCursor)) {
-							changes.push({
-								changes: { from: fromA, to: toA, insert: "''" },
-								selection: { anchor: fromA + 1 },
-								userEvent: "EasyTyping.change"
-							});
-							tr = tr.startState.update(...changes);
-							return tr;
-						}
-					}
+				}
 
-					// handle autopair for "”" and "’"
-					if (insertedStr === '”' || insertedStr === '’') {
-						let tempStr = insertedStr === "”" ? "“”" : "‘’";
-						changes.push({
-							changes: { from: fromA, to: toA, insert: tempStr },
-							selection: { anchor: fromA + 1 },
-							userEvent: "EasyTyping.change"
-						});
-						tr = tr.startState.update(...changes);
-						return tr;
-					}
+				// handle autopair for "\u201c" and "\u2018"
+				if (insertedStr === '\u201c' || insertedStr === '\u2018') {
+					let tempStr = insertedStr === "\u201c" ? "\u201c\u201d" : "\u2018\u2019";
+					changes.push({
+						changes: { from: fromA, to: toA, insert: tempStr },
+						selection: { anchor: fromA + 1 },
+						userEvent: "EasyTyping.change"
+					});
+					tr = tr.startState.update(...changes);
+					return tr;
 				}
 			}
 		})
@@ -1822,61 +1773,30 @@ export default class EasyTypingPlugin extends Plugin {
     }
 
 	triggerCvtRule = (view: EditorView, cursor_pos: number):boolean => {
-		let rules: ConvertRule[] = [];
-		if (this.settings.QuoteSpace) rules = rules.concat(this.ExtraBasicConvRules);
-		if (this.settings.QuoteSpace) rules = rules.concat(this.QuoteSpaceRules);
-		rules = rules.concat(this.UserConvertRules);
-		for (let rule of rules) {
-			let leftDocStr = view.state.doc.sliceString(0, cursor_pos);
-			let rightDocStr = view.state.doc.sliceString(cursor_pos);
-			let leftRegexpStr = rule.before.left;
-			if (isRegexp(rule.before.left)){
-				leftRegexpStr = leftRegexpStr.slice(2, -1);
-			}else{
-				leftRegexpStr = leftRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const cvtCtx: TxContext = {
+			kind: RuleType.Input,
+			docText: view.state.doc.toString(),
+			selection: { from: cursor_pos, to: cursor_pos },
+			inserted: '',
+			changeType: 'input.type',
+			scopeHint: RuleScope.All,
+			debug: this.settings?.debug,
+		};
+		const cvtResult = this.ruleEngine.process(cvtCtx);
+		if (cvtResult) {
+			const tabstopGroups = tabstopSpecsToTabstopGroups(cvtResult.tabstops);
+			view.dispatch({
+				changes: {
+					from: cvtResult.matchRange.from,
+					to: cvtResult.matchRange.to,
+					insert: cvtResult.newText,
+				},
+				userEvent: "EasyTyping.change"
+			});
+			if (tabstopGroups.length > 0) {
+				addTabstopsAndSelect(view, tabstopGroups);
 			}
-			
-			let leftRegexp = new RegExp(leftRegexpStr+"$");
-			let leftMatch = leftDocStr.match(leftRegexp);
-			if (leftMatch){
-				let leftMatchStr = leftMatch[0];
-				// 选择 leftMatch[0] 之后的所有匹配
-				let matchList = leftMatch.slice(1);
-				let matchPosBegin = cursor_pos - leftMatchStr.length;
-				let rightRegexpStr = rule.before.right;
-				if (isRegexp(rule.before.right)){
-					rightRegexpStr = rightRegexpStr.slice(2, -1);
-				}else{
-					// $& 表示匹配的子串
-					rightRegexpStr = rightRegexpStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-				}
-				let rightRegexp = new RegExp('^'+rightRegexpStr);
-				let rightMatch = rightDocStr.match(rightRegexp);
-				if(rightMatch){
-					let rightMatchStr = rightMatch[0];
-					let matchPosEnd = cursor_pos + rightMatchStr.length;
-					matchList.push(...rightMatch.slice(1));
-					// 左右都匹配成功，开始替换字符串
-					// let replaceLeft = replacePlaceholders(rule.after.left, matchList);
-					// let replaceRight = replacePlaceholders(rule.after.right, matchList);
-					let [new_string, tabstops] = parseTheAfterPattern(rule.after_pattern, matchList);
-					const updatedTabstops = tabstops.map(tabstop => ({
-						...tabstop, // 展开现有的属性
-						from: tabstop.from + matchPosBegin, // 增加from属性的值
-						to: tabstop.to + matchPosBegin // 增加to属性的值
-					}));
-					view.dispatch({
-						changes: {
-							from: matchPosBegin,
-							to: matchPosEnd,
-							insert: new_string
-						},
-						userEvent: "EasyTyping.change"
-					});
-					addTabstopsAndSelect(view, tabstopSpecsToTabstopGroups(updatedTabstops));
-					return true;
-				}
-			}
+			return true;
 		}
 		return false;
 	}
