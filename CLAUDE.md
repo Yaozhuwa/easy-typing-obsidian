@@ -88,6 +88,7 @@ interface SimpleRule {
 | `f` | 作用域限定为公式 |
 | `c` | 作用域限定为代码 |
 | `a` | 所有作用域（默认，无需显式指定） |
+| `F` | replacement 为函数体（JS 代码） |
 
 可组合使用，如 `dr` = Delete + 正则，`rt` = 正则 + 文本作用域。
 
@@ -127,6 +128,24 @@ interface SimpleRule {
 | `\t` | Tab |
 | `\r` | 回车 |
 | `\\` | 字面反斜杠 |
+
+#### 函数替换（F 标志）
+
+当 options 包含 `F` 时，replacement 字段被视为 JavaScript 函数体，通过 `new Function()` 编译。
+
+**参数**：
+- Input/Delete 规则：`leftMatches: string[]`, `rightMatches: string[]`
+- SelectKey 规则：`selectionText: string`, `key: string`
+
+**返回值**：
+- 返回 `string` → 进入标准模板处理管道（支持 `$0`、`[[1]]` 等）
+- 返回 `undefined` → 跳过此规则
+
+**示例**：
+```jsonc
+// 输入 /date 插入当前日期
+{ "trigger": "/date", "replacement": "const d=new Date(); return d.toISOString().slice(0,10)+'$0';", "options": "F" }
+```
 
 #### 规则示例
 
