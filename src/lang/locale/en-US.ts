@@ -157,6 +157,10 @@ const locale = {
             fieldPriority: "Priority",
             fieldDescription: "Description",
             buttonSave: "Save",
+            fieldIsFunction: "Is Function",
+            functionHintInputDelete: "Args: leftMatches (string[]), rightMatches (string[]). Return string or undefined to skip.",
+            functionHintSelectKey: "Args: selectionText (string), key (string). Return string or undefined to skip.",
+            functionPlaceholder: "// Example:\nconst d = new Date();\nreturn d.toISOString().slice(0,10) + '$0';",
         },
         ruleType: {
             input: "Input",

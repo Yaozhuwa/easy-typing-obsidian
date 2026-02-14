@@ -160,6 +160,10 @@ const locale: typeof enUS = {
             fieldPriority: "Приоритет",
             fieldDescription: "Описание",
             buttonSave: "Сохранить",
+            fieldIsFunction: "Функция",
+            functionHintInputDelete: "Аргументы: leftMatches (string[]), rightMatches (string[]). Верните строку или undefined для пропуска.",
+            functionHintSelectKey: "Аргументы: selectionText (string), key (string). Верните строку или undefined для пропуска.",
+            functionPlaceholder: "// Пример:\nconst d = new Date();\nreturn d.toISOString().slice(0,10) + '$0';",
         },
         ruleType: {
             input: "Ввод",

@@ -158,6 +158,10 @@ const locale: typeof enUS = {
             fieldPriority: "优先级",
             fieldDescription: "描述",
             buttonSave: "保存",
+            fieldIsFunction: "函数替换",
+            functionHintInputDelete: "参数：leftMatches (string[])、rightMatches (string[])。返回字符串或 undefined 跳过。",
+            functionHintSelectKey: "参数：selectionText (string)、key (string)。返回字符串或 undefined 跳过。",
+            functionPlaceholder: "// 示例：\nconst d = new Date();\nreturn d.toISOString().slice(0,10) + '$0';",
         },
         ruleType: {
             input: "输入",
