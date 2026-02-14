@@ -740,21 +740,21 @@ function setAttributes(element: any, attributes: any) {
 
 const simpleJSLanguage = StreamLanguage.define({
 	token(stream) {
-		if (stream.match('//')) { stream.skipToEnd(); return 'lineComment'; }
+		if (stream.match('//')) { stream.skipToEnd(); return 'comment'; }
 		if (stream.match('/*')) {
 			while (!stream.eol()) {
 				if (stream.match('*/')) break;
 				stream.next();
 			}
-			return 'blockComment';
+			return 'comment';
 		}
 		if (stream.match(/^"(?:[^"\\]|\\.)*"/) || stream.match(/^'(?:[^'\\]|\\.)*'/)) return 'string';
 		if (stream.match(/^`(?:[^`\\]|\\.)*`/)) return 'string';
 		if (stream.match(/^0x[0-9a-fA-F]+/) || stream.match(/^\d+(\.\d+)?/)) return 'number';
 		if (stream.match(/^(?:const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|true|false|null|undefined|typeof|instanceof|in|of|try|catch|finally|throw|async|await)\b/)) return 'keyword';
 		if (stream.match(/^[+\-*/%=<>!&|^~?:]+/)) return 'operator';
-		if (stream.match(/^[()[\]{}]/)) return 'paren';
-		if (stream.match(/^\w+/)) return 'variableName';
+		if (stream.match(/^[()[\]{}]/)) return 'bracket';
+		if (stream.match(/^\w+/)) return 'variable';
 		stream.next();
 		return null;
 	}
@@ -763,11 +763,11 @@ const simpleJSLanguage = StreamLanguage.define({
 const jsHighlightStyle = HighlightStyle.define([
 	{ tag: tags.keyword, color: '#c678dd' },
 	{ tag: tags.string, color: '#98c379' },
-	{ tag: [tags.lineComment, tags.blockComment], color: 'var(--text-faint)', fontStyle: 'italic' },
+	{ tag: tags.comment, color: 'var(--text-faint)', fontStyle: 'italic' },
 	{ tag: tags.number, color: '#d19a66' },
 	{ tag: tags.operator, color: '#56b6c2' },
 	{ tag: tags.variableName, color: 'var(--text-normal)' },
-	{ tag: tags.paren, color: 'var(--text-muted)' },
+	{ tag: tags.bracket, color: 'var(--text-muted)' },
 ]);
 
 const fnEditorTheme = EditorView.theme({
@@ -933,7 +933,7 @@ export class RuleEditModal extends Modal {
 			text: '',
 		});
 		fnHint.dataset.field = 'fnHint';
-		fnHint.style.marginTop = '-10px';
+		fnHint.style.marginTop = '6px';
 		fnHint.style.marginBottom = '10px';
 		fnHint.style.fontSize = '12px';
 		fnHint.style.fontFamily = 'var(--font-monospace)';
