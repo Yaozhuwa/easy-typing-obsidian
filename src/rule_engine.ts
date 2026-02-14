@@ -93,6 +93,7 @@ export class RuleEngine {
 	private rulesById: Map<string, ConvertRule> = new Map();
 	private sortedRules: ConvertRule[] = [];
 	private ruleIdCounter: number = 0;
+	private fnErrorLastNotify: Map<string, number> = new Map();
 
 	// ===== Static Utilities =====
 
@@ -400,6 +401,17 @@ export class RuleEngine {
 
 	// ===== Rule Execution =====
 
+	private notifyFunctionError(ruleId: string, error: unknown): void {
+		const now = Date.now();
+		const last = this.fnErrorLastNotify.get(ruleId) ?? 0;
+		if (now - last > 5000) {
+			this.fnErrorLastNotify.set(ruleId, now);
+			const msg = error instanceof Error ? error.message : String(error);
+			new Notice(`[EasyTyping] Rule "${ruleId}" runtime error: ${msg}`);
+		}
+		console.error(`[RuleEngine] Runtime error in rule "${ruleId}":`, error);
+	}
+
 	process(ctx: TxContext): ApplyResult | null {
 		for (const rule of this.sortedRules) {
 			if (!rule.enabled) continue;
@@ -481,16 +493,21 @@ export class RuleEngine {
 		let text: string;
 
 		if (typeof rule.replacement === 'function') {
-			if (rule.type === RuleType.SelectKey) {
-				const fn = rule.replacement as (sel: string, key: string) => string | void;
-				const result = fn(match.selectionText!, match.key!);
-				if (result === undefined) return null;
-				text = result as string;
-			} else {
-				const fn = rule.replacement as (l: string[], r: string[]) => string | void;
-				const result = fn(match.leftMatches, match.rightMatches);
-				if (result === undefined) return null;
-				text = result as string;
+			try {
+				if (rule.type === RuleType.SelectKey) {
+					const fn = rule.replacement as (sel: string, key: string) => string | void;
+					const result = fn(match.selectionText!, match.key!);
+					if (result === undefined) return null;
+					text = result as string;
+				} else {
+					const fn = rule.replacement as (l: string[], r: string[]) => string | void;
+					const result = fn(match.leftMatches, match.rightMatches);
+					if (result === undefined) return null;
+					text = result as string;
+				}
+			} catch (e) {
+				this.notifyFunctionError(rule.id, e);
+				return null;
 			}
 		} else {
 			text = rule.replacement;
