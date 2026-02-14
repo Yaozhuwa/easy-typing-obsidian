@@ -12,7 +12,11 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
+		"@codemirror/commands": "^6.10.2",
 		"@codemirror/language": "^6.2.1",
+		"@codemirror/state": "^6.5.4",
+		"@codemirror/view": "^6.39.14",
+		"@lezer/highlight": "^1.2.3",
 		"@types/node": "^20.10.7",
 		"@types/obsidian-typings": "npm:obsidian-typings@^1.1.1",
 		"@types/sprintf-js": "^1.1.4",

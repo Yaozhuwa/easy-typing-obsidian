@@ -6,6 +6,11 @@ import {sprintf} from "sprintf-js";
 import { setDebug } from './utils';
 import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleTriggerMode, RuleScope } from './rule_engine';
 import { DEFAULT_BUILTIN_RULES } from './default_rules';
+import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
+import { indentWithTab } from '@codemirror/commands';
+import { StreamLanguage, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { tags } from '@lezer/highlight';
 
 export interface PairString {
 	left: string;
@@ -731,6 +736,82 @@ function setAttributes(element: any, attributes: any) {
 }
 
 
+// ===== Lightweight JS tokenizer for CM6 =====
+
+const simpleJSLanguage = StreamLanguage.define({
+	token(stream) {
+		if (stream.match('//')) { stream.skipToEnd(); return 'lineComment'; }
+		if (stream.match('/*')) {
+			while (!stream.eol()) {
+				if (stream.match('*/')) break;
+				stream.next();
+			}
+			return 'blockComment';
+		}
+		if (stream.match(/^"(?:[^"\\]|\\.)*"/) || stream.match(/^'(?:[^'\\]|\\.)*'/)) return 'string';
+		if (stream.match(/^`(?:[^`\\]|\\.)*`/)) return 'string';
+		if (stream.match(/^0x[0-9a-fA-F]+/) || stream.match(/^\d+(\.\d+)?/)) return 'number';
+		if (stream.match(/^(?:const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|true|false|null|undefined|typeof|instanceof|in|of|try|catch|finally|throw|async|await)\b/)) return 'keyword';
+		if (stream.match(/^[+\-*/%=<>!&|^~?:]+/)) return 'operator';
+		if (stream.match(/^[()[\]{}]/)) return 'paren';
+		if (stream.match(/^\w+/)) return 'variableName';
+		stream.next();
+		return null;
+	}
+});
+
+const jsHighlightStyle = HighlightStyle.define([
+	{ tag: tags.keyword, color: '#c678dd' },
+	{ tag: tags.string, color: '#98c379' },
+	{ tag: [tags.lineComment, tags.blockComment], color: 'var(--text-faint)', fontStyle: 'italic' },
+	{ tag: tags.number, color: '#d19a66' },
+	{ tag: tags.operator, color: '#56b6c2' },
+	{ tag: tags.variableName, color: 'var(--text-normal)' },
+	{ tag: tags.paren, color: 'var(--text-muted)' },
+]);
+
+const fnEditorTheme = EditorView.theme({
+	'&': {
+		fontSize: '13px',
+		border: '1px solid var(--background-modifier-border)',
+		borderRadius: '4px',
+		backgroundColor: 'var(--background-primary)',
+	},
+	'.cm-content': {
+		fontFamily: 'var(--font-monospace)',
+		padding: '8px',
+		minHeight: '120px',
+	},
+	'&.cm-focused': {
+		outline: '1px solid var(--interactive-accent)',
+	},
+	'.cm-gutters': { display: 'none' },
+	'.cm-activeLine': { backgroundColor: 'transparent' },
+});
+
+function createJSEditorView(
+	container: HTMLElement,
+	initialValue: string,
+	onChange: (value: string) => void,
+): EditorView {
+	const state = EditorState.create({
+		doc: initialValue,
+		extensions: [
+			simpleJSLanguage,
+			syntaxHighlighting(jsHighlightStyle),
+			fnEditorTheme,
+			keymap.of([indentWithTab]),
+			EditorState.tabSize.of(4),
+			EditorView.updateListener.of((update: ViewUpdate) => {
+				if (update.docChanged) {
+					onChange(update.state.doc.toString());
+				}
+			}),
+		],
+	});
+	return new EditorView({ state, parent: container });
+}
+
 export class RuleEditModal extends Modal {
 	mode: 'create' | 'edit';
 	initial: Partial<SimpleRule>;
@@ -748,6 +829,7 @@ export class RuleEditModal extends Modal {
 	description: string = '';
 	enabled: boolean = true;
 	isFunction: boolean = false;
+	private cmEditor: EditorView | null = null;
 
 	constructor(
 		app: App,
@@ -825,14 +907,27 @@ export class RuleEditModal extends Modal {
 			});
 		triggerRightSetting.settingEl.dataset.field = 'triggerRight';
 
-		// Replacement
+		// Replacement (textarea for string mode)
 		const replacementSetting = new Setting(contentEl)
 			.setName(locale.settings.ruleEditModal.fieldReplacement);
 		replacementSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
+		replacementSetting.settingEl.dataset.field = 'replacementTextarea';
 		const replacementArea = new TextAreaComponent(replacementSetting.controlEl);
 		replacementArea.inputEl.setAttribute('style', 'width: 100%; min-height: 60px;');
 		replacementArea.setValue(this.replacement);
 		replacementArea.onChange(v => this.replacement = v);
+
+		// CM6 editor for function mode (syntax highlighted)
+		const editorWrapper = contentEl.createDiv({ cls: 'setting-item' });
+		editorWrapper.dataset.field = 'fnEditor';
+		editorWrapper.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
+		const editorLabel = editorWrapper.createDiv({ cls: 'setting-item-info' });
+		editorLabel.createDiv({ cls: 'setting-item-name', text: locale.settings.ruleEditModal.fieldReplacement });
+		const editorContainer = editorWrapper.createDiv({ cls: 'setting-item-control' });
+		editorContainer.setAttribute('style', 'width: 100%;');
+		this.cmEditor = createJSEditorView(editorContainer, this.replacement, (value) => {
+			this.replacement = value;
+		});
 
 		// Function hint (visible only in function mode)
 		const fnHint = contentEl.createEl('div', {
@@ -926,19 +1021,30 @@ export class RuleEditModal extends Modal {
 				: locale.settings.ruleEditModal.functionHintInputDelete;
 		}
 
-		// Make replacement textarea monospace when function mode is on
-		const replacementArea = contentEl.querySelector('textarea') as HTMLTextAreaElement;
-		if (replacementArea) {
+		// Toggle between textarea and CM6 editor
+		const textareaSetting = contentEl.querySelector('[data-field="replacementTextarea"]') as HTMLElement;
+		const editorSetting = contentEl.querySelector('[data-field="fnEditor"]') as HTMLElement;
+		if (textareaSetting && editorSetting) {
 			if (this.isFunction) {
-				replacementArea.style.fontFamily = 'var(--font-monospace)';
-				replacementArea.style.minHeight = '120px';
-				if (!replacementArea.value) {
-					replacementArea.placeholder = locale.settings.ruleEditModal.functionPlaceholder;
+				textareaSetting.style.display = 'none';
+				editorSetting.style.display = '';
+				// Sync value to CM6 editor
+				if (this.cmEditor) {
+					const current = this.cmEditor.state.doc.toString();
+					if (current !== this.replacement) {
+						this.cmEditor.dispatch({
+							changes: { from: 0, to: current.length, insert: this.replacement }
+						});
+					}
 				}
 			} else {
-				replacementArea.style.fontFamily = '';
-				replacementArea.style.minHeight = '60px';
-				replacementArea.placeholder = '';
+				textareaSetting.style.display = '';
+				editorSetting.style.display = 'none';
+				// Sync value to textarea
+				const textarea = textareaSetting.querySelector('textarea') as HTMLTextAreaElement;
+				if (textarea && textarea.value !== this.replacement) {
+					textarea.value = this.replacement;
+				}
 			}
 		}
 	}
@@ -966,6 +1072,10 @@ export class RuleEditModal extends Modal {
 	}
 
 	onClose() {
+		if (this.cmEditor) {
+			this.cmEditor.destroy();
+			this.cmEditor = null;
+		}
 		this.contentEl.empty();
 	}
 }
