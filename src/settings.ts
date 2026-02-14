@@ -773,8 +773,6 @@ const jsHighlightStyle = HighlightStyle.define([
 const fnEditorTheme = EditorView.theme({
 	'&': {
 		fontSize: '13px',
-		border: '1px solid var(--background-modifier-border)',
-		borderRadius: '4px',
 		backgroundColor: 'var(--background-primary)',
 	},
 	'.cm-content': {
@@ -783,7 +781,7 @@ const fnEditorTheme = EditorView.theme({
 		minHeight: '120px',
 	},
 	'&.cm-focused': {
-		outline: '1px solid var(--interactive-accent)',
+		outline: 'none',
 	},
 	'.cm-gutters': { display: 'none' },
 	'.cm-activeLine': { backgroundColor: 'transparent' },
@@ -797,7 +795,7 @@ function createJSEditorView(
 	const state = EditorState.create({
 		doc: initialValue,
 		extensions: [
-			simpleJSLanguage,
+			simpleJSLanguage.extension,
 			syntaxHighlighting(jsHighlightStyle),
 			fnEditorTheme,
 			keymap.of([indentWithTab]),
@@ -918,13 +916,13 @@ export class RuleEditModal extends Modal {
 		replacementArea.onChange(v => this.replacement = v);
 
 		// CM6 editor for function mode (syntax highlighted)
-		const editorWrapper = contentEl.createDiv({ cls: 'setting-item' });
+		const editorWrapper = contentEl.createDiv();
 		editorWrapper.dataset.field = 'fnEditor';
-		editorWrapper.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
-		const editorLabel = editorWrapper.createDiv({ cls: 'setting-item-info' });
-		editorLabel.createDiv({ cls: 'setting-item-name', text: locale.settings.ruleEditModal.fieldReplacement });
-		const editorContainer = editorWrapper.createDiv({ cls: 'setting-item-control' });
-		editorContainer.setAttribute('style', 'width: 100%;');
+		editorWrapper.createEl('label', {
+			text: locale.settings.ruleEditModal.fieldReplacement,
+			cls: 'et-fn-editor-label',
+		});
+		const editorContainer = editorWrapper.createDiv({ cls: 'et-fn-editor-container' });
 		this.cmEditor = createJSEditorView(editorContainer, this.replacement, (value) => {
 			this.replacement = value;
 		});

@@ -148,3 +148,25 @@ span[class="easy-typing-cursor-widget"] {
 .et-deleted-rules .setting-item {
     opacity: 0.7;
 }
+
+/* Function editor in rule modal */
+.et-fn-editor-label {
+    display: block;
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+    margin-bottom: 6px;
+    font-weight: var(--font-semibold);
+}
+
+.et-fn-editor-container {
+    width: 100%;
+}
+
+.et-fn-editor-container .cm-editor {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+}
+
+.et-fn-editor-container .cm-editor.cm-focused {
+    border-color: var(--interactive-accent);
+}
