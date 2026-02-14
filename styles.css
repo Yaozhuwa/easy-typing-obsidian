@@ -96,6 +96,36 @@ span[class="easy-typing-cursor-widget"] {
     border: 1px solid rgba(33, 150, 243, 0.3);
 }
 
+/* Rule Trigger Mode Tag */
+.et-rule-trigger-mode {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-right: 6px;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.et-trigger-mode-auto {
+    background-color: rgba(158, 158, 158, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+.et-trigger-mode-tab {
+    background-color: rgba(255, 152, 0, 0.15);
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.et-rule-trigger-mode:hover {
+    filter: brightness(1.2);
+}
+
 .et-rule-item .setting-item-name {
     white-space: nowrap;
     overflow: hidden;

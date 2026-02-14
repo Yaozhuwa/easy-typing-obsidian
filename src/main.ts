@@ -15,7 +15,7 @@ import {ensureSyntaxTree, syntaxTree} from "@codemirror/language";
 import { selectCodeBlockInPos, isCodeBlockInPos, getCodeBlockInfoInPos, getQuoteInfoInPos } from './syntax';
 import { consumeAndGotoNextTabstop, tabstopsStateField, isInsideATabstop, removeAllTabstops, addTabstopsAndSelect, addTabstops, addTabstopsEffect, isInsideCurTabstop, hasTabstops } from './tabstops_state_field';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
-import { RuleEngine, SimpleRule, TxContext, RuleType, RuleScope } from './rule_engine';
+import { RuleEngine, SimpleRule, TxContext, RuleType, RuleTriggerMode, RuleScope } from './rule_engine';
 import { DEFAULT_BUILTIN_RULES } from './default_rules';
 
 
@@ -594,63 +594,6 @@ export default class EasyTypingPlugin extends Plugin {
 							tr = tr.startState.update(...changes);
 							return tr;
 						}
-					}
-				}
-
-				// Unified input rules (BasicConv + FW2HW + AutoPairPatch) via RuleEngine
-				// Rules are matched against the NEW doc state (tr.state, after insert)
-				// Results are mapped back to OLD doc coordinates for the TransactionSpec
-				{
-					const inputCtx: TxContext = {
-						kind: RuleType.Input,
-						docText: tr.state.doc.toString(),
-						selection: { from: toB, to: toB },
-						inserted: insertedStr,
-						changeType: changeTypeStr,
-						scopeHint: RuleScope.All,
-						debug: this.settings?.debug,
-					};
-					const inputResult = this.ruleEngine.process(inputCtx);
-					if (inputResult) {
-						// Map positions from new doc back to old doc
-						// The insert added (toB - toA) characters at fromA
-						const insertLen = toB - toA;
-						const oldFrom = inputResult.matchRange.from <= fromA
-							? inputResult.matchRange.from
-							: inputResult.matchRange.from - insertLen;
-						const oldTo = inputResult.matchRange.to - insertLen;
-
-						// Tabstop/cursor positions are offsets within the replacement text,
-						// anchored at matchRange.from in the intermediate doc.
-						// In the dispatch result doc, the replacement starts at oldFrom,
-						// so the correct mapping is: oldFrom + (pos - matchRange.from).
-						const mapPos = (pos: number) =>
-							oldFrom + (pos - inputResult.matchRange.from);
-
-						const adjustedTabstops = inputResult.tabstops.map(t => ({
-							...t,
-							from: mapPos(t.from),
-							to: mapPos(t.to),
-						}));
-						const tabstopGroups = tabstopSpecsToTabstopGroups(adjustedTabstops);
-
-						if (tabstopGroups.length > 0) {
-							changes.push({
-								changes: { from: oldFrom, to: oldTo, insert: inputResult.newText },
-								selection: tabstopGroups[0].toEditorSelection(),
-								effects: [addTabstopsEffect.of(tabstopGroups)],
-								userEvent: "EasyTyping.change"
-							});
-						} else {
-							const adjustedCursor = mapPos(inputResult.cursor);
-							changes.push({
-								changes: { from: oldFrom, to: oldTo, insert: inputResult.newText },
-								selection: { anchor: adjustedCursor },
-								userEvent: "EasyTyping.change"
-							});
-						}
-						tr = tr.startState.update(...changes);
-						return tr;
 					}
 				}
 			}
@@ -1741,16 +1684,27 @@ export default class EasyTypingPlugin extends Plugin {
 		const cvtResult = this.ruleEngine.process(cvtCtx);
 		if (cvtResult) {
 			const tabstopGroups = tabstopSpecsToTabstopGroups(cvtResult.tabstops);
-			view.dispatch({
-				changes: {
-					from: cvtResult.matchRange.from,
-					to: cvtResult.matchRange.to,
-					insert: cvtResult.newText,
-				},
-				userEvent: "EasyTyping.change"
-			});
 			if (tabstopGroups.length > 0) {
-				addTabstopsAndSelect(view, tabstopGroups);
+				view.dispatch({
+					changes: {
+						from: cvtResult.matchRange.from,
+						to: cvtResult.matchRange.to,
+						insert: cvtResult.newText,
+					},
+					selection: tabstopGroups[0].toEditorSelection(),
+					effects: [addTabstopsEffect.of(tabstopGroups)],
+					userEvent: "EasyTyping.change"
+				});
+			} else {
+				view.dispatch({
+					changes: {
+						from: cvtResult.matchRange.from,
+						to: cvtResult.matchRange.to,
+						insert: cvtResult.newText,
+					},
+					selection: { anchor: cvtResult.cursor },
+					userEvent: "EasyTyping.change"
+				});
 			}
 			return true;
 		}
@@ -2200,6 +2154,19 @@ export default class EasyTypingPlugin extends Plugin {
 		rule.enabled = enabled;
 		await this.saveRulesFile(file, cache);
 		this.ruleEngine.setEnabled(id, enabled);
+	}
+
+	async updateRuleTriggerMode(id: string, isBuiltin: boolean, tabMode: boolean): Promise<void> {
+		const cache = isBuiltin ? this.cachedBuiltinRules : this.cachedUserRules;
+		const file = isBuiltin ? this.BUILTIN_RULES_FILE : this.USER_RULES_FILE;
+		const rule = cache.find(r => r.id === id);
+		if (!rule) return;
+		let opts = rule.options ?? '';
+		if (tabMode && !opts.includes('T')) opts += 'T';
+		else if (!tabMode) opts = opts.replace(/T/g, '');
+		rule.options = opts || undefined;
+		await this.saveRulesFile(file, cache);
+		this.ruleEngine.updateRule(id, { triggerMode: tabMode ? RuleTriggerMode.Tab : RuleTriggerMode.Auto });
 	}
 
 	getCommandNameMap(): Map<string, string> {

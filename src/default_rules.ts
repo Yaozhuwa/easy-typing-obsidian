@@ -13,10 +13,6 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	// ===== Basic Conversion Rules =====
 	// Original: BasicConvRuleStringList in main.ts:72-74
 	{ id: 'builtin-conv-001', trigger: '··', replacement: '`$0`', priority: 10, description: '中文点转代码' },
-	{ id: 'builtin-conv-002', trigger: '(^|\\n)！【【', trigger_right: '】', replacement: '[[1]]![[$0]]', options: 'r', priority: 10, description: '中文感叹号+双方括号转嵌入' },
-	{ id: 'builtin-conv-003', trigger: '！【【', replacement: '![[$0]]', priority: 10, description: '中文感叹号+双方括号转嵌入(无右)' },
-	{ id: 'builtin-conv-004', trigger: '【【', trigger_right: '】', replacement: '[[$0]]', priority: 10, description: '中文方括号转 wiki link' },
-	{ id: 'builtin-conv-005', trigger: '【【', replacement: '[[$0]]', priority: 10, description: '中文方括号转 wiki link(无右)' },
 	{ id: 'builtin-conv-006', trigger: '￥￥', replacement: '$$0$', priority: 10, description: '人民币符号转行内公式' },
 	{ id: 'builtin-conv-007', trigger: '$￥', trigger_right: '$', replacement: '$$\n$0\n$$', priority: 10, description: '混合符号转公式块' },
 	{ id: 'builtin-conv-008', trigger: '¥¥', replacement: '$$0$', priority: 10, description: '半角人民币转行内公式' },

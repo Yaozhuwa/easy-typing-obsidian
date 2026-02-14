@@ -4,7 +4,7 @@ import EasyTypingPlugin from './main';
 import { enUS, ruRU, zhCN, zhTW } from './lang/locale';
 import {sprintf} from "sprintf-js";
 import { setDebug } from './utils';
-import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleScope } from './rule_engine';
+import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleTriggerMode, RuleScope } from './rule_engine';
 import { DEFAULT_BUILTIN_RULES } from './default_rules';
 
 export interface PairString {
@@ -547,6 +547,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const typeLabel = this.getRuleTypeLabel(opts.type);
 		const typeCls = this.getRuleTypeCls(opts.type);
 		const enabled = rule.enabled !== false;
+		const isTab = opts.triggerMode === RuleTriggerMode.Tab;
 
 		let preview: string;
 		if (rule.description) {
@@ -562,6 +563,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.setClass('et-rule-item')
 			.setName(createFragment(f => {
 				f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
+				const modeTag = f.createSpan({
+					cls: `et-rule-trigger-mode ${isTab ? 'et-trigger-mode-tab' : 'et-trigger-mode-auto'}`,
+					text: isTab ? 'Tab' : 'Auto',
+				});
+				modeTag.setAttribute('aria-label', locale.settings.ruleEditModal.fieldTriggerMode);
+				modeTag.addEventListener('click', async (e) => {
+					e.stopPropagation();
+					const newIsTab = !isTab;
+					await this.plugin.updateRuleTriggerMode(rule.id!, isBuiltin, newIsTab);
+					this.display();
+				});
 				f.createSpan({ text: preview });
 			}))
 			.addToggle(toggle => {
@@ -722,6 +734,7 @@ export class RuleEditModal extends Modal {
 
 	// Form state
 	ruleType: EngineRuleType = EngineRuleType.Input;
+	triggerMode: RuleTriggerMode = RuleTriggerMode.Auto;
 	trigger: string = '';
 	triggerRight: string = '';
 	replacement: string = '';
@@ -746,6 +759,7 @@ export class RuleEditModal extends Modal {
 		if (initial.options !== undefined || initial.trigger !== undefined) {
 			const opts = RuleEngine.parseOptions(initial.options);
 			this.ruleType = opts.type;
+			this.triggerMode = opts.triggerMode;
 			this.isRegex = opts.isRegex;
 			this.ruleScope = opts.scope[0] || RuleScope.All;
 		}
@@ -776,6 +790,16 @@ export class RuleEditModal extends Modal {
 					this.ruleType = v as EngineRuleType;
 					this.refreshVisibility(contentEl);
 				});
+			});
+
+		// Trigger Mode
+		new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldTriggerMode)
+			.addDropdown(dropdown => {
+				dropdown.addOption(RuleTriggerMode.Auto, locale.dropdownOptions.triggerModeAuto);
+				dropdown.addOption(RuleTriggerMode.Tab, locale.dropdownOptions.triggerModeTab);
+				dropdown.setValue(this.triggerMode);
+				dropdown.onChange((v: string) => this.triggerMode = v as RuleTriggerMode);
 			});
 
 		// Trigger
@@ -869,6 +893,7 @@ export class RuleEditModal extends Modal {
 		let options = '';
 		if (this.ruleType === EngineRuleType.Delete) options += 'd';
 		else if (this.ruleType === EngineRuleType.SelectKey) options += 's';
+		if (this.triggerMode === RuleTriggerMode.Tab) options += 'T';
 		if (this.isRegex) options += 'r';
 		if (this.ruleScope === RuleScope.Text) options += 't';
 		else if (this.ruleScope === RuleScope.Formula) options += 'f';
