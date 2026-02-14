@@ -1,3 +1,4 @@
+import { Notice } from 'obsidian';
 import { TabstopSpec } from './tabstop';
 
 // ===== Enums =====
@@ -167,6 +168,24 @@ export class RuleEngine {
 	static normalizeRule(simple: SimpleRule): Omit<ConvertRule, 'id'> {
 		const opts = RuleEngine.parseOptions(simple.options);
 
+		// Compile function replacement when F flag is present
+		let replacement: ConvertRule['replacement'] = simple.replacement;
+		if (opts.isFunctionReplacement && typeof simple.replacement === 'string') {
+			try {
+				if (opts.type === RuleType.SelectKey) {
+					replacement = new Function('selectionText', 'key', simple.replacement) as
+						(selectionText: string, key: string) => string | void;
+				} else {
+					replacement = new Function('leftMatches', 'rightMatches', simple.replacement) as
+						(leftMatches: string[], rightMatches: string[]) => string | void;
+				}
+			} catch (e) {
+				console.error(`[RuleEngine] Failed to compile function for rule "${simple.id ?? '?'}":`, e);
+				replacement = (): undefined => undefined;
+				new Notice(`[EasyTyping] Rule "${simple.id ?? '?'}" has invalid function body: ${(e as Error).message}`);
+			}
+		}
+
 		if (opts.type === RuleType.SelectKey) {
 			return {
 				description: simple.description ?? '',
@@ -177,7 +196,7 @@ export class RuleEngine {
 				scope: opts.scope,
 				priority: simple.priority ?? 100,
 				match: { left: '', right: '', isRegex: false },
-				replacement: simple.replacement,
+				replacement,
 			};
 		}
 
@@ -194,7 +213,7 @@ export class RuleEngine {
 				right: simple.trigger_right ?? '',
 				isRegex: opts.isRegex,
 			},
-			replacement: simple.replacement,
+			replacement,
 		};
 	}
 
