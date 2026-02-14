@@ -548,6 +548,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const typeCls = this.getRuleTypeCls(opts.type);
 		const enabled = rule.enabled !== false;
 		const isTab = opts.triggerMode === RuleTriggerMode.Tab;
+		const isFn = opts.isFunctionReplacement;
 
 		let preview: string;
 		if (rule.description) {
@@ -574,6 +575,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					await this.plugin.updateRuleTriggerMode(rule.id!, isBuiltin, newIsTab);
 					this.display();
 				});
+				if (isFn) {
+					f.createSpan({ cls: 'et-rule-type-tag et-rule-type-fn', text: 'Fn' });
+				}
 				f.createSpan({ text: preview });
 			}))
 			.addToggle(toggle => {
@@ -743,6 +747,7 @@ export class RuleEditModal extends Modal {
 	priority: number = 100;
 	description: string = '';
 	enabled: boolean = true;
+	isFunction: boolean = false;
 
 	constructor(
 		app: App,
@@ -761,6 +766,7 @@ export class RuleEditModal extends Modal {
 			this.ruleType = opts.type;
 			this.triggerMode = opts.triggerMode;
 			this.isRegex = opts.isRegex;
+			this.isFunction = opts.isFunctionReplacement;
 			this.ruleScope = opts.scope[0] || RuleScope.All;
 		}
 		if (initial.trigger !== undefined) this.trigger = initial.trigger;
@@ -828,6 +834,17 @@ export class RuleEditModal extends Modal {
 		replacementArea.setValue(this.replacement);
 		replacementArea.onChange(v => this.replacement = v);
 
+		// Function hint (visible only in function mode)
+		const fnHint = contentEl.createEl('div', {
+			cls: 'setting-item-description',
+			text: '',
+		});
+		fnHint.dataset.field = 'fnHint';
+		fnHint.style.marginTop = '-10px';
+		fnHint.style.marginBottom = '10px';
+		fnHint.style.fontSize = '12px';
+		fnHint.style.fontFamily = 'var(--font-monospace)';
+
 		// Is Regex
 		new Setting(contentEl)
 			.setName(locale.settings.ruleEditModal.fieldIsRegex)
@@ -835,6 +852,18 @@ export class RuleEditModal extends Modal {
 				toggle.setValue(this.isRegex);
 				toggle.onChange(v => this.isRegex = v);
 			});
+
+		// Is Function
+		const fnSetting = new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldIsFunction)
+			.addToggle(toggle => {
+				toggle.setValue(this.isFunction);
+				toggle.onChange(v => {
+					this.isFunction = v;
+					this.refreshVisibility(contentEl);
+				});
+			});
+		fnSetting.settingEl.dataset.field = 'isFunction';
 
 		// Scope
 		new Setting(contentEl)
@@ -887,6 +916,31 @@ export class RuleEditModal extends Modal {
 		if (triggerRightEl) {
 			triggerRightEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
 		}
+
+		// Function hint
+		const fnHint = contentEl.querySelector('[data-field="fnHint"]') as HTMLElement;
+		if (fnHint) {
+			fnHint.style.display = this.isFunction ? '' : 'none';
+			fnHint.textContent = this.ruleType === EngineRuleType.SelectKey
+				? locale.settings.ruleEditModal.functionHintSelectKey
+				: locale.settings.ruleEditModal.functionHintInputDelete;
+		}
+
+		// Make replacement textarea monospace when function mode is on
+		const replacementArea = contentEl.querySelector('textarea') as HTMLTextAreaElement;
+		if (replacementArea) {
+			if (this.isFunction) {
+				replacementArea.style.fontFamily = 'var(--font-monospace)';
+				replacementArea.style.minHeight = '120px';
+				if (!replacementArea.value) {
+					replacementArea.placeholder = locale.settings.ruleEditModal.functionPlaceholder;
+				}
+			} else {
+				replacementArea.style.fontFamily = '';
+				replacementArea.style.minHeight = '60px';
+				replacementArea.placeholder = '';
+			}
+		}
 	}
 
 	buildSimpleRule(): SimpleRule {
@@ -895,6 +949,7 @@ export class RuleEditModal extends Modal {
 		else if (this.ruleType === EngineRuleType.SelectKey) options += 's';
 		if (this.triggerMode === RuleTriggerMode.Tab) options += 'T';
 		if (this.isRegex) options += 'r';
+		if (this.isFunction) options += 'F';
 		if (this.ruleScope === RuleScope.Text) options += 't';
 		else if (this.ruleScope === RuleScope.Formula) options += 'f';
 		else if (this.ruleScope === RuleScope.Code) options += 'c';

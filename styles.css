@@ -96,6 +96,12 @@ span[class="easy-typing-cursor-widget"] {
     border: 1px solid rgba(33, 150, 243, 0.3);
 }
 
+.et-rule-type-fn {
+    background-color: rgba(156, 39, 176, 0.15);
+    color: #9c27b0;
+    border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
 /* Rule Trigger Mode Tag */
 .et-rule-trigger-mode {
     display: inline-block;
