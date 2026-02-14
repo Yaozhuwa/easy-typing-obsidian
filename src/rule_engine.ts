@@ -99,6 +99,7 @@ export class RuleEngine {
 		type: RuleType;
 		triggerMode: RuleTriggerMode;
 		isRegex: boolean;
+		isFunctionReplacement: boolean;
 		scope: RuleScope[];
 	} {
 		const type = options.includes('d') ? RuleType.Delete
@@ -110,6 +111,8 @@ export class RuleEngine {
 
 		const isRegex = options.includes('r');
 
+		const isFunctionReplacement = options.includes('F');
+
 		const scope: RuleScope[] = [];
 		if (options.includes('a') || (!options.includes('t') && !options.includes('f') && !options.includes('c'))) {
 			scope.push(RuleScope.All);
@@ -119,7 +122,7 @@ export class RuleEngine {
 			if (options.includes('c')) scope.push(RuleScope.Code);
 		}
 
-		return { type, triggerMode, isRegex, scope };
+		return { type, triggerMode, isRegex, isFunctionReplacement, scope };
 	}
 
 	/**
