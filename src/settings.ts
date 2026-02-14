@@ -6,11 +6,9 @@ import {sprintf} from "sprintf-js";
 import { setDebug } from './utils';
 import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleTriggerMode, RuleScope } from './rule_engine';
 import { DEFAULT_BUILTIN_RULES } from './default_rules';
-import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
+import { EditorView, keymap, ViewUpdate, ViewPlugin, Decoration, DecorationSet } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { indentWithTab } from '@codemirror/commands';
-import { StreamLanguage, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { tags } from '@lezer/highlight';
 
 export interface PairString {
 	left: string;
@@ -736,39 +734,94 @@ function setAttributes(element: any, attributes: any) {
 }
 
 
-// ===== Lightweight JS tokenizer for CM6 =====
+// ===== Lightweight JS syntax highlight via ViewPlugin + Decoration =====
 
-const simpleJSLanguage = StreamLanguage.define({
-	token(stream) {
-		if (stream.match('//')) { stream.skipToEnd(); return 'comment'; }
-		if (stream.match('/*')) {
-			while (!stream.eol()) {
-				if (stream.match('*/')) break;
-				stream.next();
-			}
-			return 'comment';
-		}
-		if (stream.match(/^"(?:[^"\\]|\\.)*"/) || stream.match(/^'(?:[^'\\]|\\.)*'/)) return 'string';
-		if (stream.match(/^`(?:[^`\\]|\\.)*`/)) return 'string';
-		if (stream.match(/^0x[0-9a-fA-F]+/) || stream.match(/^\d+(\.\d+)?/)) return 'number';
-		if (stream.match(/^(?:const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|true|false|null|undefined|typeof|instanceof|in|of|try|catch|finally|throw|async|await)\b/)) return 'keyword';
-		if (stream.match(/^[+\-*/%=<>!&|^~?:]+/)) return 'operator';
-		if (stream.match(/^[()[\]{}]/)) return 'bracket';
-		if (stream.match(/^\w+/)) return 'variable';
-		stream.next();
-		return null;
-	}
-});
-
-const jsHighlightStyle = HighlightStyle.define([
-	{ tag: tags.keyword, color: '#c678dd' },
-	{ tag: tags.string, color: '#98c379' },
-	{ tag: tags.comment, color: 'var(--text-faint)', fontStyle: 'italic' },
-	{ tag: tags.number, color: '#d19a66' },
-	{ tag: tags.operator, color: '#56b6c2' },
-	{ tag: tags.variableName, color: 'var(--text-normal)' },
-	{ tag: tags.bracket, color: 'var(--text-muted)' },
+const JS_KEYWORDS = new Set([
+	'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while',
+	'do', 'switch', 'case', 'break', 'continue', 'new', 'this', 'true', 'false',
+	'null', 'undefined', 'typeof', 'instanceof', 'in', 'of', 'try', 'catch',
+	'finally', 'throw', 'async', 'await',
 ]);
+
+function tokenizeJS(text: string): { from: number; to: number; cls: string }[] {
+	const tokens: { from: number; to: number; cls: string }[] = [];
+	let i = 0;
+	while (i < text.length) {
+		// Line comment
+		if (text[i] === '/' && text[i + 1] === '/') {
+			const start = i;
+			while (i < text.length && text[i] !== '\n') i++;
+			tokens.push({ from: start, to: i, cls: 'et-hl-comment' });
+			continue;
+		}
+		// Block comment
+		if (text[i] === '/' && text[i + 1] === '*') {
+			const start = i;
+			i += 2;
+			while (i < text.length - 1 && !(text[i] === '*' && text[i + 1] === '/')) i++;
+			if (i < text.length - 1) i += 2; else i = text.length;
+			tokens.push({ from: start, to: i, cls: 'et-hl-comment' });
+			continue;
+		}
+		// String
+		if (text[i] === '"' || text[i] === "'" || text[i] === '`') {
+			const quote = text[i];
+			const start = i;
+			i++;
+			while (i < text.length && text[i] !== quote) {
+				if (text[i] === '\\') i++;
+				i++;
+			}
+			if (i < text.length) i++;
+			tokens.push({ from: start, to: i, cls: 'et-hl-string' });
+			continue;
+		}
+		// Number
+		if (/\d/.test(text[i]) && (i === 0 || /[^a-zA-Z_$]/.test(text[i - 1]))) {
+			const start = i;
+			if (text[i] === '0' && (text[i + 1] === 'x' || text[i + 1] === 'X')) {
+				i += 2;
+				while (i < text.length && /[0-9a-fA-F]/.test(text[i])) i++;
+			} else {
+				while (i < text.length && /\d/.test(text[i])) i++;
+				if (i < text.length && text[i] === '.') { i++; while (i < text.length && /\d/.test(text[i])) i++; }
+			}
+			tokens.push({ from: start, to: i, cls: 'et-hl-number' });
+			continue;
+		}
+		// Word (keyword or identifier)
+		if (/[a-zA-Z_$]/.test(text[i])) {
+			const start = i;
+			while (i < text.length && /[a-zA-Z0-9_$]/.test(text[i])) i++;
+			if (JS_KEYWORDS.has(text.slice(start, i))) {
+				tokens.push({ from: start, to: i, cls: 'et-hl-keyword' });
+			}
+			continue;
+		}
+		i++;
+	}
+	return tokens;
+}
+
+const jsHighlightPlugin = ViewPlugin.fromClass(class {
+	decorations: DecorationSet;
+	constructor(view: EditorView) {
+		this.decorations = this.buildDecorations(view);
+	}
+	update(update: ViewUpdate) {
+		if (update.docChanged || update.viewportChanged) {
+			this.decorations = this.buildDecorations(update.view);
+		}
+	}
+	buildDecorations(view: EditorView): DecorationSet {
+		const text = view.state.doc.toString();
+		const tokens = tokenizeJS(text);
+		const ranges = tokens.map(t => Decoration.mark({ class: t.cls }).range(t.from, t.to));
+		return Decoration.set(ranges, true);
+	}
+}, {
+	decorations: v => v.decorations
+});
 
 const fnEditorTheme = EditorView.theme({
 	'&': {
@@ -795,8 +848,7 @@ function createJSEditorView(
 	const state = EditorState.create({
 		doc: initialValue,
 		extensions: [
-			simpleJSLanguage.extension,
-			syntaxHighlighting(jsHighlightStyle),
+			jsHighlightPlugin,
 			fnEditorTheme,
 			keymap.of([indentWithTab]),
 			EditorState.tabSize.of(4),

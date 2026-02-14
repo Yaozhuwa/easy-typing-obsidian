@@ -170,3 +170,9 @@ span[class="easy-typing-cursor-widget"] {
 .et-fn-editor-container .cm-editor.cm-focused {
     border-color: var(--interactive-accent);
 }
+
+/* JS syntax highlighting in function editor */
+.et-hl-keyword { color: #c678dd; }
+.et-hl-string { color: #98c379; }
+.et-hl-comment { color: var(--text-faint); font-style: italic; }
+.et-hl-number { color: #d19a66; }
