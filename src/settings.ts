@@ -477,11 +477,11 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const controlEl = headerEl.createDiv({ cls: 'setting-item-control' });
 		const resetBtn = controlEl.createEl('button', { text: locale.toolTip.resetAllRules });
 		resetBtn.addEventListener('click', async () => {
-			await this.plugin.resetAllBuiltinRules();
+			await this.plugin.ruleManager.resetAllBuiltinRules();
 			this.display();
 		});
 
-		for (const rule of this.plugin.cachedBuiltinRules) {
+		for (const rule of this.plugin.ruleManager.cachedBuiltinRules) {
 			this.buildRuleItem(el, rule, true);
 		}
 
@@ -505,7 +505,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					.addButton(button => {
 						button.setButtonText(locale.toolTip.restoreRule)
 							.onClick(async () => {
-								await this.plugin.restoreBuiltinRule(id);
+								await this.plugin.ruleManager.restoreBuiltinRule(id);
 								this.display();
 							});
 					});
@@ -522,12 +522,12 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const addBtn = controlEl.createEl('button', { text: '+' });
 		addBtn.addEventListener('click', () => {
 			new RuleEditModal(this.app, 'create', {}, async (rule) => {
-				await this.plugin.addUserRule(rule);
+				await this.plugin.ruleManager.addUserRule(rule);
 				this.display();
 			}).open();
 		});
 
-		for (const rule of this.plugin.cachedUserRules) {
+		for (const rule of this.plugin.ruleManager.cachedUserRules) {
 			this.buildRuleItem(el, rule, false);
 		}
 	}
@@ -563,7 +563,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					modeTag.addEventListener('click', async (e) => {
 						e.stopPropagation();
 						const newIsTab = !isTab;
-						await this.plugin.updateRuleTriggerMode(rule.id!, isBuiltin, newIsTab);
+						await this.plugin.ruleManager.updateRuleTriggerMode(rule.id!, isBuiltin, newIsTab);
 						this.display();
 					});
 				}
@@ -577,7 +577,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					.setTooltip(locale.toolTip.enableRule)
 					.onChange(async (value) => {
 						setting.settingEl.style.opacity = value ? "" : "0.5";
-						await this.plugin.toggleRuleEnabled(rule.id!, isBuiltin, value);
+						await this.plugin.ruleManager.toggleRuleEnabled(rule.id!, isBuiltin, value);
 					});
 			})
 			.addExtraButton(button => {
@@ -586,9 +586,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					.onClick(() => {
 						new RuleEditModal(this.app, 'edit', rule, async (updated) => {
 							if (isBuiltin) {
-								await this.plugin.updateBuiltinRule(rule.id!, updated);
+								await this.plugin.ruleManager.updateBuiltinRule(rule.id!, updated);
 							} else {
-								await this.plugin.updateUserRule(rule.id!, updated);
+								await this.plugin.ruleManager.updateUserRule(rule.id!, updated);
 							}
 							this.display();
 						}).open();
@@ -599,9 +599,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					.setTooltip(locale.toolTip.removeRule)
 					.onClick(async () => {
 						if (isBuiltin) {
-							await this.plugin.deleteBuiltinRule(rule.id!);
+							await this.plugin.ruleManager.deleteBuiltinRule(rule.id!);
 						} else {
-							await this.plugin.deleteUserRule(rule.id!);
+							await this.plugin.ruleManager.deleteUserRule(rule.id!);
 						}
 						this.display();
 					});
