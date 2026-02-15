@@ -670,7 +670,7 @@ export default class EasyTypingPlugin extends Plugin {
 
 			if (changeType.contains('EasyTyping') || changeType=='undo' || changeType=='redo') return;
 			// 判断每次输入结束
-			if (changeType != 'none' && notSelected && !changeType.includes('delete')) {
+			if (changeType != 'none' && notSelected && changedStr.length<1 && !changeType.includes('delete')) {
 				// 用户自定义转化规则
 				if (this.triggerCvtRule(update.view, mainSelection.anchor)) return;
 				if (composeEnd && this.triggerPuncRectify(update.view, change_from)) return;
