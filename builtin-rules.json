@@ -1,11 +1,12 @@
 [
   {
-    "id": "builtin-autopair-input",
-    "trigger": "[【（《「『“‘]",
+    "trigger": "[（《「『“‘]",
     "replacement": "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’'}; return p[leftMatches[0]];",
     "options": "rF",
     "priority": 10,
-    "description": "中文符号自动配对"
+    "description": "中文符号自动配对",
+    "enabled": true,
+    "id": "builtin-autopair-input"
   },
   {
     "id": "builtin-autopair-delete",

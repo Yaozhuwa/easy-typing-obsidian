@@ -14,7 +14,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	// Chinese symbol auto-pairing via function rules
 	{
 		id: 'builtin-autopair-input',
-		trigger: '[【（《「『“‘]',
+		trigger: '[（《「『“‘]',
 		replacement: "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’'}; return p[leftMatches[0]];",
 		options: 'rF',
 		priority: 10,
