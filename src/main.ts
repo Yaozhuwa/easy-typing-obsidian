@@ -18,6 +18,7 @@ import { tabstopSpecsToTabstopGroups } from './tabstop';
 import { RuleEngine, TxContext, RuleType, RuleScope } from './rule_engine';
 import { RuleManager } from './rule_manager';
 import { toggleComment } from './comment_toggle';
+import { triggerCvtRule, triggerPuncRectify, handleEndComposeTypeKey } from './rule_processor';
 
 
 export default class EasyTypingPlugin extends Plugin {
@@ -671,8 +672,8 @@ export default class EasyTypingPlugin extends Plugin {
 			// 判断每次输入结束
 			if (changeType != 'none' && notSelected && changedStr.length<1 && !changeType.includes('delete')) {
 				// 用户自定义转化规则
-				if (this.triggerCvtRule(update.view, mainSelection.anchor)) return;
-				if (composeEnd && this.triggerPuncRectify(update.view, change_from)) return;
+				if (triggerCvtRule(this, update.view, mainSelection.anchor)) return;
+				if (composeEnd && triggerPuncRectify(this, update.view, change_from)) return;
 
 				// 判断格式化文本
 				// console.log("ready to format");
@@ -735,7 +736,7 @@ export default class EasyTypingPlugin extends Plugin {
 		{
 			const sel = view.state.selection;
 			if (sel.ranges.length === 1 && sel.main.from === sel.main.to) {
-				if (this.triggerCvtRule(view, sel.main.to, 'tab')) return true;
+				if (triggerCvtRule(this, view, sel.main.to, 'tab')) return true;
 			}
 		}
 
@@ -1191,7 +1192,7 @@ export default class EasyTypingPlugin extends Plugin {
 			// console.log("Keyup:", event.key, event.shiftKey, event.ctrlKey||event.metaKey);
 			console.log("Keyup:", event.key);
 		}
-		this.handleEndComposeTypeKey(event, view);
+		handleEndComposeTypeKey(this, event, view);
 	}
 
 	handleShiftEnter(view: EditorView): boolean {
@@ -1409,89 +1410,6 @@ export default class EasyTypingPlugin extends Plugin {
 		return false;
     }
 
-	triggerCvtRule = (view: EditorView, cursor_pos: number, changeType: string = 'input.type'):boolean => {
-		const cvtCtx: TxContext = {
-			kind: RuleType.Input,
-			docText: view.state.doc.toString(),
-			selection: { from: cursor_pos, to: cursor_pos },
-			inserted: '',
-			changeType: changeType,
-			scopeHint: RuleScope.All,
-			debug: this.settings?.debug,
-		};
-		const cvtResult = this.ruleEngine.process(cvtCtx);
-		if (cvtResult) {
-			const tabstopGroups = tabstopSpecsToTabstopGroups(cvtResult.tabstops);
-			if (tabstopGroups.length > 0) {
-				view.dispatch({
-					changes: {
-						from: cvtResult.matchRange.from,
-						to: cvtResult.matchRange.to,
-						insert: cvtResult.newText,
-					},
-					selection: tabstopGroups[0].toEditorSelection(),
-					effects: [addTabstopsEffect.of(tabstopGroups)],
-					userEvent: "EasyTyping.change"
-				});
-			} else {
-				view.dispatch({
-					changes: {
-						from: cvtResult.matchRange.from,
-						to: cvtResult.matchRange.to,
-						insert: cvtResult.newText,
-					},
-					selection: { anchor: cvtResult.cursor },
-					userEvent: "EasyTyping.change"
-				});
-			}
-			return true;
-		}
-		return false;
-	}
-
-	triggerPuncRectify = (view: EditorView, change_from_pos: number):boolean => {
-		if (this.settings.PuncRectify &&
-			/[,.?!]/.test(view.state.doc.sliceString(change_from_pos - 1, change_from_pos))) {
-			let punc = view.state.doc.sliceString(change_from_pos - 1, change_from_pos)
-			if (change_from_pos > 2 && /[^\u4e00-\u9fa5]/.test(view.state.doc.sliceString(change_from_pos - 2, change_from_pos - 1))) { }
-			else {
-				view.dispatch({
-					changes: {
-						from: change_from_pos - 1,
-						to: change_from_pos,
-						insert: this.halfToFullSymbolMap.get(punc)
-					},
-					// selection: { anchor: toB - rule.before.left.length + rule.after.left.length },
-					userEvent: "EasyTyping.change"
-				})
-				return true;
-			}
-		}
-		return false;
-	}
-
-	handleEndComposeTypeKey = (event: KeyboardEvent, view: EditorView) => {
-		if ((['Enter', 'Process', ' ', 'Shift'].contains(event.key) || /\d/.test(event.key)) &&
-			this.compose_need_handle) {
-			let cursor = view.state.selection.asSingle().main;
-			if (cursor.head != cursor.anchor) return;
-			let insertedStr = view.state.doc.sliceString(this.compose_begin_pos, cursor.anchor);
-			// console.log("inserted str", insertedStr);
-			this.compose_need_handle = false;
-			if (this.triggerCvtRule(view, cursor.anchor)) return;
-			if (this.triggerPuncRectify(view, this.compose_begin_pos)) return;
-			if (this.settings.AutoFormat && !this.isCurrentFileExclude()){
-				if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
-				let changes = this.Formater.formatLineOfDoc(view.state, this.settings,
-					this.compose_begin_pos, cursor.anchor, insertedStr);
-				if (changes != null) {
-					view.dispatch(...changes[0]);
-					view.dispatch(changes[1]);
-					return;
-				}
-			}
-		}
-	}
 
 	formatArticle = (editor: Editor, view: MarkdownView): void => {
 		const editorView = editor.cm as EditorView;
