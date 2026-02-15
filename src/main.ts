@@ -11,12 +11,13 @@ import { tabstopsStateField } from './tabstops_state_field';
 import { RuleEngine } from './rule_engine';
 import { RuleManager } from './rule_manager';
 import { toggleComment } from './comment_toggle';
-import { isCurrentFileExclude as isCurrentFileExcludeFn, formatArticle, formatSelectionOrCurLine, preFormatOneLine, formatOneLine, deleteBlankLines, convert2CodeBlock, switchAutoFormatting } from './formatting_commands';
+import { isCurrentFileExclude as isCurrentFileExcludeFn, formatArticle, formatSelectionOrCurLine, deleteBlankLines, convert2CodeBlock, switchAutoFormatting } from './formatting_commands';
+import { PluginContext } from './plugin_context';
 import { handleTabDown, handleEnter, handleBackspace, handleShiftEnter, handleModA, goNewLineAfterCurLine, selectBlockInCursor, onKeyup } from './keyboard_handlers';
 import { createTransactionFilter, createViewUpdatePlugin, normalPaste } from './cm_extensions';
 
 
-export default class EasyTypingPlugin extends Plugin {
+export default class EasyTypingPlugin extends Plugin implements PluginContext {
 	settings: EasyTypingSettings;
 	halfToFullSymbolMap: Map<string, string>;
 	Formater: LineFormater;
@@ -231,17 +232,6 @@ export default class EasyTypingPlugin extends Plugin {
 			}));
 		}
 
-		// this.registerEvent(this.app.workspace.on('file-open', (file: TFile | null) => {
-		// 	if (file != null) {
-		// 		let editor = this.getEditor();
-		// 		if (editor === null) return;
-		// 		this.ContentParser.parseNewArticle(editor.getValue());
-		// 		if (this.settings?.debug) {
-		// 			new Notice("EasyTyping: Parse New Article: " + file.vault.getName() + '/' + file.path);
-		// 			// if (this.settings.debug) this.ContentParser.print();
-		// 		}
-		// 	}
-		// }));
 		console.log("Easy Typing Plugin loaded.")
 	}
 
