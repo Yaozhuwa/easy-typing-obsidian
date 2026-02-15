@@ -574,6 +574,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				toggle.setValue(enabled)
 					.setTooltip(locale.toolTip.enableRule)
 					.onChange(async (value) => {
+						setting.settingEl.style.opacity = value ? "" : "0.5";
 						await this.plugin.toggleRuleEnabled(rule.id!, isBuiltin, value);
 					});
 			})

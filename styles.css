@@ -91,9 +91,9 @@ span[class="easy-typing-cursor-widget"] {
 }
 
 .et-rule-type-selectkey {
-    background-color: rgba(33, 150, 243, 0.15);
-    color: #2196f3;
-    border: 1px solid rgba(33, 150, 243, 0.3);
+    background-color: rgba(255, 152, 0, 0.15);
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
 }
 
 .et-rule-type-fn {
