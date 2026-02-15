@@ -24,7 +24,8 @@
     "replacement": "",
     "options": "d",
     "priority": 100,
-    "description": "快速删除空 markdown 注释"
+    "description": "快速删除空 markdown 注释",
+    "enabled": true
   },
   {
     "id": "user-migrated-del-3",
@@ -48,7 +49,7 @@
   {
     "trigger": "(?<=^|\\n)([\\w-]+)-call",
     "replacement": "> [![[0]]] $0\\n> $1",
-    "options": "rt",
+    "options": "rtT",
     "priority": 100,
     "description": "快捷 Callout",
     "enabled": true,

@@ -51,7 +51,8 @@
     "trigger_right": "$",
     "replacement": "$$\n$0\n$$",
     "priority": 10,
-    "description": "半角混合转公式块"
+    "description": "半角混合转公式块",
+    "enabled": true
   },
   {
     "id": "builtin-conv-010",
@@ -135,7 +136,8 @@
     "replacement": "[[1]]> $0",
     "options": "r",
     "priority": 50,
-    "description": "引用符号转换"
+    "description": "引用符号转换",
+    "enabled": true
   },
   {
     "id": "builtin-extra-002",

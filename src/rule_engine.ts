@@ -417,6 +417,7 @@ export class RuleEngine {
 			if (!rule.enabled) continue;
 			if (rule.type !== ctx.kind) continue;
 			if (rule.triggerMode === RuleTriggerMode.Tab && ctx.changeType !== 'tab') continue;
+			if (rule.triggerMode === RuleTriggerMode.Auto && ctx.changeType === 'tab') continue;
 
 			// Scope check: RuleScope.All on either side means "no restriction"
 			if (ctx.scopeHint !== RuleScope.All && !rule.scope.includes(RuleScope.All) && !rule.scope.includes(ctx.scopeHint)) continue;

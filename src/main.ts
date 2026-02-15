@@ -733,6 +733,13 @@ export default class EasyTypingPlugin extends Plugin {
 			return true;
 		}
 
+		{
+			const sel = view.state.selection;
+			if (sel.ranges.length === 1 && sel.main.from === sel.main.to) {
+				if (this.triggerCvtRule(view, sel.main.to, 'tab')) return true;
+			}
+		}
+
 		if (!this.settings.Tabout) return false;
 
 		let state = view.state;
@@ -1624,13 +1631,13 @@ export default class EasyTypingPlugin extends Plugin {
 		return false;
     }
 
-	triggerCvtRule = (view: EditorView, cursor_pos: number):boolean => {
+	triggerCvtRule = (view: EditorView, cursor_pos: number, changeType: string = 'input.type'):boolean => {
 		const cvtCtx: TxContext = {
 			kind: RuleType.Input,
 			docText: view.state.doc.toString(),
 			selection: { from: cursor_pos, to: cursor_pos },
 			inserted: '',
-			changeType: 'input.type',
+			changeType: changeType,
 			scopeHint: RuleScope.All,
 			debug: this.settings?.debug,
 		};
