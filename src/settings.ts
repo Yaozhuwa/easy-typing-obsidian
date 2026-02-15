@@ -554,17 +554,19 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.setClass('et-rule-item')
 			.setName(createFragment(f => {
 				f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
-				const modeTag = f.createSpan({
-					cls: `et-rule-trigger-mode ${isTab ? 'et-trigger-mode-tab' : 'et-trigger-mode-auto'}`,
-					text: isTab ? 'Tab' : 'Auto',
-				});
-				modeTag.setAttribute('aria-label', locale.settings.ruleEditModal.fieldTriggerMode);
-				modeTag.addEventListener('click', async (e) => {
-					e.stopPropagation();
-					const newIsTab = !isTab;
-					await this.plugin.updateRuleTriggerMode(rule.id!, isBuiltin, newIsTab);
-					this.display();
-				});
+				if (opts.type === EngineRuleType.Input) {
+					const modeTag = f.createSpan({
+						cls: `et-rule-trigger-mode ${isTab ? 'et-trigger-mode-tab' : 'et-trigger-mode-auto'}`,
+						text: isTab ? 'Tab' : 'Auto',
+					});
+					modeTag.setAttribute('aria-label', locale.settings.ruleEditModal.fieldTriggerMode);
+					modeTag.addEventListener('click', async (e) => {
+						e.stopPropagation();
+						const newIsTab = !isTab;
+						await this.plugin.updateRuleTriggerMode(rule.id!, isBuiltin, newIsTab);
+						this.display();
+					});
+				}
 				if (isFn) {
 					f.createSpan({ cls: 'et-rule-type-tag et-rule-type-fn', text: 'Fn' });
 				}
@@ -918,8 +920,8 @@ export class RuleEditModal extends Modal {
 				});
 			});
 
-		// Trigger Mode
-		new Setting(contentEl)
+		// Trigger Mode (only meaningful for Input rules)
+		const triggerModeSetting = new Setting(contentEl)
 			.setName(locale.settings.ruleEditModal.fieldTriggerMode)
 			.addDropdown(dropdown => {
 				dropdown.addOption(RuleTriggerMode.Auto, locale.dropdownOptions.triggerModeAuto);
@@ -927,6 +929,7 @@ export class RuleEditModal extends Modal {
 				dropdown.setValue(this.triggerMode);
 				dropdown.onChange((v: string) => this.triggerMode = v as RuleTriggerMode);
 			});
+		triggerModeSetting.settingEl.dataset.field = 'triggerMode';
 
 		// Trigger
 		new Setting(contentEl)
@@ -1050,6 +1053,12 @@ export class RuleEditModal extends Modal {
 			triggerRightEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
 		}
 
+		// Trigger Mode only applies to Input rules
+		const triggerModeEl = contentEl.querySelector('[data-field="triggerMode"]') as HTMLElement;
+		if (triggerModeEl) {
+			triggerModeEl.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
+		}
+
 		// Function hint
 		const fnHint = contentEl.querySelector('[data-field="fnHint"]') as HTMLElement;
 		if (fnHint) {
@@ -1091,7 +1100,7 @@ export class RuleEditModal extends Modal {
 		let options = '';
 		if (this.ruleType === EngineRuleType.Delete) options += 'd';
 		else if (this.ruleType === EngineRuleType.SelectKey) options += 's';
-		if (this.triggerMode === RuleTriggerMode.Tab) options += 'T';
+		if (this.ruleType === EngineRuleType.Input && this.triggerMode === RuleTriggerMode.Tab) options += 'T';
 		if (this.isRegex) options += 'r';
 		if (this.isFunction) options += 'F';
 		if (this.ruleScope === RuleScope.Text) options += 't';

@@ -192,7 +192,7 @@ export class RuleEngine {
 				description: simple.description ?? '',
 				enabled: simple.enabled ?? true,
 				type: RuleType.SelectKey,
-				triggerMode: opts.triggerMode,
+				triggerMode: RuleTriggerMode.Auto,
 				triggerKeys: RuleEngine.parseTriggerKeys(simple.trigger),
 				scope: opts.scope,
 				priority: simple.priority ?? 100,
@@ -201,11 +201,16 @@ export class RuleEngine {
 			};
 		}
 
+		// triggerMode only applies to Input rules; force Auto for Delete
+		const triggerMode = opts.type === RuleType.Input
+			? opts.triggerMode
+			: RuleTriggerMode.Auto;
+
 		return {
 			description: simple.description ?? '',
 			enabled: simple.enabled ?? true,
 			type: opts.type,
-			triggerMode: opts.triggerMode,
+			triggerMode,
 			triggerKeys: undefined,
 			scope: opts.scope,
 			priority: simple.priority ?? 100,
