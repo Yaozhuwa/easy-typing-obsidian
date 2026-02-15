@@ -21,7 +21,6 @@ export enum StrictLineMode { EnterTwice = "enter_twice", TwoSpace = "two_space",
 export interface EasyTypingSettings {
 	Tabout: boolean;
 	SelectionEnhance: boolean;
-	IntrinsicSymbolPairs: boolean;
 	BaseObEditEnhance: boolean;
 	FW2HWEnhance: boolean;
 	BetterCodeEdit: boolean;
@@ -59,7 +58,6 @@ export interface EasyTypingSettings {
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	Tabout: true,
 	SelectionEnhance: true,
-	IntrinsicSymbolPairs: true,
 	BaseObEditEnhance: true,
 	FW2HWEnhance: true,
 	BetterCodeEdit: true,
@@ -188,17 +186,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	// ==================== Tab 1: 编辑增强 ====================
 	buildEditEnhanceTab(el: HTMLElement): void {
-		new Setting(el)
-			.setName(locale.settings.symbolAutoPair.name)
-			.setDesc(locale.settings.symbolAutoPair.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.IntrinsicSymbolPairs)
-					.onChange(async (value) => {
-						this.plugin.settings.IntrinsicSymbolPairs = value;
-						await this.plugin.saveSettings();
-					});
-			});
-
 		new Setting(el)
 			.setName(locale.settings.selectionReplace.name)
 			.setDesc(locale.settings.selectionReplace.desc)

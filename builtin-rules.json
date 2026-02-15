@@ -1,5 +1,22 @@
 [
   {
+    "id": "builtin-autopair-input",
+    "trigger": "[【（《「『“‘]",
+    "replacement": "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’'}; return p[leftMatches[0]];",
+    "options": "rF",
+    "priority": 10,
+    "description": "中文符号自动配对"
+  },
+  {
+    "id": "builtin-autopair-delete",
+    "trigger": "[【（《「『“‘]",
+    "trigger_right": "[】）》」』”’]",
+    "replacement": "const p={'【':'】','（':'）','《':'》','「':'」','『':'』','“':'”','‘':'’'}; return p[leftMatches[0]]===rightMatches[0] ? '' : undefined;",
+    "options": "drF",
+    "priority": 10,
+    "description": "删除中文符号配对"
+  },
+  {
     "id": "builtin-conv-001",
     "trigger": "··",
     "replacement": "`$0`",
@@ -68,210 +85,13 @@
     "description": "中文顿号转斜杠"
   },
   {
-    "id": "builtin-fw2hw-001",
-    "trigger": "。。",
-    "replacement": ".$0",
+    "id": "builtin-fw2hw",
+    "trigger": "([。！；，：？》｜（《“”‘’])\\1",
+    "trigger_right": "[）》”’]?",
+    "replacement": "const p={'（':['）','($0)'],'《':['》','<$0'],'“':['”','\"$0\"'],'”':['”','\"$0\"'],'‘':['’',\"'$0'\"],'’':['’',\"'$0'\"]}; const m={'。':'.$0','！':'!$0','；':';$0','，':',$0','：':':$0','？':'?$0','》':'>$0','｜':'|$0','（':'($0)','《':'<$0','“':'\"$0\"','”':'\"$0\"','‘':\"'$0'\",'’':\"'$0'\"}; const c=leftMatches[1],r=rightMatches[0]||'',e=p[c]; return e&&e[0]===r?e[1]:m[c];",
+    "options": "rF",
     "priority": 20,
-    "description": "全角句号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-002",
-    "trigger": "！！",
-    "replacement": "!$0",
-    "priority": 20,
-    "description": "全角感叹号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-003",
-    "trigger": "；；",
-    "replacement": ";$0",
-    "priority": 20,
-    "description": "全角分号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-004",
-    "trigger": "，，",
-    "replacement": ",$0",
-    "priority": 20,
-    "description": "全角逗号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-005",
-    "trigger": "：：",
-    "replacement": ":$0",
-    "priority": 20,
-    "description": "全角冒号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-006",
-    "trigger": "？？",
-    "replacement": "?$0",
-    "priority": 20,
-    "description": "全角问号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-007",
-    "trigger": "（（",
-    "trigger_right": "）",
-    "replacement": "($0)",
-    "priority": 20,
-    "description": "全角括号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-008",
-    "trigger": "（（",
-    "replacement": "($0)",
-    "priority": 20,
-    "description": "全角括号转半角(无右)"
-  },
-  {
-    "id": "builtin-fw2hw-009",
-    "trigger": "““",
-    "trigger_right": "”",
-    "replacement": "\"$0\"",
-    "priority": 20,
-    "description": "中文左双引号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-010",
-    "trigger": "””",
-    "trigger_right": "”",
-    "replacement": "\"$0\"",
-    "priority": 20,
-    "description": "中文右双引号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-011",
-    "trigger": "‘‘",
-    "trigger_right": "’",
-    "replacement": "'$0'",
-    "priority": 20,
-    "description": "中文左单引号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-012",
-    "trigger": "’’",
-    "trigger_right": "’",
-    "replacement": "'$0'",
-    "priority": 20,
-    "description": "中文右单引号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-013",
-    "trigger": "》》",
-    "replacement": ">$0",
-    "priority": 20,
-    "description": "全角右书名号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-014",
-    "trigger": "《《",
-    "trigger_right": "》",
-    "replacement": "<$0",
-    "priority": 20,
-    "description": "全角左书名号转半角"
-  },
-  {
-    "id": "builtin-fw2hw-015",
-    "trigger": "《《",
-    "replacement": "<$0",
-    "priority": 20,
-    "description": "全角左书名号转半角(无右)"
-  },
-  {
-    "id": "builtin-fw2hw-016",
-    "trigger": "｜｜",
-    "replacement": "|$0",
-    "priority": 20,
-    "description": "全角竖线转半角"
-  },
-  {
-    "id": "builtin-pair-001",
-    "trigger": "【】",
-    "trigger_right": "】",
-    "replacement": "【】$0",
-    "priority": 25,
-    "description": "防止重复右方括号"
-  },
-  {
-    "id": "builtin-pair-002",
-    "trigger": "（）",
-    "trigger_right": "）",
-    "replacement": "（）$0",
-    "priority": 25,
-    "description": "防止重复右圆括号"
-  },
-  {
-    "id": "builtin-pair-003",
-    "trigger": "<>",
-    "trigger_right": ">",
-    "replacement": "<>$0",
-    "priority": 25,
-    "description": "防止重复右尖括号"
-  },
-  {
-    "id": "builtin-pair-004",
-    "trigger": "《》",
-    "trigger_right": "》",
-    "replacement": "《》$0",
-    "priority": 25,
-    "description": "防止重复右书名号"
-  },
-  {
-    "id": "builtin-pair-005",
-    "trigger": "「」",
-    "trigger_right": "」",
-    "replacement": "「」$0",
-    "priority": 25,
-    "description": "防止重复右单角括号"
-  },
-  {
-    "id": "builtin-pair-006",
-    "trigger": "『』",
-    "trigger_right": "』",
-    "replacement": "『』$0",
-    "priority": 25,
-    "description": "防止重复右双角括号"
-  },
-  {
-    "id": "builtin-pair-007",
-    "trigger": "()",
-    "trigger_right": ")",
-    "replacement": "()$0",
-    "priority": 25,
-    "description": "防止重复右圆括号(英)"
-  },
-  {
-    "id": "builtin-pair-008",
-    "trigger": "[]",
-    "trigger_right": "]",
-    "replacement": "[]$0",
-    "priority": 25,
-    "description": "防止重复右方括号(英)"
-  },
-  {
-    "id": "builtin-pair-009",
-    "trigger": "{}",
-    "trigger_right": "}",
-    "replacement": "{}$0",
-    "priority": 25,
-    "description": "防止重复右花括号"
-  },
-  {
-    "id": "builtin-pair-010",
-    "trigger": "''",
-    "trigger_right": "'",
-    "replacement": "''$0",
-    "priority": 25,
-    "description": "防止重复右单引号(英)"
-  },
-  {
-    "id": "builtin-pair-011",
-    "trigger": "\"\"",
-    "trigger_right": "\"",
-    "replacement": "\"\"$0",
-    "priority": 25,
-    "description": "防止重复右双引号(英)"
+    "description": "连续全角符号转半角"
   },
   {
     "id": "builtin-del-001",
@@ -301,108 +121,13 @@
     "description": "删除公式块对"
   },
   {
-    "id": "builtin-sel-001",
-    "trigger": "【",
-    "replacement": "[${SELECTION}]",
-    "options": "s",
+    "id": "builtin-sel",
+    "trigger": "[【¥“”]",
+    "replacement": "const m={'¥': ['$', '$'], '【': ['[', ']'], '“': ['“','”'], '”': ['“','”']}; \nreturn m[key][0] + '${0:${SELECTION}}' + m[key][1];",
+    "options": "sF",
     "priority": 40,
-    "description": "选中文字加方括号"
-  },
-  {
-    "id": "builtin-sel-002",
-    "trigger": "￥",
-    "replacement": "$${SELECTION}$",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加公式"
-  },
-  {
-    "id": "builtin-sel-003",
-    "trigger": "·",
-    "replacement": "`${SELECTION}`",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加代码"
-  },
-  {
-    "id": "builtin-sel-004",
-    "trigger": "¥",
-    "replacement": "$${SELECTION}$",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加公式(半角)"
-  },
-  {
-    "id": "builtin-sel-005",
-    "trigger": "《",
-    "replacement": "《${SELECTION}》",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加书名号"
-  },
-  {
-    "id": "builtin-sel-006",
-    "trigger": "“",
-    "replacement": "“${SELECTION}”",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加中文双引号(左)"
-  },
-  {
-    "id": "builtin-sel-007",
-    "trigger": "”",
-    "replacement": "“${SELECTION}”",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加中文双引号(右)"
-  },
-  {
-    "id": "builtin-sel-008",
-    "trigger": "（",
-    "replacement": "（${SELECTION}）",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加中文圆括号"
-  },
-  {
-    "id": "builtin-sel-009",
-    "trigger": "<",
-    "replacement": "<${SELECTION}>",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加尖括号"
-  },
-  {
-    "id": "builtin-sel-010",
-    "trigger": "\"",
-    "replacement": "\"${SELECTION}\"",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加英文双引号"
-  },
-  {
-    "id": "builtin-sel-011",
-    "trigger": "'",
-    "replacement": "'${SELECTION}'",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加英文单引号"
-  },
-  {
-    "id": "builtin-sel-012",
-    "trigger": "「",
-    "replacement": "「${SELECTION}」",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加单角括号"
-  },
-  {
-    "id": "builtin-sel-013",
-    "trigger": "『",
-    "replacement": "『${SELECTION}』",
-    "options": "s",
-    "priority": 40,
-    "description": "选中文字加双角括号"
+    "description": "选中文字加符号",
+    "enabled": true
   },
   {
     "id": "builtin-extra-001",
@@ -410,8 +135,7 @@
     "replacement": "[[1]]> $0",
     "options": "r",
     "priority": 50,
-    "description": "引用符号转换",
-    "enabled": true
+    "description": "引用符号转换"
   },
   {
     "id": "builtin-extra-002",
@@ -419,6 +143,7 @@
     "replacement": "[[1]] [[2]]$0",
     "options": "r",
     "priority": 50,
-    "description": "引用后加空格"
+    "description": "引用后加空格",
+    "enabled": true
   }
 ]

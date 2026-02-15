@@ -61,5 +61,14 @@
     "description": "快速任务",
     "enabled": true,
     "id": "user-1770958043933-igpb"
+  },
+  {
+    "trigger": "/date",
+    "replacement": "const d=new Date(); \nreturn d.toISOString().slice(0,10)+'$0';",
+    "options": "F",
+    "priority": 100,
+    "description": "快速日期",
+    "enabled": true,
+    "id": "user-1771045635587-yvj9"
   }
 ]

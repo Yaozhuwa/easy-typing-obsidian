@@ -2,10 +2,6 @@ import { enUS } from ".";
 
 const locale: typeof enUS = {
     settings: {
-        symbolAutoPair: {
-            name: "符號自動配對及刪除配對",
-            desc: "增加多種符號配對輸入，配對刪除，如《》, “”, 「」, 『』, 【】等"
-        },
         selectionReplace: {
             name: "選中文本替換增强",
             desc: "選中文本情況下的編輯增强，按￥→$選中的文本$, 按·→`選中的文本`，《 → 《選中的文本》等等"

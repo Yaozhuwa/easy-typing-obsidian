@@ -1,15 +1,35 @@
 import { SimpleRule } from './rule_engine';
 
 // Priority bands:
+//   5:  Auto pair rules (Chinese symbol pairing)
 //   10: Basic conversion rules (immediate, transactionFilter)
 //   20: FW2HW symbol rules (immediate, transactionFilter)
-//   25: Auto pair patch rules (immediate, transactionFilter)
 //   30: Intrinsic delete rules
 //   40: Selection replace rules
 //   50: Quote/extra rules (regex, deferred via triggerCvtRule)
 //   100+: User rules (default)
 
 export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
+	// ===== Auto Pair Rules =====
+	// Chinese symbol auto-pairing via function rules
+	{
+		id: 'builtin-autopair-input',
+		trigger: '[【（《「『“‘]',
+		replacement: "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’'}; return p[leftMatches[0]];",
+		options: 'rF',
+		priority: 10,
+		description: '中文符号自动配对',
+	},
+	{
+		id: 'builtin-autopair-delete',
+		trigger: '[\u3010\uFF08\u300A\u300C\u300E\u201c\u2018]',
+		trigger_right: '[\u3011\uFF09\u300B\u300D\u300F\u201d\u2019]',
+		replacement: "const p={'\u3010':'\u3011','\uFF08':'\uFF09','\u300A':'\u300B','\u300C':'\u300D','\u300E':'\u300F','\u201c':'\u201d','\u2018':'\u2019'}; return p[leftMatches[0]]===rightMatches[0] ? '' : undefined;",
+		options: 'drF',
+		priority: 10,
+		description: '删除中文符号配对',
+	},
+
 	// ===== Basic Conversion Rules =====
 	// Original: BasicConvRuleStringList in main.ts:72-74
 	{ id: 'builtin-conv-001', trigger: '··', replacement: '`$0`', priority: 10, description: '中文点转代码' },
@@ -24,38 +44,16 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	{ id: 'builtin-conv-013', trigger: '(^|\\n)、', replacement: '[[1]]/$0', options: 'r', priority: 10, description: '中文顿号转斜杠' },
 
 	// ===== FW2HW Symbol Rules =====
-	// Original: FW2HWSymbolRulesStrList in main.ts:81-86
-	{ id: 'builtin-fw2hw-001', trigger: '。。', replacement: '.$0', priority: 20, description: '全角句号转半角' },
-	{ id: 'builtin-fw2hw-002', trigger: '！！', replacement: '!$0', priority: 20, description: '全角感叹号转半角' },
-	{ id: 'builtin-fw2hw-003', trigger: '；；', replacement: ';$0', priority: 20, description: '全角分号转半角' },
-	{ id: 'builtin-fw2hw-004', trigger: '，，', replacement: ',$0', priority: 20, description: '全角逗号转半角' },
-	{ id: 'builtin-fw2hw-005', trigger: '：：', replacement: ':$0', priority: 20, description: '全角冒号转半角' },
-	{ id: 'builtin-fw2hw-006', trigger: '？？', replacement: '?$0', priority: 20, description: '全角问号转半角' },
-	{ id: 'builtin-fw2hw-007', trigger: '（（', trigger_right: '）', replacement: '($0)', priority: 20, description: '全角括号转半角' },
-	{ id: 'builtin-fw2hw-008', trigger: '（（', replacement: '($0)', priority: 20, description: '全角括号转半角(无右)' },
-	{ id: 'builtin-fw2hw-009', trigger: '\u201c\u201c', trigger_right: '\u201d', replacement: '"$0"', priority: 20, description: '中文左双引号转半角' },
-	{ id: 'builtin-fw2hw-010', trigger: '\u201d\u201d', trigger_right: '\u201d', replacement: '"$0"', priority: 20, description: '中文右双引号转半角' },
-	{ id: 'builtin-fw2hw-011', trigger: '\u2018\u2018', trigger_right: '\u2019', replacement: "'$0'", priority: 20, description: '中文左单引号转半角' },
-	{ id: 'builtin-fw2hw-012', trigger: '\u2019\u2019', trigger_right: '\u2019', replacement: "'$0'", priority: 20, description: '中文右单引号转半角' },
-	{ id: 'builtin-fw2hw-013', trigger: '》》', replacement: '>$0', priority: 20, description: '全角右书名号转半角' },
-	{ id: 'builtin-fw2hw-014', trigger: '《《', trigger_right: '》', replacement: '<$0', priority: 20, description: '全角左书名号转半角' },
-	{ id: 'builtin-fw2hw-015', trigger: '《《', replacement: '<$0', priority: 20, description: '全角左书名号转半角(无右)' },
-	{ id: 'builtin-fw2hw-016', trigger: '｜｜', replacement: '|$0', priority: 20, description: '全角竖线转半角' },
-
-	// ===== Auto Pair Patch Rules =====
-	// Original: autoPairRulesPatchStrList in main.ts:91-95
-	// Prevent duplicate closing symbols when auto-pairing
-	{ id: 'builtin-pair-001', trigger: '【】', trigger_right: '】', replacement: '【】$0', priority: 25, description: '防止重复右方括号' },
-	{ id: 'builtin-pair-002', trigger: '（）', trigger_right: '）', replacement: '（）$0', priority: 25, description: '防止重复右圆括号' },
-	{ id: 'builtin-pair-003', trigger: '<>', trigger_right: '>', replacement: '<>$0', priority: 25, description: '防止重复右尖括号' },
-	{ id: 'builtin-pair-004', trigger: '《》', trigger_right: '》', replacement: '《》$0', priority: 25, description: '防止重复右书名号' },
-	{ id: 'builtin-pair-005', trigger: '「」', trigger_right: '」', replacement: '「」$0', priority: 25, description: '防止重复右单角括号' },
-	{ id: 'builtin-pair-006', trigger: '『』', trigger_right: '』', replacement: '『』$0', priority: 25, description: '防止重复右双角括号' },
-	{ id: 'builtin-pair-007', trigger: '()', trigger_right: ')', replacement: '()$0', priority: 25, description: '防止重复右圆括号(英)' },
-	{ id: 'builtin-pair-008', trigger: '[]', trigger_right: ']', replacement: '[]$0', priority: 25, description: '防止重复右方括号(英)' },
-	{ id: 'builtin-pair-009', trigger: '{}', trigger_right: '}', replacement: '{}$0', priority: 25, description: '防止重复右花括号' },
-	{ id: 'builtin-pair-010', trigger: "''", trigger_right: "'", replacement: "''$0", priority: 25, description: '防止重复右单引号(英)' },
-	{ id: 'builtin-pair-011', trigger: '""', trigger_right: '"', replacement: '""$0', priority: 25, description: '防止重复右双引号(英)' },
+	// Doubled full-width symbol → half-width. If right counterpart exists and matches, consume it too.
+	{
+		id: 'builtin-fw2hw',
+		trigger: '([。！；，：？》｜（《“”‘’])\\1',
+		trigger_right: '[）》”’]?',
+		replacement: "const p={'\uFF08':['\uFF09','($0)'],'\u300A':['\u300B','<$0'],'\u201c':['\u201d','\"$0\"'],'\u201d':['\u201d','\"$0\"'],'\u2018':['\u2019',\"'$0'\"],'\u2019':['\u2019',\"'$0'\"]}; const m={'\u3002':'.$0','\uFF01':'!$0','\uFF1B':';$0','\uFF0C':',$0','\uFF1A':':$0','\uFF1F':'?$0','\u300B':'>$0','\uFF5C':'|$0','\uFF08':'($0)','\u300A':'<$0','\u201c':'\"$0\"','\u201d':'\"$0\"','\u2018':\"'$0'\",'\u2019':\"'$0'\"}; const c=leftMatches[1],r=rightMatches[0]||'',e=p[c]; return e&&e[0]===r?e[1]:m[c];",
+		options: 'rF',
+		priority: 20,
+		description: '连续全角符号转半角',
+	},
 
 	// ===== Intrinsic Delete Rules =====
 	// Original: DeleteRulesStrList in main.ts:88
@@ -64,20 +62,14 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	{ id: 'builtin-del-003', trigger: '$$\n', trigger_right: '\n$$', replacement: '', options: 'd', priority: 30, description: '删除公式块对' },
 
 	// ===== Selection Replace Rules =====
-	// Original: selectionReplaceMapInitalData in main.ts:54-59
-	{ id: 'builtin-sel-001', trigger: '【', replacement: '[${SELECTION}]', options: 's', priority: 40, description: '选中文字加方括号' },
-	{ id: 'builtin-sel-002', trigger: '￥', replacement: '$${SELECTION}$', options: 's', priority: 40, description: '选中文字加公式' },
-	{ id: 'builtin-sel-003', trigger: '·', replacement: '`${SELECTION}`', options: 's', priority: 40, description: '选中文字加代码' },
-	{ id: 'builtin-sel-004', trigger: '¥', replacement: '$${SELECTION}$', options: 's', priority: 40, description: '选中文字加公式(半角)' },
-	{ id: 'builtin-sel-005', trigger: '《', replacement: '《${SELECTION}》', options: 's', priority: 40, description: '选中文字加书名号' },
-	{ id: 'builtin-sel-006', trigger: '\u201c', replacement: '\u201c${SELECTION}\u201d', options: 's', priority: 40, description: '选中文字加中文双引号(左)' },
-	{ id: 'builtin-sel-007', trigger: '\u201d', replacement: '\u201c${SELECTION}\u201d', options: 's', priority: 40, description: '选中文字加中文双引号(右)' },
-	{ id: 'builtin-sel-008', trigger: '（', replacement: '（${SELECTION}）', options: 's', priority: 40, description: '选中文字加中文圆括号' },
-	{ id: 'builtin-sel-009', trigger: '<', replacement: '<${SELECTION}>', options: 's', priority: 40, description: '选中文字加尖括号' },
-	{ id: 'builtin-sel-010', trigger: '"', replacement: '"${SELECTION}"', options: 's', priority: 40, description: '选中文字加英文双引号' },
-	{ id: 'builtin-sel-011', trigger: "'", replacement: "'${SELECTION}'", options: 's', priority: 40, description: '选中文字加英文单引号' },
-	{ id: 'builtin-sel-012', trigger: '「', replacement: '「${SELECTION}」', options: 's', priority: 40, description: '选中文字加单角括号' },
-	{ id: 'builtin-sel-013', trigger: '『', replacement: '『${SELECTION}』', options: 's', priority: 40, description: '选中文字加双角括号' },
+	{
+		id: 'builtin-sel',
+		trigger: `[【¥“”]`,
+		replacement: "const m={'¥': ['$', '$'], '【': ['[', ']'], '“': ['“','”'], '”': ['“','”']}; \nreturn m[key][0] + '${0:${SELECTION}}' + m[key][1];",
+		options: 'sF',
+		priority: 40,
+		description: '选中文字加符号',
+	},
 
 	// ===== Quote/Extra Rules (regex, deferred) =====
 	// Original: ExtraBasicConvRuleStringList and QuoteSpaceRuleStringList in main.ts:75-76

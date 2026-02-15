@@ -21,7 +21,6 @@ import { DEFAULT_BUILTIN_RULES } from './default_rules';
 
 export default class EasyTypingPlugin extends Plugin {
 	settings: EasyTypingSettings;
-	SymbolPairsMap: Map<string, string>;
 	halfToFullSymbolMap: Map<string, string>;
 	Formater: LineFormater;
 	CurActiveMarkdown: string;
@@ -44,10 +43,6 @@ export default class EasyTypingPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		await this.initRuleEngine();
-		this.SymbolPairsMap = new Map<string, string>();
-		let SymbolPairs = ["【】", "（）", "《》", "“”", "‘’", "「」", "『』", '[]', '()', '{}', '""', "''"]
-		for (let pairStr of SymbolPairs) this.SymbolPairsMap.set(pairStr.charAt(0), pairStr.charAt(1));
-
 		this.halfToFullSymbolMap = new Map([
 			[".", "。"],
 			[",", "，"],
@@ -489,14 +484,8 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
-			// ========== delete pair symbol ============
-			if (changeTypeStr === "delete.backward" && this.settings.IntrinsicSymbolPairs) {
-				if (this.SymbolPairsMap.has(changedStr) && this.SymbolPairsMap.get(changedStr) === tr.startState.sliceDoc(toA, toA + 1)) {
-					changes.push({ changes: { from: fromA, to: toA + 1 }, userEvent: "EasyTyping.change" });
-					tr = tr.startState.update(...changes);
-					return tr;
-				}
-
+			// ========== delete code block pair ============
+			if (changeTypeStr === "delete.backward") {
 				// 处理删除代码块
 				let line_content = tr.startState.doc.lineAt(toA).text;
 				let next_line_content = tr.startState.doc.sliceString(toA, toA + line_content.length+1);
@@ -598,42 +587,6 @@ export default class EasyTypingPlugin extends Plugin {
 				}
 			}
 
-			// ================ auto pair =================
-			if (this.settings.IntrinsicSymbolPairs) {
-				if (this.SymbolPairsMap.has(insertedStr) && insertedStr!="'") {
-					changes.push({
-						changes: { from: fromA, to: toA, insert: insertedStr + this.SymbolPairsMap.get(insertedStr) },
-						selection: { anchor: fromA + 1 },
-						userEvent: "EasyTyping.change"
-					});
-					tr = tr.startState.update(...changes);
-					return tr;
-				}
-				else if (insertedStr === "'") {
-					let charBeforeCursor = tr.startState.sliceDoc(fromA - 1, fromA);
-					if (['', ' ', '\n'].includes(charBeforeCursor)) {
-						changes.push({
-							changes: { from: fromA, to: toA, insert: "''" },
-							selection: { anchor: fromA + 1 },
-							userEvent: "EasyTyping.change"
-						});
-						tr = tr.startState.update(...changes);
-						return tr;
-					}
-				}
-
-				// handle autopair for "\u201c" and "\u2018"
-				if (insertedStr === '\u201c' || insertedStr === '\u2018') {
-					let tempStr = insertedStr === "\u201c" ? "\u201c\u201d" : "\u2018\u2019";
-					changes.push({
-						changes: { from: fromA, to: toA, insert: tempStr },
-						selection: { anchor: fromA + 1 },
-						userEvent: "EasyTyping.change"
-					});
-					tr = tr.startState.update(...changes);
-					return tr;
-				}
-			}
 		})
 		return tr;
 	}

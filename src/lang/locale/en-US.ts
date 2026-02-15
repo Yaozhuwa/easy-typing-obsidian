@@ -1,9 +1,5 @@
 const locale = {
     settings: {
-        symbolAutoPair: {
-            name: "Symbol auto pair and delete with pair",
-            desc: "Add auto-pairing and auto-deletion for various symbols such as 《》, “”, 「」, 『』, 【】, etc."
-        },
         selectionReplace: {
             name: "Selection Replace Enhancement",
             desc: "Enhanced editing for selected text, e.g., pressing ￥ → $selected text$, pressing · → `selected text`, 《 → 《selected text》, etc."
