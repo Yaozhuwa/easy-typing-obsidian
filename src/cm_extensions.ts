@@ -184,8 +184,6 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 
 			if (selected) return tr;
 
-			// let test_s = "¥"
-			// console.log( '¥', test_s == '￥')
 
 			// 尝试解决微软旧版输入法的问题~
 			if (ctx.settings.TryFixMSIME &&
@@ -218,26 +216,6 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 						tr = tr.startState.update(...changes);
 						return tr;
 					}
-				}
-			}
-
-			// ========== delete code block pair ============
-			if (changeTypeStr === "delete.backward") {
-				// 处理删除代码块
-				let line_content = tr.startState.doc.lineAt(toA).text;
-				let next_line_content = tr.startState.doc.sliceString(toA, toA + line_content.length+1);
-				if (/^\s*```$/.test(line_content) && '\n'+line_content==next_line_content) {
-					changes.push({
-						changes:{
-							from: toA-3,
-							to: toA+line_content.length+1,
-							insert: ''
-						},
-						selection: { anchor: toA - 3 },
-						userEvent: "EasyTyping.change"
-					});
-					tr = tr.startState.update(...changes);
-					return tr;
 				}
 			}
 
@@ -274,55 +252,27 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 				}
 			}
 
-			// 处理英文输入法下输入代码块
-			if (changeTypeStr == 'input.type' && insertedStr =='`\n```' && ctx.settings.BaseObEditEnhance){
-				const line_content = tr.startState.doc.lineAt(fromA).text;
-				if (/^\s*``$/.test(line_content)){
-					changes.push({
-						changes: {from: fromA, to: toA, insert: '`\n'+line_content+'`'},
-						selection: { anchor: fromA + 1 },
-						userEvent: "EasyTyping.change"
-					});
-					tr = tr.startState.update(...changes);
-					return tr;
-				}
-			}
 
 			// 通常单字输入
-			if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA === toA && fromB + 1 === toB) {
-				// if (ctx.settings.debug) console.log("Input.type => ", insertedStr)
-				// =========== basic convert rules ============
-				// not support undo and redo
-				if (ctx.settings.BaseObEditEnhance) {
-					// 处理英文标点下``|的情况，光标自动跳转到中间
-					if (insertedStr === '`' &&
-						toA-tr.startState.doc.lineAt(toA).from>2 &&
-						tr.startState.sliceDoc(toA-1, toA) === '`'
-						&& tr.startState.sliceDoc(toA-2, toA-1) != '`'){
-						changes.push({
-							changes: {from:toA, insert:'`'},
-							selection: { anchor: toA }, userEvent: "EasyTyping.change"
-						});
-						tr = tr.startState.update(...changes);
-						return tr;
-					}
-
-					// 处理中文输入法下输入代码块
-					if (insertedStr == '·'){
-						let line_content = tr.startState.doc.lineAt(fromA).text;
-						let ch_pos = fromA - tr.startState.doc.lineAt(fromA).from;
-						if (/^\s*``$/.test(line_content) && ch_pos==line_content.length-1){
-							changes.push({
-								changes: {from: fromA+1, to: toA+1, insert: '`\n'+line_content+'`'},
-								selection: { anchor: fromA + 2 },
-								userEvent: "EasyTyping.change"
-							});
-							tr = tr.startState.update(...changes);
-							return tr;
-						}
-					}
-				}
-			}
+			// if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA === toA && fromB + 1 === toB) {
+			// 	// if (ctx.settings.debug) console.log("Input.type => ", insertedStr)
+			// 	// =========== basic convert rules ============
+			// 	// not support undo and redo
+			// 	if (ctx.settings.BaseObEditEnhance) {
+			// 		// 处理英文标点下``|的情况，光标自动跳转到中间
+			// 		if (insertedStr === '`' &&
+			// 			toA-tr.startState.doc.lineAt(toA).from>2 &&
+			// 			tr.startState.sliceDoc(toA-1, toA) === '`'
+			// 			&& tr.startState.sliceDoc(toA-2, toA-1) != '`'){
+			// 			changes.push({
+			// 				changes: {from:toA, insert:'`'},
+			// 				selection: { anchor: toA }, userEvent: "EasyTyping.change"
+			// 			});
+			// 			tr = tr.startState.update(...changes);
+			// 			return tr;
+			// 		}
+			// 	}
+			// }
 
 		})
 		return tr;

@@ -1,12 +1,11 @@
 [
   {
+    "id": "builtin-autopair-input",
     "trigger": "[（《「『“‘]",
     "replacement": "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’'}; return p[leftMatches[0]];",
     "options": "rF",
     "priority": 10,
-    "description": "中文符号自动配对",
-    "enabled": true,
-    "id": "builtin-autopair-input"
+    "description": "中文符号自动配对"
   },
   {
     "id": "builtin-autopair-delete",
@@ -18,73 +17,30 @@
     "description": "删除中文符号配对"
   },
   {
-    "id": "builtin-conv-001",
     "trigger": "··",
     "replacement": "`$0`",
     "priority": 10,
-    "description": "中文点转代码"
+    "description": "全角点转代码",
+    "enabled": true,
+    "id": "builtin-conv-001"
   },
   {
-    "id": "builtin-conv-006",
-    "trigger": "￥￥",
-    "replacement": "$$0$",
+    "trigger": "(￥￥|¥¥|\\$￥|\\$¥|\\$\\$)",
+    "trigger_right": "\\$?",
+    "replacement": "return rightMatches[0] === '$' ? '$$\\n$0\\n$$' : '$$0$';",
+    "options": "rF",
     "priority": 10,
-    "description": "人民币符号转行内公式"
+    "description": "钱符号转公式（行内/块）",
+    "enabled": true,
+    "id": "builtin-conv-formula"
   },
   {
-    "id": "builtin-conv-007",
-    "trigger": "$￥",
-    "trigger_right": "$",
-    "replacement": "$$\n$0\n$$",
+    "id": "builtin-conv-linestart",
+    "trigger": "(^|\\n)([》、])",
+    "replacement": "const m = {'》': '[[1]]> $0', '、': '[[1]]/$0'}; return m[leftMatches[2]];",
+    "options": "rF",
     "priority": 10,
-    "description": "混合符号转公式块"
-  },
-  {
-    "id": "builtin-conv-008",
-    "trigger": "¥¥",
-    "replacement": "$$0$",
-    "priority": 10,
-    "description": "半角人民币转行内公式"
-  },
-  {
-    "id": "builtin-conv-009",
-    "trigger": "$¥",
-    "trigger_right": "$",
-    "replacement": "$$\n$0\n$$",
-    "priority": 10,
-    "description": "半角混合转公式块",
-    "enabled": true
-  },
-  {
-    "id": "builtin-conv-010",
-    "trigger": "$$",
-    "trigger_right": "$",
-    "replacement": "$$\n$0\n$$",
-    "priority": 10,
-    "description": "三美元转公式块"
-  },
-  {
-    "id": "builtin-conv-011",
-    "trigger": "$$",
-    "replacement": "$$0$",
-    "priority": 10,
-    "description": "双美元转行内公式"
-  },
-  {
-    "id": "builtin-conv-012",
-    "trigger": "(^|\\n)》",
-    "replacement": "[[1]]> $0",
-    "options": "r",
-    "priority": 10,
-    "description": "中文书名号转引用"
-  },
-  {
-    "id": "builtin-conv-013",
-    "trigger": "(^|\\n)、",
-    "replacement": "[[1]]/$0",
-    "options": "r",
-    "priority": 10,
-    "description": "中文顿号转斜杠"
+    "description": "行首中文符号转半角"
   },
   {
     "id": "builtin-fw2hw",
@@ -114,22 +70,23 @@
     "description": "删除高亮对"
   },
   {
-    "id": "builtin-del-003",
     "trigger": "$$\n",
     "trigger_right": "\n$$",
     "replacement": "",
     "options": "d",
     "priority": 30,
-    "description": "删除公式块对"
+    "description": "删除公式块对",
+    "enabled": true,
+    "id": "builtin-del-003"
   },
   {
-    "id": "builtin-sel",
     "trigger": "[【¥“”]",
     "replacement": "const m={'¥': ['$', '$'], '【': ['[', ']'], '“': ['“','”'], '”': ['“','”']}; \nreturn m[key][0] + '${0:${SELECTION}}' + m[key][1];",
     "options": "sF",
     "priority": 40,
-    "description": "选中文字加符号",
-    "enabled": true
+    "description": "选中文字加配对全角符号",
+    "enabled": true,
+    "id": "builtin-sel"
   },
   {
     "id": "builtin-extra-001",
@@ -137,8 +94,7 @@
     "replacement": "[[1]]> $0",
     "options": "r",
     "priority": 50,
-    "description": "引用符号转换",
-    "enabled": true
+    "description": "引用符号转换"
   },
   {
     "id": "builtin-extra-002",
@@ -146,7 +102,6 @@
     "replacement": "[[1]] [[2]]$0",
     "options": "r",
     "priority": 50,
-    "description": "引用后加空格",
-    "enabled": true
+    "description": "引用后加空格"
   }
 ]

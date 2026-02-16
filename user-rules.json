@@ -71,5 +71,25 @@
     "description": "快速日期",
     "enabled": true,
     "id": "user-1771045635587-yvj9"
+  },
+  {
+    "trigger": "(?<=^|\\n)([ \\t]*)`·",
+    "trigger_right": "`",
+    "replacement": "[[1]]```\n[[1]]$0\n[[1]]```",
+    "options": "r",
+    "priority": 100,
+    "description": "全角输入代码块",
+    "enabled": true,
+    "id": "user-1771228969107-sn3d"
+  },
+  {
+    "trigger": "(?<=^|\\n)([ \\t]*)```",
+    "trigger_right": "\\n([ \\t]*)```",
+    "replacement": "[[1]]",
+    "options": "dr",
+    "priority": 100,
+    "description": "代码块快速删除",
+    "enabled": true,
+    "id": "user-1771230148640-830q"
   }
 ]
