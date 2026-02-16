@@ -4,7 +4,7 @@ import { syntaxTree } from '@codemirror/language';
 import { MarkdownView } from 'obsidian';
 import { PluginContext } from './plugin_context';
 import { StrictLineMode } from './settings';
-import { triggerCvtRule, handleEndComposeTypeKey } from './rule_processor';
+import { triggerCvtRule } from './rule_processor';
 import { isCodeBlockInPos, getCodeBlockInfoInPos, getQuoteInfoInPos, selectCodeBlockInPos } from './syntax';
 import { getPosLineType2, LineType } from './core';
 import { consumeAndGotoNextTabstop } from './tabstops_state_field';
@@ -774,15 +774,4 @@ export function selectBlockInCursor(ctx: PluginContext, view: EditorView): boole
 		userEvent: "EasyTyping.selectBlockInCursor"
 	});
 	return true;
-}
-
-// =====================================================
-// onKeyup
-// =====================================================
-
-export function onKeyup(ctx: PluginContext, event: KeyboardEvent, view: EditorView): void {
-	if (ctx.settings?.debug) {
-		console.log("Keyup:", event.key);
-	}
-	handleEndComposeTypeKey(ctx, event, view);
 }

@@ -283,128 +283,129 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 	});
 }
 
+/**
+ * 共享的输入处理管线：triggerCvtRule → puncRectify → autoFormat
+ * compose end 和 normal input 都走这条路径
+ */
+function tryProcessInput(
+	ctx: PluginContext, update: ViewUpdate,
+	changeFrom: number, cursorPos: number,
+	isCompose: boolean
+): boolean {
+	if (getPosLineType(update.view.state, changeFrom) === LineType.table) return false;
+	if (triggerCvtRule(ctx, update.view, cursorPos)) return true;
+	if (isCompose && triggerPuncRectify(ctx, update.view, changeFrom)) return true;
+	if (!ctx.settings.AutoFormat || isCurrentFileExclude(ctx)) return false;
+	const lineType = getPosLineType(update.view.state, changeFrom);
+	if (lineType !== LineType.text && lineType !== LineType.table) return false;
+	const insertedStr = update.view.state.doc.sliceString(changeFrom, cursorPos);
+	const changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, changeFrom, cursorPos, insertedStr);
+	if (changes) {
+		update.view.dispatch(...changes[0]);
+		update.view.dispatch(changes[1]);
+		return true;
+	}
+	return false;
+}
+
 export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 	return EditorView.updateListener.of((update: ViewUpdate) => {
-		if (ctx.onFormatArticle === true) return;
+		if (ctx.onFormatArticle) return;
 
-		let cursor_changed = update.transactions.find(tr => tr.selection) != null;
-		// console.log('cursor_changed', cursor_changed)
-
-		if (hasTabstops(update.view) && (update.docChanged || cursor_changed) && !update.view.composing && !isInsideCurTabstop(update.view)) {
-			removeAllTabstops(update.view);
+		// --- Tabstop 清理 ---
+		if (hasTabstops(update.view)) {
+			const cursor_changed = update.transactions.some(tr => tr.selection);
+			if ((update.docChanged || cursor_changed) && !update.view.composing && !isInsideCurTabstop(update.view)) {
+				removeAllTabstops(update.view);
+			}
+			if (update.transactions.some(tr => tr.isUserEvent("undo"))) {
+				removeAllTabstops(update.view);
+			}
 		}
-		if (hasTabstops(update.view) && update.transactions.find(tr => tr.isUserEvent("undo"))){
-			removeAllTabstops(update.view);
+
+		// --- Compose 状态跟踪 ---
+		if (update.view.composing) {
+			if (update.docChanged) {
+				let tr = update.transactions[0];
+				tr.changes.iterChanges((fromA) => {
+					if (!ctx.compose_need_handle) {
+						ctx.compose_need_handle = true;
+						ctx.compose_begin_pos = fromA;
+					}
+					ctx.compose_end_pos = update.view.state.selection.asSingle().main.anchor;
+				});
+			}
+			return;
 		}
 
-		let notSelected = true;
-		let mainSelection = update.view.state.selection.asSingle().main;
-		if (mainSelection.anchor != mainSelection.head) notSelected = false;
+		// --- Compose end 处理（无论 docChanged 与否） ---
+		if (ctx.compose_need_handle) {
+			ctx.compose_need_handle = false;
+			const cursor = update.view.state.selection.asSingle().main;
+			if (cursor.head === cursor.anchor) {
+				if (tryProcessInput(ctx, update, ctx.compose_begin_pos, cursor.anchor, true)) return;
+			}
+		}
+
 		if (!update.docChanged) return;
 
-		let isExcludeFile = isCurrentFileExclude(ctx);
-		// console.log(ctx.CurActiveMarkdown, isExcludeFile)
+		// --- 提取首个变更到局部变量 ---
+		const tr = update.transactions[0];
+		const changeType = getTypeStrOfTransac(tr);
 
-		// if (ctx.settings.debug) console.log("-----ViewUpdateChange-----");
-		let tr = update.transactions[0]
-		let changeType = getTypeStrOfTransac(tr);
+		let fromA = 0, toA = 0, fromB = 0, toB = 0, insertedStr = '', changedStr = '';
+		tr.changes.iterChanges((_fromA, _toA, _fromB, _toB, inserted) => {
+			fromA = _fromA; toA = _toA; fromB = _fromB; toB = _toB;
+			insertedStr = inserted.sliceString(0);
+			changedStr = tr.startState.doc.sliceString(_fromA, _toA);
+		});
 
-		tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
-			let insertedStr = inserted.sliceString(0);
-			let changedStr = tr.startState.doc.sliceString(fromA, toA);
-			if (ctx.settings?.debug){
-				console.log("[ViewUpdate] type, fromA, toA, changed, fromB, toB, inserted");
-				console.log(changeType, fromA, toA, changedStr, fromB, toB, insertedStr)
-				console.log("==>[Composing]", update.view.composing)
-			}
+		if (ctx.settings?.debug) {
+			console.log("[ViewUpdate] type, fromA, toA, changed, fromB, toB, inserted");
+			console.log(changeType, fromA, toA, changedStr, fromB, toB, insertedStr);
+		}
 
-			// table 内部不做处理，直接返回 => 配合 Obsidian 的机制
-			if (getPosLineType(update.view.state, fromB) == LineType.table) {
-				return;
-			}
+		if (getPosLineType(update.view.state, fromB) === LineType.table) return;
+		if (changeType.includes('EasyTyping') || changeType === 'undo' || changeType === 'redo') return;
 
-			let cursor = update.view.state.selection.asSingle().main;
+		const cursor = update.view.state.selection.asSingle().main;
+		const notSelected = cursor.anchor === cursor.head;
 
-			if (update.view.composing){
-				if (ctx.compose_need_handle){
-					ctx.compose_end_pos = cursor.anchor;
+		// --- 正常输入结束 → 触发规则 + 自动格式化 ---
+		if (notSelected && changedStr.length < 1 && !changeType.includes('delete')) {
+			if (tryProcessInput(ctx, update, fromB, cursor.anchor, false)) return;
+		}
+
+		// --- 粘贴时自动格式化 ---
+		const isExcludeFile = isCurrentFileExclude(ctx);
+		if (ctx.settings.AutoFormat && !isExcludeFile && changeType === "input.paste" && !Platform.isIosApp) {
+			let updateLineStart = update.state.doc.lineAt(fromB).number;
+			let updateLineEnd = update.state.doc.lineAt(toB).number;
+			if (updateLineStart === updateLineEnd && getPosLineType(update.view.state, toB) === LineType.text) {
+				let changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, fromB, toB, insertedStr);
+				if (changes) {
+					update.view.dispatch(...changes[0]);
+					return;
 				}
-				else{
-					ctx.compose_need_handle = true;
-					ctx.compose_begin_pos = fromA;
-					ctx.compose_end_pos = cursor.anchor;
-				}
-				return;
 			}
-
-			let change_from = fromB;
-			let change_to = toB;
-			let composeEnd = false;
-			if (ctx.compose_need_handle){
-				composeEnd = true;
-				ctx.compose_need_handle = false;
-				change_from = ctx.compose_begin_pos;
-				change_to = ctx.compose_end_pos;
-			}
-
-			if (changeType.contains('EasyTyping') || changeType=='undo' || changeType=='redo') return;
-			// 判断每次输入结束
-			if (changeType != 'none' && notSelected && (changedStr.length<1 || composeEnd) && !changeType.includes('delete')) {
-				// 用户自定义转化规则
-				if (triggerCvtRule(ctx, update.view, mainSelection.anchor)) return;
-				if (composeEnd && triggerPuncRectify(ctx, update.view, change_from)) return;
-
-				// 判断格式化文本
-				// console.log("ready to format");
-				// console.log("check is exclue file:", isExcludeFile)
-				if (ctx.settings.AutoFormat && notSelected && !isExcludeFile &&
-					 (changeType != 'none' || insertedStr=="\n")) {
-
-					if (getPosLineType(update.view.state, change_from) == LineType.text || getPosLineType(update.view.state, change_from) == LineType.table){
-						let changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, change_from, cursor.anchor, insertedStr);
-						if (changes != null) {
-							update.view.dispatch(...changes[0]);
-							update.view.dispatch(changes[1]);
-							return;
-						}
+			else {
+				let all_changes: TransactionSpec[] = [];
+				let inserted_array = insertedStr.split("\n");
+				let update_start = fromB;
+				for (let i = updateLineStart; i <= updateLineEnd; i++) {
+					let real_inserted = inserted_array[i - updateLineStart];
+					let changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, update_start, update_start + real_inserted.length, real_inserted);
+					if (changes) {
+						all_changes.push(...changes[0]);
 					}
+					update_start += real_inserted.length + 1;
+				}
+				if (all_changes.length > 0) {
+					update.view.dispatch(...all_changes);
+					return;
 				}
 			}
-
-			// 粘贴时自动格式化
-			if (ctx.settings.AutoFormat && !isExcludeFile && changeType == "input.paste" && !Platform.isIosApp) {
-				let updateLineStart = update.state.doc.lineAt(fromB).number;
-				let updateLineEnd = update.state.doc.lineAt(toB).number;
-				if (updateLineStart == updateLineEnd && getPosLineType(update.view.state, toB) == LineType.text) {
-					let changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, fromB, toB, insertedStr);
-					if (changes != null) {
-						update.view.dispatch(...changes[0]);
-						// update.view.dispatch(changes[1]);
-						return;
-					}
-				}
-				else {
-					let all_changes: TransactionSpec[] = [];
-					let inserted_array = insertedStr.split("\n");
-					let update_start = fromB
-					for (let i = updateLineStart; i <= updateLineEnd; i++) {
-						let real_inserted = inserted_array[i - updateLineStart];
-						// console.log('real_inserted', real_inserted.replace(/\n/g, '\\n'))
-						// console.log('update_doc_text', update.state.doc.sliceString(update_start, update_start + real_inserted.length).replace(/\n/g, '\\n'))
-						let changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, update_start, update_start + real_inserted.length, real_inserted);
-						// console.log('changes', changes)
-						if (changes != null) {
-							all_changes.push(...changes[0]);
-						}
-						update_start += real_inserted.length + 1;
-					}
-					if (all_changes.length > 0) {
-						update.view.dispatch(...all_changes);
-						return;
-					}
-				}
-			}
-		});	// iterchanges end
+		}
 	});
 }
 

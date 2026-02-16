@@ -3,7 +3,6 @@ import { PluginContext } from './plugin_context';
 import { RuleType, TxContext } from './rule_engine';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 import { addTabstopsEffect } from './tabstops_state_field';
-import { getPosLineType, LineType } from './core';
 import { detectRuleScope } from './syntax';
 
 export function triggerCvtRule(ctx: PluginContext, view: EditorView, cursor_pos: number, changeType: string = 'input.type'): boolean {
@@ -67,27 +66,4 @@ export function triggerPuncRectify(ctx: PluginContext, view: EditorView, change_
 		}
 	}
 	return false;
-}
-
-export function handleEndComposeTypeKey(ctx: PluginContext, event: KeyboardEvent, view: EditorView): void {
-	if ((['Enter', 'Process', ' ', 'Shift'].contains(event.key) || /\d/.test(event.key)) &&
-		ctx.compose_need_handle) {
-		let cursor = view.state.selection.asSingle().main;
-		if (cursor.head != cursor.anchor) return;
-		let insertedStr = view.state.doc.sliceString(ctx.compose_begin_pos, cursor.anchor);
-		// console.log("inserted str", insertedStr);
-		ctx.compose_need_handle = false;
-		if (triggerCvtRule(ctx, view, cursor.anchor)) return;
-		if (triggerPuncRectify(ctx, view, ctx.compose_begin_pos)) return;
-		if (ctx.settings.AutoFormat && !ctx.isCurrentFileExclude()){
-			if (getPosLineType(view.state, cursor.anchor) != LineType.text) return;
-			let changes = ctx.Formater.formatLineOfDoc(view.state, ctx.settings,
-				ctx.compose_begin_pos, cursor.anchor, insertedStr);
-			if (changes != null) {
-				view.dispatch(...changes[0]);
-				view.dispatch(changes[1]);
-				return;
-			}
-		}
-	}
 }

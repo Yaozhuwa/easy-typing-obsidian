@@ -13,7 +13,7 @@ import { RuleManager } from './rule_manager';
 import { toggleComment } from './comment_toggle';
 import { isCurrentFileExclude as isCurrentFileExcludeFn, formatArticle, formatSelectionOrCurLine, deleteBlankLines, convert2CodeBlock, switchAutoFormatting } from './formatting_commands';
 import { PluginContext } from './plugin_context';
-import { handleTabDown, handleEnter, handleBackspace, handleShiftEnter, handleModA, goNewLineAfterCurLine, selectBlockInCursor, onKeyup } from './keyboard_handlers';
+import { handleTabDown, handleEnter, handleBackspace, handleShiftEnter, handleModA, goNewLineAfterCurLine, selectBlockInCursor } from './keyboard_handlers';
 import { createTransactionFilter, createViewUpdatePlugin, normalPaste } from './cm_extensions';
 import { getLocale } from './lang/locale';
 
@@ -69,9 +69,6 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 		this.registerEditorExtension([
 			createTransactionFilter(this),
 			createViewUpdatePlugin(this),
-			Prec.highest(EditorView.domEventHandlers({
-				"keyup": (event: KeyboardEvent, view: EditorView) => onKeyup(this, event, view)
-			})),
 			tabstopsStateField.extension,
 		]);
 
