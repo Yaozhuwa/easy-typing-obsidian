@@ -489,7 +489,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				const opts = RuleEngine.parseOptions(defaultRule.options);
 				const typeLabel = this.getRuleTypeLabel(opts.type);
 				const typeCls = this.getRuleTypeCls(opts.type);
-				const preview = defaultRule.description || `${defaultRule.trigger} → ${typeof defaultRule.replacement === 'string' ? defaultRule.replacement : '(fn)'}`;
+				const preview = defaultRule.description || `${RuleEngine.escapeText(defaultRule.trigger)} → ${typeof defaultRule.replacement === 'string' ? defaultRule.replacement : '(fn)'}`;
 				new Setting(details)
 					.setName(createFragment(f => {
 						f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
@@ -540,7 +540,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			preview = rule.description;
 		} else {
 			const repl = typeof rule.replacement === 'string' ? rule.replacement : '(fn)';
-			preview = `${rule.trigger}${rule.trigger_right ? ' … ' + rule.trigger_right : ''} → ${repl}`;
+			preview = `${RuleEngine.escapeText(rule.trigger)}${rule.trigger_right ? ' … ' + RuleEngine.escapeText(rule.trigger_right) : ''} → ${repl}`;
 		}
 		// Truncate long previews
 		if (preview.length > 60) preview = preview.substring(0, 57) + '...';
@@ -888,8 +888,8 @@ export class RuleEditModal extends Modal {
 			this.isFunction = opts.isFunctionReplacement;
 			this.ruleScope = opts.scope[0] || RuleScope.All;
 		}
-		if (initial.trigger !== undefined) this.trigger = initial.trigger;
-		if (initial.trigger_right !== undefined) this.triggerRight = initial.trigger_right;
+		if (initial.trigger !== undefined) this.trigger = RuleEngine.escapeText(initial.trigger);
+		if (initial.trigger_right !== undefined) this.triggerRight = RuleEngine.escapeText(initial.trigger_right);
 		if (typeof initial.replacement === 'string') this.replacement = initial.replacement;
 		if (initial.priority !== undefined) this.priority = initial.priority;
 		if (initial.description !== undefined) this.description = initial.description;
@@ -1107,8 +1107,8 @@ export class RuleEditModal extends Modal {
 		else if (this.ruleScope === RuleScope.Code) options += 'c';
 
 		return {
-			trigger: this.trigger,
-			trigger_right: this.triggerRight || undefined,
+			trigger: RuleEngine.unescapeText(this.trigger),
+			trigger_right: RuleEngine.unescapeText(this.triggerRight) || undefined,
 			replacement: this.replacement,
 			options: options || undefined,
 			priority: this.priority,

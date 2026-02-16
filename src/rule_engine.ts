@@ -128,6 +128,18 @@ export class RuleEngine {
 	}
 
 	/**
+	 * Convert real control characters to visible escape sequences for UI display.
+	 * Inverse of unescapeText: newline → \n, tab → \t, CR → \r, \\ → \\\\
+	 */
+	static escapeText(text: string): string {
+		return text
+			.replace(/\\/g, '\\\\')
+			.replace(/\n/g, '\\n')
+			.replace(/\t/g, '\\t')
+			.replace(/\r/g, '\\r');
+	}
+
+	/**
 	 * Convert escape sequences in user-entered text: \n → newline, \t → tab, \r → CR, \\\\ → \\
 	 * Strings from TypeScript source already contain real newlines and are unaffected.
 	 */
