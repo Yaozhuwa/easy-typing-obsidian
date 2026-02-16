@@ -15,6 +15,7 @@ import { isCurrentFileExclude as isCurrentFileExcludeFn, formatArticle, formatSe
 import { PluginContext } from './plugin_context';
 import { handleTabDown, handleEnter, handleBackspace, handleShiftEnter, handleModA, goNewLineAfterCurLine, selectBlockInCursor, onKeyup } from './keyboard_handlers';
 import { createTransactionFilter, createViewUpdatePlugin, normalPaste } from './cm_extensions';
+import { getLocale } from './lang/locale';
 
 
 export default class EasyTypingPlugin extends Plugin implements PluginContext {
@@ -22,8 +23,6 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 	halfToFullSymbolMap: Map<string, string>;
 	Formater: LineFormater;
 	CurActiveMarkdown: string;
-
-	lang: string;
 
 	compose_begin_pos: number;
 	compose_end_pos: number;
@@ -103,12 +102,11 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 			},
 		])));
 
-		this.lang = window.localStorage.getItem('language');
-		let command_name_map = this.getCommandNameMap();
+		const locale = getLocale();
 
 		this.addCommand({
 			id: "easy-typing-format-article",
-			name: command_name_map.get("format_article"),
+			name: locale.commands.formatArticle,
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				formatArticle(this, editor, view);
 			},
@@ -120,7 +118,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-select-block",
-			name: command_name_map.get("select_block"),
+			name: locale.commands.selectBlock,
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				selectBlockInCursor(this, editor.cm as EditorView);
 			},
@@ -128,7 +126,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-format-selection",
-			name: command_name_map.get("format_selection"),
+			name: locale.commands.formatSelection,
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				formatSelectionOrCurLine(this, editor, view);
 			},
@@ -140,7 +138,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-delete-blank-line",
-			name: command_name_map.get("delete_blank_line"),
+			name: locale.commands.deleteBlankLine,
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				deleteBlankLines(this, editor);
 			},
@@ -152,7 +150,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-goto-new-line-after-cur-line",
-			name: command_name_map.get("goto_new_line_after_cur_line"),
+			name: locale.commands.gotoNewLine,
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				goNewLineAfterCurLine(this, editor.cm as EditorView);
 			},
@@ -161,7 +159,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-insert-codeblock",
-			name: command_name_map.get("insert_codeblock"),
+			name: locale.commands.insertCodeblock,
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				convert2CodeBlock(this, editor);
 			},
@@ -173,7 +171,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-format-switch",
-			name: command_name_map.get("switch_autoformat"),
+			name: locale.commands.switchAutoformat,
 			callback: () => switchAutoFormatting(this),
 			hotkeys: [{
 				modifiers: ['Ctrl'],
@@ -183,7 +181,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-paste-without-format",
-			name: command_name_map.get("paste_wo_format"),
+			name: locale.commands.pasteWithoutFormat,
 			editorCallback: (editor) => normalPaste(editor, this.settings?.debug),
 			hotkeys: [
 				{
@@ -196,7 +194,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.addCommand({
 			id: "easy-typing-toggle-comment",
-			name: command_name_map.get("toggle_comment"),
+			name: locale.commands.toggleComment,
 			editorCallback: (editor: Editor, view: MarkdownView) => toggleComment(editor.cm as EditorView),
 			hotkeys: [{ modifiers: ["Mod"], key: "/" }],
 		});
@@ -249,72 +247,6 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 	isCurrentFileExclude(): boolean {
 		return isCurrentFileExcludeFn(this);
-	}
-
-	getCommandNameMap(): Map<string, string> {
-		const lang = window.localStorage.getItem('language');
-
-		let command_name_map_en = new Map([
-			["format_article", "Format current article"],
-			["format_selection", "Format selected text or current line"],
-			["delete_blank_line", "Delete blank lines of the selected or whole article"],
-			["insert_codeblock", "Insert code block w/wo selection"],
-			["switch_autoformat", "Switch autoformat"],
-			["paste_wo_format", "Paste without format"],
-			["toggle_comment", "Toggle comment"],
-			["goto_new_line_after_cur_line", "Go to new line after current line"],
-			['select_block', "Select current text block"]
-
-		]);
-
-		let command_name_map_zh_TW = new Map([
-			["format_article", "格式化全文"],
-			["format_selection", "格式化選中部分/當前行"],
-			["delete_blank_line", "刪除選中部分/全文的多餘空白行"],
-			["insert_codeblock", "插入代碼塊"],
-			["switch_autoformat", "切換自動格式化開關"],
-			["paste_wo_format", "無格式化粘貼"],
-			["toggle_comment", "切換註釋"],
-			["goto_new_line_after_cur_line", "跳到當前行後的新行"],
-			['select_block', "選擇當前文本塊"]
-		]);
-
-		let command_name_map_zh = new Map([
-			["format_article", "格式化全文"],
-			["format_selection", "格式化选中部分/当前行"],
-			["delete_blank_line", "刪除选中部分/全文的多余空白行"],
-			["insert_codeblock", "插入代码块"],
-			["switch_autoformat", "切换自动格式化开关"],
-			["paste_wo_format", "无格式化粘贴"],
-			["toggle_comment", "切换注释"],
-			["goto_new_line_after_cur_line", "跳到当前行后新行"],
-			['select_block', "选择当前文本块"]
-		]);
-
-		let command_name_map_ru = new Map([
-			["format_article", "Форматировать текущую статью"],
-			["format_selection", "Форматировать выделенный текст или текущую строку"],
-			["delete_blank_line", "Удалить пустые строки в выделенном или всей статье"],
-			["insert_codeblock", "Вставить блок кода с/без выделением"],
-			["switch_autoformat", "Переключить автоформатирование"],
-			["paste_wo_format", "Вставить без форматирования"],
-			["toggle_comment", "Переключить комментарий"],
-			["goto_new_line_after_cur_line", "Перейти к новой строке после текущей"],
-			['select_block', "Выбрать текущий текстовый блок"]
-		]);
-
-		let command_name_map = command_name_map_en;
-		if (lang == 'zh') {
-			command_name_map = command_name_map_zh;
-		}
-		else if (lang == 'zh-TW') {
-			command_name_map = command_name_map_zh_TW;
-		}
-		else if (lang == "ru") {
-			command_name_map = command_name_map_ru;
-		}
-
-		return command_name_map;
 	}
 
 	getEditor = (): Editor | null => {
