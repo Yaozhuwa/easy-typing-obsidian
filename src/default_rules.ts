@@ -22,26 +22,33 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	},
 	{
 		id: 'builtin-autopair-delete',
-		trigger: '[\u3010\uFF08\u300A\u300C\u300E\u201c\u2018]',
-		trigger_right: '[\u3011\uFF09\u300B\u300D\u300F\u201d\u2019]',
-		replacement: "const p={'\u3010':'\u3011','\uFF08':'\uFF09','\u300A':'\u300B','\u300C':'\u300D','\u300E':'\u300F','\u201c':'\u201d','\u2018':'\u2019'}; return p[leftMatches[0]]===rightMatches[0] ? '' : undefined;",
+		trigger: "[【（《「『“‘]",
+		trigger_right: "[】）》」』”’]",
+		replacement: "const p={'【':'】','（':'）','《':'》','「':'」','『':'』','“':'”','‘':'’'}; return p[leftMatches[0]]===rightMatches[0] ? '' : undefined;",
 		options: 'drF',
 		priority: 10,
 		description: '删除中文符号配对',
 	},
 
 	// ===== Basic Conversion Rules =====
-	// Original: BasicConvRuleStringList in main.ts:72-74
 	{ id: 'builtin-conv-001', trigger: '··', replacement: '`$0`', priority: 10, description: '中文点转代码' },
-	{ id: 'builtin-conv-006', trigger: '￥￥', replacement: '$$0$', priority: 10, description: '人民币符号转行内公式' },
-	{ id: 'builtin-conv-007', trigger: '$￥', trigger_right: '$', replacement: '$$\n$0\n$$', priority: 10, description: '混合符号转公式块' },
-	{ id: 'builtin-conv-008', trigger: '¥¥', replacement: '$$0$', priority: 10, description: '半角人民币转行内公式' },
-	{ id: 'builtin-conv-009', trigger: '$¥', trigger_right: '$', replacement: '$$\n$0\n$$', priority: 10, description: '半角混合转公式块' },
-	// $$|$ must come before $$| (more specific pattern first)
-	{ id: 'builtin-conv-010', trigger: '$$', trigger_right: '$', replacement: '$$\n$0\n$$', priority: 10, description: '三美元转公式块' },
-	{ id: 'builtin-conv-011', trigger: '$$', replacement: '$$0$', priority: 10, description: '双美元转行内公式' },
-	{ id: 'builtin-conv-012', trigger: '(^|\\n)》', replacement: '[[1]]> $0', options: 'r', priority: 10, description: '中文书名号转引用' },
-	{ id: 'builtin-conv-013', trigger: '(^|\\n)、', replacement: '[[1]]/$0', options: 'r', priority: 10, description: '中文顿号转斜杠' },
+	{
+		id: 'builtin-conv-formula',
+		trigger: '(￥￥|¥¥|\\$￥|\\$¥|\\$\\$)',
+		trigger_right: '\\$?',
+		replacement: "return rightMatches[0] === '$' ? '$$\\n$0\\n$$' : '$$0$';",
+		options: 'rF',
+		priority: 10,
+		description: '钱符号转公式（行内/块）',
+	},
+	{
+		id: 'builtin-conv-linestart',
+		trigger: '(^|\\n)([》、])',
+		replacement: "const m = {'》': '[[1]]> $0', '、': '[[1]]/$0'}; return m[leftMatches[2]];",
+		options: 'rF',
+		priority: 10,
+		description: '行首中文符号转半角',
+	},
 
 	// ===== FW2HW Symbol Rules =====
 	// Doubled full-width symbol → half-width. If right counterpart exists and matches, consume it too.
