@@ -151,6 +151,7 @@ const locale: Locale = {
             fieldIsRegex: "正則表達式",
             fieldTriggerMode: "觸發方式",
             fieldScope: "作用域",
+            fieldScopeLanguage: "語言（可選）",
             fieldPriority: "優先級",
             fieldDescription: "描述",
             buttonSave: "儲存",

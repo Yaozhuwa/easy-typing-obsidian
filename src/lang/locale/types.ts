@@ -45,6 +45,7 @@ export interface Locale {
             fieldIsRegex: string;
             fieldTriggerMode: string;
             fieldScope: string;
+            fieldScopeLanguage: string;
             fieldPriority: string;
             fieldDescription: string;
             buttonSave: string;

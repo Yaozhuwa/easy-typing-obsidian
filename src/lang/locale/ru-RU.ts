@@ -153,6 +153,7 @@ const locale: Locale = {
             fieldIsRegex: "Регулярное выражение",
             fieldTriggerMode: "Режим запуска",
             fieldScope: "Область",
+            fieldScopeLanguage: "Язык (необязательно)",
             fieldPriority: "Приоритет",
             fieldDescription: "Описание",
             buttonSave: "Сохранить",

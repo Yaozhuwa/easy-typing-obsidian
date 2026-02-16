@@ -862,6 +862,7 @@ export class RuleEditModal extends Modal {
 	replacement: string = '';
 	isRegex: boolean = false;
 	ruleScope: RuleScope = RuleScope.All;
+	scopeLanguage: string = '';
 	priority: number = 100;
 	description: string = '';
 	enabled: boolean = true;
@@ -894,6 +895,7 @@ export class RuleEditModal extends Modal {
 		if (initial.priority !== undefined) this.priority = initial.priority;
 		if (initial.description !== undefined) this.description = initial.description;
 		if (initial.enabled !== undefined) this.enabled = initial.enabled;
+		if (initial.scope_language !== undefined) this.scopeLanguage = initial.scope_language;
 	}
 
 	onOpen() {
@@ -1008,8 +1010,21 @@ export class RuleEditModal extends Modal {
 				dropdown.addOption(RuleScope.Formula, locale.dropdownOptions.scopeFormula);
 				dropdown.addOption(RuleScope.Code, locale.dropdownOptions.scopeCode);
 				dropdown.setValue(this.ruleScope);
-				dropdown.onChange((v: string) => this.ruleScope = v as RuleScope);
+				dropdown.onChange((v: string) => {
+					this.ruleScope = v as RuleScope;
+					this.refreshVisibility(contentEl);
+				});
 			});
+
+		// Scope Language (only visible when scope is Code)
+		const scopeLangSetting = new Setting(contentEl)
+			.setName(locale.settings.ruleEditModal.fieldScopeLanguage)
+			.addText(text => {
+				text.setPlaceholder('e.g. python, javascript');
+				text.setValue(this.scopeLanguage);
+				text.onChange(v => this.scopeLanguage = v.trim().toLowerCase());
+			});
+		scopeLangSetting.settingEl.dataset.field = 'scopeLanguage';
 
 		// Priority
 		new Setting(contentEl)
@@ -1093,6 +1108,12 @@ export class RuleEditModal extends Modal {
 				}
 			}
 		}
+
+		// Scope Language only visible when scope is Code
+		const scopeLangEl = contentEl.querySelector('[data-field="scopeLanguage"]') as HTMLElement;
+		if (scopeLangEl) {
+			scopeLangEl.style.display = this.ruleScope === RuleScope.Code ? '' : 'none';
+		}
 	}
 
 	buildSimpleRule(): SimpleRule {
@@ -1114,6 +1135,7 @@ export class RuleEditModal extends Modal {
 			priority: this.priority,
 			description: this.description || undefined,
 			enabled: this.enabled,
+			scope_language: (this.ruleScope === RuleScope.Code && this.scopeLanguage) ? this.scopeLanguage : undefined,
 		};
 	}
 

@@ -152,6 +152,7 @@ const locale: Locale = {
             fieldIsRegex: "Is Regex",
             fieldTriggerMode: "Trigger Mode",
             fieldScope: "Scope",
+            fieldScopeLanguage: "Language (optional)",
             fieldPriority: "Priority",
             fieldDescription: "Description",
             buttonSave: "Save",
