@@ -349,7 +349,7 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 
 			if (changeType.contains('EasyTyping') || changeType=='undo' || changeType=='redo') return;
 			// 判断每次输入结束
-			if (changeType != 'none' && notSelected && changedStr.length<1 && !changeType.includes('delete')) {
+			if (changeType != 'none' && notSelected && (changedStr.length<1 || composeEnd) && !changeType.includes('delete')) {
 				// 用户自定义转化规则
 				if (triggerCvtRule(ctx, update.view, mainSelection.anchor)) return;
 				if (composeEnd && triggerPuncRectify(ctx, update.view, change_from)) return;

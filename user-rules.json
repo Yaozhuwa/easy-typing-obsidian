@@ -48,8 +48,8 @@
   },
   {
     "trigger": "(?<=^|\\n)([\\w-]+)-call",
-    "replacement": "> [![[0]]] $0\\n> $1",
-    "options": "rtT",
+    "replacement": "> [![[1]]] $0\\n> $1",
+    "options": "rt",
     "priority": 100,
     "description": "快捷 Callout",
     "enabled": true,
@@ -91,5 +91,15 @@
     "description": "代码块快速删除",
     "enabled": true,
     "id": "user-1771230148640-830q"
+  },
+  {
+    "trigger": "pp",
+    "replacement": "print($0)",
+    "options": "c",
+    "priority": 100,
+    "description": "Python 代码块打印",
+    "enabled": true,
+    "scope_language": "python",
+    "id": "user-1771255414184-iknf"
   }
 ]
