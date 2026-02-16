@@ -31,6 +31,7 @@ export interface ConvertRule {
 	triggerMode: RuleTriggerMode;
 	triggerKeys?: string[];
 	scope: RuleScope[];
+	scopeLanguage?: string;
 	priority: number;
 	match: {
 		left: string;
@@ -53,6 +54,7 @@ export interface SimpleRule {
 	enabled?: boolean;
 	description?: string;
 	priority?: number;
+	scope_language?: string;
 }
 
 export interface TxContext {
@@ -62,6 +64,7 @@ export interface TxContext {
 	inserted: string;
 	changeType: string;
 	scopeHint: RuleScope;
+	scopeLanguage?: string;
 	debug?: boolean;
 	key?: string;
 }
@@ -207,6 +210,7 @@ export class RuleEngine {
 				triggerMode: RuleTriggerMode.Auto,
 				triggerKeys: RuleEngine.parseTriggerKeys(simple.trigger),
 				scope: opts.scope,
+				scopeLanguage: simple.scope_language,
 				priority: simple.priority ?? 100,
 				match: { left: '', right: '', isRegex: false },
 				replacement,
@@ -225,6 +229,7 @@ export class RuleEngine {
 			triggerMode,
 			triggerKeys: undefined,
 			scope: opts.scope,
+			scopeLanguage: simple.scope_language,
 			priority: simple.priority ?? 100,
 			match: {
 				left: simple.trigger,
@@ -438,6 +443,8 @@ export class RuleEngine {
 
 			// Scope check: RuleScope.All on either side means "no restriction"
 			if (ctx.scopeHint !== RuleScope.All && !rule.scope.includes(RuleScope.All) && !rule.scope.includes(ctx.scopeHint)) continue;
+			// Language check: rule specifies language → must match exactly
+			if (rule.scopeLanguage && ctx.scopeLanguage !== rule.scopeLanguage) continue;
 
 			switch (ctx.kind) {
 				case RuleType.SelectKey: {
