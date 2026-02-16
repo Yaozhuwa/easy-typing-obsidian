@@ -2,6 +2,7 @@ import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
 import { EditorView } from '@codemirror/view';
 import { EditorState, SelectionRange } from '@codemirror/state';
 import { getPosLineType2 } from "./core";
+import { RuleScope } from './rule_engine';
 export interface CodeBlockInfo {
     start_pos: number;
     end_pos: number;
@@ -193,4 +194,29 @@ export function getQuoteInfoInPos(state: EditorState, pos: number): QuoteInfo | 
     else{
         return null;
     }
+}
+
+export interface ScopeInfo {
+    scope: RuleScope;
+    language?: string;
+}
+
+export function detectRuleScope(state: EditorState, pos: number): ScopeInfo {
+    const tree = syntaxTree(state);
+    const node = tree.resolveInner(pos, -1);
+    const name = node.name;
+
+    if (name.contains('math')) {
+        return { scope: RuleScope.Formula };
+    }
+
+    if (name.contains('code') && !name.contains('link')) {
+        const codeBlockInfo = getCodeBlockInfoInPos(state, pos);
+        return {
+            scope: RuleScope.Code,
+            language: codeBlockInfo?.language || undefined,
+        };
+    }
+
+    return { scope: RuleScope.Text };
 }
