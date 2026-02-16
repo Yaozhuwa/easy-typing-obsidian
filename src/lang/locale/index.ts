@@ -1,8 +1,29 @@
-export { default as enUS } from './en-US';
-export { default as zhCN } from './zh-CN';
-export { default as ruRU } from "./ru-RU";
-export { default as zhTW } from "./zh-TW";
+import { moment } from 'obsidian';
+import enUS from './en-US';
+import zhCN from './zh-CN';
+import zhTW from './zh-TW';
+import ruRU from './ru-RU';
+import type { Locale } from './types';
 
-// TODO: wrote a langUtlis, who return labels
-//  from language, if label not exist on, for example,
-//  on ruRU, langUtils return label from enUS or from zhCH(where label exist)  
+const localeMap: Record<string, Locale> = {
+    'en': enUS,
+    'zh': zhCN,
+    'zh-cn': zhCN,
+    'zh-tw': zhTW,
+    'ru': ruRU,
+};
+
+let cached: Locale | null = null;
+
+export function getLocale(): Locale {
+    if (cached) return cached;
+    const lang = moment.locale().toLowerCase();
+    cached = localeMap[lang] ?? enUS;
+    return cached;
+}
+
+export function resetLocaleCache(): void {
+    cached = null;
+}
+
+export type { Locale } from './types';

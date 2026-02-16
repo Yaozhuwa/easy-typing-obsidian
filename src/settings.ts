@@ -1,7 +1,7 @@
 import { SpaceState, string2SpaceState } from 'src/core';
 import { App, TextComponent, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TextAreaComponent, moment } from 'obsidian';
 import EasyTypingPlugin from './main';
-import { enUS, ruRU, zhCN, zhTW } from './lang/locale';
+import { getLocale } from './lang/locale';
 import {sprintf} from "sprintf-js";
 import { setDebug } from './utils';
 import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleTriggerMode, RuleScope } from './rule_engine';
@@ -97,7 +97,6 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	deletedBuiltinRuleIds: [],
 }
 
-var locale = enUS;
 
 export class EasyTypingSettingTab extends PluginSettingTab {
 	plugin: EasyTypingPlugin;
@@ -112,16 +111,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 
-		// 根据系统语言选择对应的语言包
-		if (moment.locale() == "zh" || moment.locale() == "zh-cn") {
-			locale = zhCN;
-		}
-		else if (moment.locale().toLowerCase() == "zh-tw"){
-			locale = zhTW;
-		}
-		else if (moment.locale() == "ru") {
-			locale = ruRU;
-		}
+		const locale = getLocale();
 
 		containerEl.empty();
 
@@ -186,6 +176,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	// ==================== Tab 1: 编辑增强 ====================
 	buildEditEnhanceTab(el: HTMLElement): void {
+		const locale = getLocale();
 		new Setting(el)
 			.setName(locale.settings.selectionReplace.name)
 			.setDesc(locale.settings.selectionReplace.desc)
@@ -255,6 +246,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	// ==================== Tab 2: 自动格式化 ====================
 	buildAutoFormatTab(el: HTMLElement): void {
+		const locale = getLocale();
 		// 主开关
 		new Setting(el)
 			.setName(locale.settings.autoFormatting.name)
@@ -471,6 +463,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	// ==================== Tab 3: 内置规则 ====================
 	buildBuiltinRulesSection(el: HTMLElement): void {
+		const locale = getLocale();
 		const headerEl = el.createDiv({ cls: 'setting-item' });
 		const infoEl = headerEl.createDiv({ cls: 'setting-item-info' });
 		infoEl.createEl('h3', { text: locale.headers.builtinRulesSection });
@@ -515,6 +508,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	// ==================== Tab 4: 自定义规则 ====================
 	buildUserRulesSection(el: HTMLElement): void {
+		const locale = getLocale();
 		const headerEl = el.createDiv({ cls: 'setting-item' });
 		const infoEl = headerEl.createDiv({ cls: 'setting-item-info' });
 		infoEl.createEl('h3', { text: locale.headers.userRulesSection });
@@ -533,6 +527,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	}
 
 	buildRuleItem(container: HTMLElement, rule: SimpleRule, isBuiltin: boolean): void {
+		const locale = getLocale();
 		const opts = RuleEngine.parseOptions(rule.options);
 		const typeLabel = this.getRuleTypeLabel(opts.type);
 		const typeCls = this.getRuleTypeCls(opts.type);
@@ -613,6 +608,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	}
 
 	getRuleTypeLabel(type: EngineRuleType): string {
+		const locale = getLocale();
 		switch (type) {
 			case EngineRuleType.Input: return locale.settings.ruleType.input;
 			case EngineRuleType.Delete: return locale.settings.ruleType.delete;
@@ -630,6 +626,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 	// ==================== Tab 5: 其他设置 ====================
 	buildOtherTab(el: HTMLElement): void {
+		const locale = getLocale();
 		el.createEl('h3', { text: locale.headers.experimentalFeatures });
 
 		new Setting(el)
@@ -901,6 +898,7 @@ export class RuleEditModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
+		const locale = getLocale();
 		const title = this.mode === 'create'
 			? locale.settings.ruleEditModal.addTitle
 			: locale.settings.ruleEditModal.editTitle;
@@ -1048,6 +1046,7 @@ export class RuleEditModal extends Modal {
 	}
 
 	refreshVisibility(contentEl: HTMLElement) {
+		const locale = getLocale();
 		const triggerRightEl = contentEl.querySelector('[data-field="triggerRight"]') as HTMLElement;
 		if (triggerRightEl) {
 			triggerRightEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
