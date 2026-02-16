@@ -4,10 +4,10 @@ import { EditorView, ViewUpdate } from '@codemirror/view';
 import { PluginContext } from './plugin_context';
 import { triggerCvtRule, triggerPuncRectify } from './rule_processor';
 import { isCurrentFileExclude } from './formatting_commands';
-import { RuleType, TxContext, RuleScope } from './rule_engine';
+import { RuleType, TxContext } from './rule_engine';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 import { addTabstopsEffect, hasTabstops, removeAllTabstops, isInsideCurTabstop } from './tabstops_state_field';
-import { getCodeBlockInfoInPos, isCodeBlockInPos } from './syntax';
+import { getCodeBlockInfoInPos, isCodeBlockInPos, detectRuleScope } from './syntax';
 import { getPosLineType, LineType } from './core';
 import { getTypeStrOfTransac, print } from './utils';
 
@@ -35,13 +35,15 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			// ========== Selection Replace ============
 			if (ctx.settings.SelectionEnhance) {
 				if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB)||insertedStr=='——'||insertedStr=='……')) {
+					const selScope = detectRuleScope(tr.startState, fromA);
 					const selCtx: TxContext = {
 						kind: RuleType.SelectKey,
 						docText: tr.startState.doc.toString(),
 						selection: { from: fromA, to: toA },
 						inserted: insertedStr,
 						changeType: changeTypeStr,
-						scopeHint: RuleScope.All,
+						scopeHint: selScope.scope,
+						scopeLanguage: selScope.language,
 						key: insertedStr,
 						debug: ctx.settings?.debug,
 					};
@@ -221,13 +223,15 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 
 			// Unified delete rules (intrinsic + user) via RuleEngine
 			if (changeTypeStr === "delete.backward") {
+				const delScope = detectRuleScope(tr.startState, toA);
 				const delCtx: TxContext = {
 					kind: RuleType.Delete,
 					docText: tr.startState.doc.toString(),
 					selection: { from: toA, to: toA },
 					inserted: '',
 					changeType: changeTypeStr,
-					scopeHint: RuleScope.All,
+					scopeHint: delScope.scope,
+					scopeLanguage: delScope.language,
 					debug: ctx.settings?.debug,
 				};
 				const delResult = ctx.ruleEngine.process(delCtx);
