@@ -1,4 +1,6 @@
-const locale = {
+import type { Locale } from './types';
+
+const locale: Locale = {
     settings: {
         selectionReplace: {
             name: "Selection Replace Enhancement",
@@ -163,6 +165,17 @@ const locale = {
             delete: "Delete",
             selectKey: "SelectKey",
         },
+    },
+    commands: {
+        formatArticle: "Format current article",
+        formatSelection: "Format selected text or current line",
+        deleteBlankLine: "Delete blank lines of the selected or whole article",
+        insertCodeblock: "Insert code block w/wo selection",
+        switchAutoformat: "Switch autoformat",
+        pasteWithoutFormat: "Paste without format",
+        toggleComment: "Toggle comment",
+        gotoNewLine: "Go to new line after current line",
+        selectBlock: "Select current text block",
     },
     headers: {
         main: "Obsidian EasyTyping Plugin",

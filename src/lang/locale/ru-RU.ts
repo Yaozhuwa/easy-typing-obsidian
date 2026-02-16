@@ -1,7 +1,7 @@
-import { enUS } from ".";
+import type { Locale } from './types';
 
 // machine translation
-const locale: typeof enUS = {
+const locale: Locale = {
     settings: {
         selectionReplace: {
             name: "Улучшение замены выделенного текста",
@@ -166,6 +166,17 @@ const locale: typeof enUS = {
             delete: "Удаление",
             selectKey: "Замена выбора",
         },
+    },
+    commands: {
+        formatArticle: "Форматировать текущую статью",
+        formatSelection: "Форматировать выделенный текст или текущую строку",
+        deleteBlankLine: "Удалить пустые строки в выделенном или всей статье",
+        insertCodeblock: "Вставить блок кода с/без выделением",
+        switchAutoformat: "Переключить автоформатирование",
+        pasteWithoutFormat: "Вставить без форматирования",
+        toggleComment: "Переключить комментарий",
+        gotoNewLine: "Перейти к новой строке после текущей",
+        selectBlock: "Выбрать текущий текстовый блок",
     },
     headers: {
         main: "Плагин Obsidian EasyTyping",

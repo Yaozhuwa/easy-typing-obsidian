@@ -1,6 +1,6 @@
-import { enUS } from ".";
+import type { Locale } from './types';
 
-const locale: typeof enUS = {
+const locale: Locale = {
     settings: {
         selectionReplace: {
             name: "选中文本替换增强",
@@ -164,6 +164,17 @@ const locale: typeof enUS = {
             delete: "删除",
             selectKey: "选中替换",
         },
+    },
+    commands: {
+        formatArticle: "格式化全文",
+        formatSelection: "格式化选中部分/当前行",
+        deleteBlankLine: "刪除选中部分/全文的多余空白行",
+        insertCodeblock: "插入代码块",
+        switchAutoformat: "切换自动格式化开关",
+        pasteWithoutFormat: "无格式化粘贴",
+        toggleComment: "切换注释",
+        gotoNewLine: "跳到当前行后新行",
+        selectBlock: "选择当前文本块",
     },
     headers: {
         main: "Obsidian EasyTyping 插件",
