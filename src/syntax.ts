@@ -218,16 +218,5 @@ export function detectRuleScope(state: EditorState, pos: number): ScopeInfo {
         };
     }
 
-    // Fallback: resolveInner may return a generic node when the syntax tree
-    // is not fully parsed (e.g. during IME compose end).
-    // Use structural code-block detection as a secondary check.
-    const codeBlockInfo = getCodeBlockInfoInPos(state, pos);
-    if (codeBlockInfo && pos > state.doc.lineAt(codeBlockInfo.start_pos).to) {
-        return {
-            scope: RuleScope.Code,
-            language: codeBlockInfo.language || undefined,
-        };
-    }
-
     return { scope: RuleScope.Text };
 }
