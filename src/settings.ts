@@ -45,7 +45,6 @@ export interface EasyTypingSettings {
 	StrictModeEnter: boolean;
 	StrictLineMode: StrictLineMode;
 	EnhanceModA: boolean;
-	PuncRectify: boolean;
 	TryFixChineseIM: boolean;
 	FixMacOSContextMenu: boolean;
 	TryFixMSIME: boolean;
@@ -86,7 +85,6 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	StrictLineMode: StrictLineMode.EnterTwice,
 	EnhanceModA: false,
 	TryFixChineseIM: true,
-	PuncRectify: false,
 	FixMacOSContextMenu: false,
 	TryFixMSIME: false,
 	CollapsePersistentEnter: false,
@@ -217,16 +215,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(el)
-			.setName(locale.settings.puncRectify.name)
-			.setDesc(locale.settings.puncRectify.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.PuncRectify)
-					.onChange(async (value) => {
-						this.plugin.settings.PuncRectify = value;
-						await this.plugin.saveSettings();
-					});
-			});
 	}
 
 	// ==================== Tab 2: 自动格式化 ====================

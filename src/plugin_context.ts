@@ -8,7 +8,6 @@ export interface PluginContext {
 	ruleEngine: RuleEngine;
 	Formater: LineFormater;
 	app: App;
-	halfToFullSymbolMap: Map<string, string>;
 	TaboutPairStrs: PairString[];
 	compose_begin_pos: number;
 	compose_end_pos: number;

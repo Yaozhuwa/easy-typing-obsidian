@@ -99,10 +99,6 @@ const locale: Locale = {
             name: "Collapse Persistent Enter",
             desc: "Adds same-level header line without expanding when pressing Enter on a collapsed header."
         },
-        puncRectify: {
-            name: "Auto Punctuation Conversion",
-            desc: "When typing after CJK characters (Chinese/Japanese/Korean), automatically convert half-width punctuation to full-width: ,.?!:; → ，。？！：；"
-        },
         printDebugInfo: {
             name: "Print debug info in console",
             desc: "Print debug information in the console."

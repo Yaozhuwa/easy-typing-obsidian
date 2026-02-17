@@ -23,7 +23,6 @@ export interface Locale {
         strictLineBreaks: { name: string; desc: string };
         enhanceModA: { name: string; desc: string };
         collapsePersistentEnter: { name: string; desc: string };
-        puncRectify: { name: string; desc: string };
         printDebugInfo: { name: string; desc: string };
         selectionReplaceRule: { name: string; desc: string };
         deleteRule: { name: string; desc: string };

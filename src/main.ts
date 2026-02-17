@@ -20,7 +20,6 @@ import { getLocale } from './lang/locale';
 
 export default class EasyTypingPlugin extends Plugin implements PluginContext {
 	settings: EasyTypingSettings;
-	halfToFullSymbolMap: Map<string, string>;
 	Formater: LineFormater;
 	CurActiveMarkdown: string;
 
@@ -38,14 +37,6 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 		await this.loadSettings();
 		this.ruleManager = new RuleManager(this.app, this.manifest, this.settings, () => this.saveSettings());
 		await this.ruleManager.initRuleEngine();
-		this.halfToFullSymbolMap = new Map([
-			[".", "。"],
-			[",", "，"],
-			['?', '？'],
-			['!', '！'],
-			[':', '：'],
-			[';', '；']
-		]);
 
 		let TaboutPairStrs = ["【|】", "（|）", "《|》", "\u201C|\u201D", "\u2018|\u2019",
 						   "「|」", "『|』", "'|'", "\"|\"", "$$|$$", '$|$', '__|__', '_|_',

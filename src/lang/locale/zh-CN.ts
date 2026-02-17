@@ -98,10 +98,6 @@ const locale: Locale = {
             name: "标题折叠保序",
             desc: "在折叠的同级标题行按回车不会展开，直接添加同级标题行"
         },
-        puncRectify: {
-            name: "自动标点转换",
-            desc: "在中文/日文/韩文字符后输入时，自动将半角标点转换为全角：,.?!:; → ，。？！：；"
-        },
         printDebugInfo: {
             name: "在控制台输出调试信息",
             desc: "在控制台输出调试信息"

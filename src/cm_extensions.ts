@@ -2,7 +2,7 @@ import { Transaction, TransactionSpec, EditorState, Extension } from '@codemirro
 import { Editor, Platform } from 'obsidian';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { PluginContext } from './plugin_context';
-import { triggerCvtRule, triggerPuncRectify } from './rule_processor';
+import { triggerCvtRule } from './rule_processor';
 import { isCurrentFileExclude } from './formatting_commands';
 import { RuleType, TxContext } from './rule_engine';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
@@ -292,7 +292,6 @@ function tryProcessInput(
 ): boolean {
 	if (getPosLineType(update.view.state, changeFrom) === LineType.table) return false;
 	if (triggerCvtRule(ctx, update.view, cursorPos)) return true;
-	if (isCompose && triggerPuncRectify(ctx, update.view, changeFrom)) return true;
 	if (!ctx.settings.AutoFormat || isCurrentFileExclude(ctx)) return false;
 	const lineType = getPosLineType(update.view.state, changeFrom);
 	if (lineType !== LineType.text && lineType !== LineType.table) return false;
