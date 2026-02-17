@@ -100,8 +100,8 @@ const locale: Locale = {
             desc: "Adds same-level header line without expanding when pressing Enter on a collapsed header."
         },
         puncRectify: {
-            name: "Punc rectify",
-            desc: "Automatically convert English punctuation (, . ? !) between Chinese characters to full-width punctuation during typing (reversible)."
+            name: "Auto Punctuation Conversion",
+            desc: "When typing after CJK characters (Chinese/Japanese/Korean), automatically convert half-width punctuation to full-width: ,。?!:; → ，。？！：；"
         },
         printDebugInfo: {
             name: "Print debug info in console",
