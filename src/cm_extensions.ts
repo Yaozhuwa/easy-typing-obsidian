@@ -33,40 +33,38 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			if (getPosLineType(tr.startState, fromA)==LineType.table) return tr;
 
 			// ========== Selection Replace ============
-			if (ctx.settings.SelectionEnhance) {
-				if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB)||insertedStr=='——'||insertedStr=='……')) {
-					const selScope = detectRuleScope(tr.startState, fromA);
-					const selCtx: TxContext = {
-						kind: RuleType.SelectKey,
-						docText: tr.startState.doc.toString(),
-						selection: { from: fromA, to: toA },
-						inserted: insertedStr,
-						changeType: changeTypeStr,
-						scopeHint: selScope.scope,
-						scopeLanguage: selScope.language,
-						key: insertedStr,
-						debug: ctx.settings?.debug,
-					};
-					const selResult = ctx.ruleEngine.process(selCtx);
-					if (selResult) {
-						const tabstopGroups = tabstopSpecsToTabstopGroups(selResult.tabstops);
-						if (tabstopGroups.length > 0) {
-							changes.push({
-								changes: { from: selResult.matchRange.from, to: selResult.matchRange.to, insert: selResult.newText },
-								selection: tabstopGroups[0].toEditorSelection(),
-								effects: [addTabstopsEffect.of(tabstopGroups)],
-								userEvent: "EasyTyping.change"
-							});
-						} else {
-							changes.push({
-								changes: { from: selResult.matchRange.from, to: selResult.matchRange.to, insert: selResult.newText },
-								selection: { anchor: selResult.cursor },
-								userEvent: "EasyTyping.change"
-							});
-						}
-						tr = tr.startState.update(...changes);
-						return tr;
+			if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB)||insertedStr=='——'||insertedStr=='……')) {
+				const selScope = detectRuleScope(tr.startState, fromA);
+				const selCtx: TxContext = {
+					kind: RuleType.SelectKey,
+					docText: tr.startState.doc.toString(),
+					selection: { from: fromA, to: toA },
+					inserted: insertedStr,
+					changeType: changeTypeStr,
+					scopeHint: selScope.scope,
+					scopeLanguage: selScope.language,
+					key: insertedStr,
+					debug: ctx.settings?.debug,
+				};
+				const selResult = ctx.ruleEngine.process(selCtx);
+				if (selResult) {
+					const tabstopGroups = tabstopSpecsToTabstopGroups(selResult.tabstops);
+					if (tabstopGroups.length > 0) {
+						changes.push({
+							changes: { from: selResult.matchRange.from, to: selResult.matchRange.to, insert: selResult.newText },
+							selection: tabstopGroups[0].toEditorSelection(),
+							effects: [addTabstopsEffect.of(tabstopGroups)],
+							userEvent: "EasyTyping.change"
+						});
+					} else {
+						changes.push({
+							changes: { from: selResult.matchRange.from, to: selResult.matchRange.to, insert: selResult.newText },
+							selection: { anchor: selResult.cursor },
+							userEvent: "EasyTyping.change"
+						});
 					}
+					tr = tr.startState.update(...changes);
+					return tr;
 				}
 			}
 

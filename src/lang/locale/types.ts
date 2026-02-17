@@ -1,7 +1,5 @@
 export interface Locale {
     settings: {
-        selectionReplace: { name: string; desc: string };
-        fullWidthToHalfWidth: { name: string; desc: string };
         basicInputEnhance: { name: string; desc: string };
         codeblockEdit: { name: string; desc: string };
         backspaceEdit: { name: string; desc: string };

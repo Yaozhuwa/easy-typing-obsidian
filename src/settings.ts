@@ -20,9 +20,7 @@ export enum StrictLineMode { EnterTwice = "enter_twice", TwoSpace = "two_space",
 
 export interface EasyTypingSettings {
 	Tabout: boolean;
-	SelectionEnhance: boolean;
 	BaseObEditEnhance: boolean;
-	FW2HWEnhance: boolean;
 	BetterCodeEdit: boolean;
 	BetterBackspace: boolean;
 	AutoFormat: boolean;
@@ -57,9 +55,7 @@ export interface EasyTypingSettings {
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	Tabout: true,
-	SelectionEnhance: true,
 	BaseObEditEnhance: true,
-	FW2HWEnhance: true,
 	BetterCodeEdit: true,
 	BetterBackspace: true,
 	AutoFormat: true,
@@ -177,28 +173,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	// ==================== Tab 1: 编辑增强 ====================
 	buildEditEnhanceTab(el: HTMLElement): void {
 		const locale = getLocale();
-		new Setting(el)
-			.setName(locale.settings.selectionReplace.name)
-			.setDesc(locale.settings.selectionReplace.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.SelectionEnhance)
-					.onChange(async (value) => {
-						this.plugin.settings.SelectionEnhance = value;
-						await this.plugin.saveSettings();
-					});
-			});
-
-		new Setting(el)
-			.setName(locale.settings.fullWidthToHalfWidth.name)
-			.setDesc(locale.settings.fullWidthToHalfWidth.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.FW2HWEnhance)
-					.onChange(async (value) => {
-						this.plugin.settings.FW2HWEnhance = value;
-						await this.plugin.saveSettings();
-					});
-			});
-
 		new Setting(el)
 			.setName(locale.settings.basicInputEnhance.name)
 			.setDesc(locale.settings.basicInputEnhance.desc)

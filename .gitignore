@@ -12,6 +12,8 @@ main.js
 
 # obsidian
 data.json
+builtin-rules.json
+user-rules.json
 
 .DS_Store
 .vscode

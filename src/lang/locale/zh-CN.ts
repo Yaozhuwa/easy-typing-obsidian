@@ -2,14 +2,6 @@ import type { Locale } from './types';
 
 const locale: Locale = {
     settings: {
-        selectionReplace: {
-            name: "选中文本替换增强",
-            desc: "选中文本情况下的编辑增强，按￥→$选中的文本$, 按·→`选中的文本`，《 → 《选中的文本》等等"
-        },
-        fullWidthToHalfWidth: {
-            name: "连续输入全角符号转半角符号",
-            desc: "连续输入全角符号转半角，。。→ .，！！→ !， 》》→ >"
-        },
         basicInputEnhance: {
             name: "Obsidian 的基础符号输入增强",
             desc: "Obsidian 的基础输入增强，如【【| → [[|]]，句首的、→ /，句首的》→ >，··| → `|`， `·|` 变成代码块，￥￥| → $|$"

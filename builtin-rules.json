@@ -1,8 +1,8 @@
 [
   {
     "id": "builtin-autopair-input",
-    "trigger": "[（《「『“‘]",
-    "replacement": "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’'}; return p[leftMatches[0]];",
+    "trigger": "[（《「『“‘《]",
+    "replacement": "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’','《':'《$0》'}; return p[leftMatches[0]];",
     "options": "rF",
     "priority": 10,
     "description": "中文符号自动配对"
@@ -17,22 +17,20 @@
     "description": "删除中文符号配对"
   },
   {
+    "id": "builtin-conv-001",
     "trigger": "··",
     "replacement": "`$0`",
     "priority": 10,
-    "description": "全角点转代码",
-    "enabled": true,
-    "id": "builtin-conv-001"
+    "description": "中文点转代码"
   },
   {
+    "id": "builtin-conv-formula",
     "trigger": "(￥￥|¥¥|\\$￥|\\$¥|\\$\\$)",
     "trigger_right": "\\$?",
     "replacement": "return rightMatches[0] === '$' ? '$$\\n$0\\n$$' : '$$0$';",
     "options": "rF",
     "priority": 10,
-    "description": "钱符号转公式（行内/块）",
-    "enabled": true,
-    "id": "builtin-conv-formula"
+    "description": "钱符号转公式（行内/块）"
   },
   {
     "id": "builtin-conv-linestart",
@@ -70,23 +68,21 @@
     "description": "删除高亮对"
   },
   {
+    "id": "builtin-del-003",
     "trigger": "$$\n",
     "trigger_right": "\n$$",
     "replacement": "",
     "options": "d",
     "priority": 30,
-    "description": "删除公式块对",
-    "enabled": true,
-    "id": "builtin-del-003"
+    "description": "删除公式块对"
   },
   {
+    "id": "builtin-sel",
     "trigger": "[【¥“”]",
     "replacement": "const m={'¥': ['$', '$'], '【': ['[', ']'], '“': ['“','”'], '”': ['“','”']}; \nreturn m[key][0] + '${0:${SELECTION}}' + m[key][1];",
     "options": "sF",
     "priority": 40,
-    "description": "选中文字加配对全角符号",
-    "enabled": true,
-    "id": "builtin-sel"
+    "description": "选中文字加符号"
   },
   {
     "id": "builtin-extra-001",

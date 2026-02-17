@@ -2,14 +2,6 @@ import type { Locale } from './types';
 
 const locale: Locale = {
     settings: {
-        selectionReplace: {
-            name: "Selection Replace Enhancement",
-            desc: "Enhanced editing for selected text, e.g., pressing ￥ → $selected text$, pressing · → `selected text`, 《 → 《selected text》, etc."
-        },
-        fullWidthToHalfWidth: {
-            name: "Convert successive full width symbol to half width symbol",
-            desc: "Convert consecutive full-width symbols to half-width, e.g., 。。→ ., ！！→ !, 》》→ >"
-        },
         basicInputEnhance: {
             name: "Basic symbol input enhance for Obsidian",
             desc: "Basic input enhancement for Obsidian, e.g., 【【| → [[|]], starting with 、→ /, starting with 》→ >, ··| → `|`, `·|` becomes code block, ￥￥| → $|$"
