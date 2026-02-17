@@ -101,7 +101,7 @@ const locale: Locale = {
         },
         puncRectify: {
             name: "Auto Punctuation Conversion",
-            desc: "When typing after CJK characters (Chinese/Japanese/Korean), automatically convert half-width punctuation to full-width: ,。?!:; → ，。？！：；"
+            desc: "When typing after CJK characters (Chinese/Japanese/Korean), automatically convert half-width punctuation to full-width: ,.?!:; → ，。？！：；"
         },
         printDebugInfo: {
             name: "Print debug info in console",
