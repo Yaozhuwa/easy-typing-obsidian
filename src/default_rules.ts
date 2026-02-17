@@ -32,6 +32,15 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	// ===== 基础转换 (priority 10) =====
 	{ id: 'builtin-conv-backtick', trigger: '··', replacement: '`$0`', priority: 10, description: '连续中文间隔号 ·· 转行内代码' },
 	{
+		id: 'builtin-conv-codeblock',
+		trigger: '(?<=^|\\n)([ \\t]*)`·',
+		trigger_right: '`',
+		replacement: '[[1]]```$0\n[[1]]```',
+		options: 'r',
+		priority: 10,
+		description: '全角间隔号 `·` 转代码块',
+	},
+	{
 		id: 'builtin-conv-formula',
 		trigger: '(￥￥|¥¥|\\$￥|\\$¥|\\$\\$)',
 		trigger_right: '\\$?',
@@ -49,11 +58,13 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		description: '行首 》 转引用标记、行首 、 转斜杠',
 	},
 
+
 	// ===== 半角转全角 (priority 15) =====
 	{
 		id: 'builtin-punc-cjk',
-		trigger: '([\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af])([,.:?!;])',
-		replacement: "const m={',':'，','.':'。','?':'？','!':'！',':':'：',';':'；'}; return leftMatches[1] + m[leftMatches[2]];",
+		trigger: '([\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af])([,.:?!;\(])',
+		trigger_right: '\\)?',
+		replacement: "const m={',':'，','.':'。','?':'？','!':'！',':':'：',';':'；','(':'（$0）'}; return leftMatches[1] + m[leftMatches[2]];",
 		options: 'rF',
 		priority: 15,
 		description: 'CJK字符后半角标点转全角',
@@ -74,6 +85,15 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	{ id: 'builtin-del-inline-formula', trigger: '$', trigger_right: '$', replacement: '', options: 'd', priority: 30, description: '删除行内公式 $...$ 配对' },
 	{ id: 'builtin-del-highlight', trigger: '==', trigger_right: '==', replacement: '', options: 'd', priority: 30, description: '删除高亮 ==...== 配对' },
 	{ id: 'builtin-del-block-formula', trigger: '$$\n', trigger_right: '\n$$', replacement: '', options: 'd', priority: 30, description: '删除块级公式 $$...$$ 配对' },
+	{
+		id: 'builtin-del-codeblock',
+		trigger: '(?<=^|\\n)([ \\t]*)```',
+		trigger_right: '\\n([ \\t]*)```',
+		replacement: '[[1]]',
+		options: 'dr',
+		priority: 30,
+		description: '快速删除空代码块',
+	},
 
 	// ===== 选中替换 (priority 40) =====
 	{
