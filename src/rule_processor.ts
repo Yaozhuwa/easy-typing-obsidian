@@ -49,7 +49,7 @@ export function triggerCvtRule(ctx: PluginContext, view: EditorView, cursor_pos:
 
 export function triggerPuncRectify(ctx: PluginContext, view: EditorView, change_from_pos: number): boolean {
 	if (ctx.settings.PuncRectify &&
-		/[,.?!]/.test(view.state.doc.sliceString(change_from_pos - 1, change_from_pos))) {
+		/[,.?!;:]/.test(view.state.doc.sliceString(change_from_pos - 1, change_from_pos))) {
 		let punc = view.state.doc.sliceString(change_from_pos - 1, change_from_pos)
 		if (change_from_pos > 2 && /[^\u4e00-\u9fa5]/.test(view.state.doc.sliceString(change_from_pos - 2, change_from_pos - 1))) { }
 		else {

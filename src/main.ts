@@ -42,7 +42,9 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 			[".", "。"],
 			[",", "，"],
 			['?', '？'],
-			['!', '！']
+			['!', '！'],
+			[':', '：'],
+			[';', '；']
 		]);
 
 		let TaboutPairStrs = ["【|】", "（|）", "《|》", "\u201C|\u201D", "\u2018|\u2019",
