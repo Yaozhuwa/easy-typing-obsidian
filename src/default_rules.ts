@@ -2,6 +2,7 @@ import { SimpleRule } from './rule_engine';
 
 // 优先级分层（数字越小越优先）:
 //   10: 自动配对 + 基础转换
+//   15: 半角转全角（CJK字符后）
 //   20: 全角转半角（连续两个相同全角标点）
 //   30: 删除配对
 //   40: 选中替换
@@ -46,6 +47,16 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		options: 'rF',
 		priority: 10,
 		description: '行首 》 转引用标记、行首 、 转斜杠',
+	},
+
+	// ===== 半角转全角 (priority 15) =====
+	{
+		id: 'builtin-punc-cjk',
+		trigger: '([\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af])([,.:?!;])',
+		replacement: "const m={',':'，','.':'。','?':'？','!':'！',':':'：',';':'；'}; return leftMatches[1] + m[leftMatches[2]];",
+		options: 'rF',
+		priority: 15,
+		description: 'CJK字符后半角标点转全角',
 	},
 
 	// ===== 全角转半角 (priority 20) =====
