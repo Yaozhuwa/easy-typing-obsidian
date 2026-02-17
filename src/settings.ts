@@ -216,6 +216,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		new Setting(el)
+			.setName(locale.settings.puncRectify.name)
+			.setDesc(locale.settings.puncRectify.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.PuncRectify)
+					.onChange(async (value) => {
+						this.plugin.settings.PuncRectify = value;
+						await this.plugin.saveSettings();
+					});
+			});
 	}
 
 	// ==================== Tab 2: 自动格式化 ====================
@@ -659,16 +670,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.FixMacOSContextMenu).onChange(async (value) => {
 					this.plugin.settings.FixMacOSContextMenu = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(el)
-			.setName(locale.settings.puncRectify.name)
-			.setDesc(locale.settings.puncRectify.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.PuncRectify).onChange(async (value) => {
-					this.plugin.settings.PuncRectify = value;
 					await this.plugin.saveSettings();
 				});
 			});
