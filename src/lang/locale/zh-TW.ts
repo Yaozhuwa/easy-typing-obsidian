@@ -2,21 +2,21 @@ import type { Locale } from './types';
 
 const locale: Locale = {
     settings: {
-        basicInputEnhance: {
-            name: "Obsidian 的基礎符號輸入增强",
-            desc: "Obsidian 的基礎輸入增强，如【【| → [[|]]，句首的、→ /，句首的》→ >，··| → `|`， `·|` 變成代碼塊，￥￥| → $|$"
+        smartPaste: {
+            name: "智慧粘貼",
+            desc: "在列表或引用塊中粘貼時，自動添加縮進和列表/引用符號"
         },
         codeblockEdit: {
             name: "增强代碼塊編輯",
             desc: "增强代碼塊內的編輯（Cmd/Ctrl+A 選中、Tab、刪除、粘貼）"
         },
         backspaceEdit: {
-            name: "增強刪除功能",
+            name: "智慧退格鍵",
             desc: "增強刪除空列表項或空引用行的功能"
         },
         tabOut: {
-            name: "Tab 键光标跳出",
-            desc: "Tab 键跳出行內代碼塊或配對符號塊"
+            name: "Tab 跳出配對符號",
+            desc: "按 Tab 鍵跳出配對符號，如【】、（）、《》、引號等"
         },
         autoFormatting: {
             name: "輸入時自動格式化",

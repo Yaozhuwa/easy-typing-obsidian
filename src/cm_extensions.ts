@@ -111,7 +111,7 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			}
 
 			// 在引用块或者列表块中粘贴时，自动添加缩进和引用/列表符号
-			if (ctx.settings.BaseObEditEnhance && changeTypeStr.contains('paste') && fromA==fromB && fromA == tr.startState.doc.lineAt(toA).to){
+			if (ctx.settings.SmartPaste && changeTypeStr.contains('paste') && fromA==fromB && fromA == tr.startState.doc.lineAt(toA).to){
 				// 检查是否在列表或引用块中
 				const lineContent = tr.startState.doc.lineAt(toA).text;
 				const listMatch = lineContent.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/);

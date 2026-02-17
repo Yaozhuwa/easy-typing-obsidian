@@ -2,21 +2,21 @@ import type { Locale } from './types';
 
 const locale: Locale = {
     settings: {
-        basicInputEnhance: {
-            name: "Basic symbol input enhance for Obsidian",
-            desc: "Basic input enhancement for Obsidian, e.g., 【【| → [[|]], starting with 、→ /, starting with 》→ >, ··| → `|`, `·|` becomes code block, ￥￥| → $|$"
+        smartPaste: {
+            name: "Smart Paste in Lists & Quotes",
+            desc: "In lists or quote blocks, paste content automatically with proper indentation and list/quote markers."
         },
         codeblockEdit: {
-            name: "Enhance codeblock edit",
+            name: "Enhance Codeblock Edit",
             desc: "Improve editing in codeblocks (Tab, delete, paste, Cmd/Ctrl+A select)."
         },
         backspaceEdit: {
-            name: "Enhance backspace edit",
-            desc: "Improve backspace featurefor empty list item or empty quote line."
+            name: "Smart Backspace",
+            desc: "Improve backspace feature for empty list item or empty quote line."
         },
         tabOut: {
-            name: "Tabout",
-            desc: "Tab out of inline code or paired symbols."
+            name: "Tab Out of Paired Symbols",
+            desc: "Press Tab to move cursor outside paired symbols like 【】, （）, 《》, quotes, etc."
         },
         autoFormatting: {
             name: "Auto formatting when typing",

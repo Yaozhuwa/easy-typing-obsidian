@@ -20,7 +20,7 @@ export enum StrictLineMode { EnterTwice = "enter_twice", TwoSpace = "two_space",
 
 export interface EasyTypingSettings {
 	Tabout: boolean;
-	BaseObEditEnhance: boolean;
+	SmartPaste: boolean;
 	BetterCodeEdit: boolean;
 	BetterBackspace: boolean;
 	AutoFormat: boolean;
@@ -55,7 +55,7 @@ export interface EasyTypingSettings {
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	Tabout: true,
-	BaseObEditEnhance: true,
+	SmartPaste: true,
 	BetterCodeEdit: true,
 	BetterBackspace: true,
 	AutoFormat: true,
@@ -174,12 +174,12 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	buildEditEnhanceTab(el: HTMLElement): void {
 		const locale = getLocale();
 		new Setting(el)
-			.setName(locale.settings.basicInputEnhance.name)
-			.setDesc(locale.settings.basicInputEnhance.desc)
+			.setName(locale.settings.smartPaste.name)
+			.setDesc(locale.settings.smartPaste.desc)
 			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.BaseObEditEnhance)
+				toggle.setValue(this.plugin.settings.SmartPaste)
 					.onChange(async (value) => {
-						this.plugin.settings.BaseObEditEnhance = value;
+						this.plugin.settings.SmartPaste = value;
 						await this.plugin.saveSettings();
 					});
 			});

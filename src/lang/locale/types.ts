@@ -1,6 +1,6 @@
 export interface Locale {
     settings: {
-        basicInputEnhance: { name: string; desc: string };
+        smartPaste: { name: string; desc: string };
         codeblockEdit: { name: string; desc: string };
         backspaceEdit: { name: string; desc: string };
         tabOut: { name: string; desc: string };
