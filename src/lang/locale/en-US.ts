@@ -16,7 +16,7 @@ const locale: Locale = {
         },
         tabOut: {
             name: "Tab Out of Paired Symbols",
-            desc: "Press Tab to move cursor outside paired symbols like 【】, （）, 《》, quotes, etc."
+            desc: "Press Tab to move cursor outside paired symbols like 【】, （）, 《》, quotes, or inline code."
         },
         autoFormatting: {
             name: "Auto formatting when typing",

@@ -16,7 +16,7 @@ const locale: Locale = {
         },
         tabOut: {
             name: "Tab 跳出配对符号",
-            desc: "按 Tab 键跳出配对符号，如【】、（）、《》、引号等"
+            desc: "按 Tab 键跳出配对符号，如【】、（）、《》、引号、行内代码等"
         },
         autoFormatting: {
             name: "输入时自动格式化",
