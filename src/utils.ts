@@ -177,64 +177,48 @@ export function taboutCursorInPairedString(input: string, cursorPosition: number
     const sortedPairs = [...symbolPairs].sort((a, b) => b.left.length - a.left.length);
 
     let stack: StackItem[] = [];
-    let fail: TabOutResult = { isSuccess: false, newPosition: 0 };
+    const fail: TabOutResult = { isSuccess: false, newPosition: 0 };
 
     for (let i = 0; i < cursorPosition; i++) {
-        let matched = false;
-        for (const { left: open, right: close } of sortedPairs) {
+        for (const pair of sortedPairs) {
+            const open = pair.left;
+            const close = pair.right;
             if (input.startsWith(open, i)) {
-                const existingIndex = stack.findIndex(item => item.open === open && item.close === close);
-                if (open !== close && existingIndex !== -1) continue;
                 stack.push({ open, close });
                 i += open.length - 1;
-                matched = true;
                 break;
             } else if (input.startsWith(close, i) && stack.length > 0) {
-                const lastOpenIndex = stack.findLastIndex(item => item.close === close);
-                if (lastOpenIndex !== -1) {
-                    stack = stack.slice(0, lastOpenIndex);
+                const matchIndex = stack.findLastIndex(item => item.close === close);
+                if (matchIndex !== -1) {
+                    stack = stack.slice(0, matchIndex);
                 }
                 i += close.length - 1;
-                matched = true;
                 break;
             }
         }
-        if (!matched) continue;
     }
 
     if (stack.length === 0) {
         return fail;
     }
 
-    let tempStack: StackItem[] = [];
     for (let i = cursorPosition; i < input.length; i++) {
-        let matched = false;
-        for (const { left: open, right: close } of sortedPairs) {
+        for (const pair of sortedPairs) {
+            const open = pair.left;
+            const close = pair.right;
             if (input.startsWith(open, i)) {
-                const existingIndex = stack.findIndex(item => item.open === open && item.close === close);
-                if (open !== close && existingIndex !== -1) continue;
-                const tempIndex = tempStack.findIndex(item => item.open === open && item.close === close);
-                if (open !== close && tempIndex !== -1) continue;
-                tempStack.push({ open, close });
+                stack.push({ open, close });
                 i += open.length - 1;
-                matched = true;
                 break;
             } else if (input.startsWith(close, i)) {
-                const tempIndex = tempStack.findLastIndex(item => item.close === close);
-                if (tempIndex !== -1) {
-                    tempStack = tempStack.slice(0, tempIndex);
-                } else {
-                    const stackIndex = stack.findLastIndex(item => item.close === close);
-                    if (stackIndex !== -1) {
-                        return { isSuccess: true, newPosition: cursorPosition === i ? i + close.length : i };
-                    }
+                const matchIndex = stack.findLastIndex(item => item.close === close);
+                if (matchIndex !== -1) {
+                    return { isSuccess: true, newPosition: i + close.length };
                 }
                 i += close.length - 1;
-                matched = true;
                 break;
             }
         }
-        if (!matched) continue;
     }
 
     return fail;
