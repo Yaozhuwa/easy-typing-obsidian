@@ -168,32 +168,24 @@ type TabOutResult = {
     newPosition: number;
 };
 
-interface StackItem {
-    open: string;
-    close: string;
-}
+
+
 
 export function taboutCursorInPairedString(input: string, cursorPosition: number, symbolPairs: PairString[]): TabOutResult {
-    const sortedPairs = [...symbolPairs].sort((a, b) => b.left.length - a.left.length);
-
-    let stack: StackItem[] = [];
-    const fail: TabOutResult = { isSuccess: false, newPosition: 0 };
+    let stack: string[] = [];
+    let fail: TabOutResult = { isSuccess: false, newPosition: 0 };
 
     for (let i = 0; i < cursorPosition; i++) {
-        for (const pair of sortedPairs) {
-            const open = pair.left;
-            const close = pair.right;
-            if (input.startsWith(open, i)) {
-                stack.push({ open, close });
+        for (const { left: open, right: close } of symbolPairs) {
+            if (input.startsWith(open, i) && (open !== close || stack.lastIndexOf(open) === -1)) {
+                stack.push(open);
                 i += open.length - 1;
-                break;
             } else if (input.startsWith(close, i) && stack.length > 0) {
-                const matchIndex = stack.findLastIndex(item => item.close === close);
-                if (matchIndex !== -1) {
-                    stack = stack.slice(0, matchIndex);
+                const lastOpenIndex = stack.lastIndexOf(open);
+                if (lastOpenIndex !== -1) {
+                    stack = stack.slice(0, lastOpenIndex);
                 }
                 i += close.length - 1;
-                break;
             }
         }
     }
@@ -202,21 +194,20 @@ export function taboutCursorInPairedString(input: string, cursorPosition: number
         return fail;
     }
 
+    let tempStack: string[] = [];
     for (let i = cursorPosition; i < input.length; i++) {
-        for (const pair of sortedPairs) {
-            const open = pair.left;
-            const close = pair.right;
-            if (input.startsWith(open, i)) {
-                stack.push({ open, close });
+        for (const { left: open, right: close } of symbolPairs) {
+            if (input.startsWith(open, i) && (open !== close || (stack.lastIndexOf(open) === -1 && tempStack.lastIndexOf(open) === -1))) {
+                tempStack.push(open);
                 i += open.length - 1;
-                break;
             } else if (input.startsWith(close, i)) {
-                const matchIndex = stack.findLastIndex(item => item.close === close);
-                if (matchIndex !== -1) {
-                    return { isSuccess: true, newPosition: i + close.length };
+                const lastOpenIndex = tempStack.lastIndexOf(open);
+                if (lastOpenIndex === -1 && stack.lastIndexOf(open) !== -1) {
+                    return { isSuccess: true, newPosition: cursorPosition === i ? i + close.length : i };
+                } else if (lastOpenIndex !== -1) {
+                    tempStack = tempStack.slice(0, lastOpenIndex);
                 }
                 i += close.length - 1;
-                break;
             }
         }
     }
