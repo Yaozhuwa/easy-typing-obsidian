@@ -97,9 +97,13 @@ export function getCodeBlocksInfos(state: EditorState): CodeBlockInfo[]{
             // console.log(nodeName, nodeFrom, nodeTo, nodeText);
             if (nodeName.includes('codeblock-begin')) {
                 isCodeBlockBegin = true;
-                let start_pos = nodeFrom + nodeText.indexOf('`');
+                const fenceMatch = nodeText.match(/[`~]{3,}/);
+                let start_pos = nodeFrom + (fenceMatch?.index ?? 0);
                 let indent = start_pos - state.doc.lineAt(start_pos).from;
-                let language = nodeText.trim().substring(3);
+                let language = nodeText
+                    .trim()
+                    .replace(/^[`~]{3,}/, '')
+                    .trim();
                 curCodeBlockInfo = {
                     start_pos: start_pos,
                     end_pos: -1,
