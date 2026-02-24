@@ -22,39 +22,36 @@ const locale: Locale = {
             name: "输入时自动格式化",
             desc: "是否在编辑文档时自动格式化文本，自动格式化的总开关"
         },
-        spaceBetweenChineseEnglish: {
-            name: "中文与英文之间的空格",
-            desc: "在中文和英文之间插入空格，可撤销"
+        languagePairSpacing: {
+            name: "语言间空格策略",
+            desc: "定义不同语言/符号类型之间是否自动添加空格"
         },
-        spaceBetweenChineseNumber: {
-            name: "中文与数字之间的空格",
-            desc: "在中文和数字之间插入空格，可撤销"
+        prefixDictionary: {
+            name: "前缀词典",
+            desc: "每行一个词或 /正则/，匹配的 token 不会被插入空格，正在输入的前缀也会暂不插入空格"
         },
-        spaceBetweenEnglishNumber: {
-            name: "英文与数字之间的空格",
-            desc: "在英文和数字之间插入空格，可撤销"
+        softSpaceSymbols: {
+            leftName: "左侧软空格符号",
+            leftDesc: "这些符号出现在区块左侧时视为已有软空格",
+            rightName: "右侧软空格符号",
+            rightDesc: "这些符号出现在区块右侧时视为已有软空格"
         },
-        quoteSpace: {
-            name: "引用符号 > 与文本之间自动空格",
-            desc: "在引用符号 > 与文本之间自动插入空格，不可撤销"
+        customScriptCategories: {
+            name: "自定义语言/符号集",
+            desc: "添加自定义语言或符号集用于空格策略",
+            namePlaceholder: "名称",
+            patternPlaceholder: "字符类模式"
         },
-        deleteSpaceBetweenChinese: {
-            name: "删除中文字符间的空格",
-            desc: "去除中文字符之间的空格，不可撤销"
-        },
+
         capitalizeFirstLetter: {
             name: "句首字母大写",
             desc: "英文每个句首字母大写，可撤销"
         },
-        textPunctuationSpace: {
-            name: "文本和标点间空格",
-            desc: "在文本和标点之间智能插入空格"
-        },
         spaceStrategyInlineCode: {
             name: "行内代码和文本之间的空格策略",
             desc: "无要求：对本类别块与左右文本没有空格的要求，" +
-                     "软空格：对本类别块与周围区块只要求有软空格，软空格如当前块左边的临近文本为。，；？等全角标点，当前块右边的临近文本为所有全半角标点，" +
-                     "严格空格：当前块与临近文本之间严格添加空格。"
+                "软空格：对本类别块与周围区块只要求有软空格，软空格如当前块左边的临近文本为。，；？等全角标点，当前块右边的临近文本为所有全半角标点，" +
+                "严格空格：当前块与临近文本之间严格添加空格。"
         },
         spaceStrategyInlineFormula: {
             name: "行内公式和文本之间的空格策略",
@@ -71,8 +68,8 @@ const locale: Locale = {
         userDefinedRegexp: {
             name: "用户定义的正则表达式",
             desc: "用户自定义正则表达式，匹配到的内容不进行格式化，每行一个表达式，行尾不要随意加空格。" +
-				"每行末尾3个字符的固定为|和两个空格策略符号，空格策略符号为-=+，分别代表不要求空格(-)，软空格(=)，严格空格(+)。" +
-				"这两个空格策略符号分别为匹配区块的左右两边的空格策略"
+                "每行末尾3个字符的固定为|和两个空格策略符号，空格策略符号为-=+，分别代表不要求空格(-)，软空格(=)，严格空格(+)。" +
+                "这两个空格策略符号分别为匹配区块的左右两边的空格策略"
         },
         excludeFoldersFiles: {
             name: "排除文件夹/文件",
@@ -175,13 +172,17 @@ const locale: Locale = {
         customRegexpBlock: "自定义正则区块",
         excludeFoldersFiles: "指定文件不自动格式化",
         experimentalFeatures: "实验功能",
+        languagePairSection: "语言间空格策略",
+        prefixDictSection: "前缀词典",
+        softSpaceSection: "自定义软空格符号",
+        customScriptSection: "自定义语言/符号集",
         aboutRegexp: {
-            header:"正则表达式相关知识，见 ",
+            header: "正则表达式相关知识，见 ",
             text: "《阮一峰：正则表达式简明教程》",
         },
         instructionsRegexp: {
             header: "正则表达式规则使用说明与示例： ",
-            text:"自定义正则表达式规则",
+            text: "自定义正则表达式规则",
         },
         customizeSelectionRule: "自定义选中文本编辑增强规则",
         customizeDeleteRule: "自定义删除编辑增强规则",
@@ -202,8 +203,7 @@ const locale: Locale = {
         enterTwice: "两次回车",
         twoSpace: "加两个空格",
         mixMode: "混合模式",
-        onlyWhenTyping: "输入时生效",
-        globally: "全局生效",
+
         noRequire: "无要求",
         softSpace: "软空格",
         strictSpace: "严格空格",
@@ -240,11 +240,21 @@ const locale: Locale = {
         newPattern: "触发规则后字符串模式",
         noticeInvaidTriggerPatternContainSymbol: "无效规则, 转换前模式必须包含代表光标位置的符号 \|",
         beforeConvert: "转换前|",
-        noticeInvalidPatternString:"Invalid pattern string!",
+        noticeInvalidPatternString: "Invalid pattern string!",
     },
     button: {
         update: "更新",
-    }
+    },
+    scriptCategoryLabels: {
+        chinese: "中文",
+        japanese: "日文",
+        korean: "韩文",
+        cjk: "中日韩",
+        english: "英文",
+        digit: "数字",
+        russian: "俄文",
+        unknown: "未知",
+    },
 };
 
 export default locale;

@@ -22,25 +22,25 @@ const locale: Locale = {
             name: "輸入時自動格式化",
             desc: "是否在編輯文檔時自動格式化文本，自動格式化的總開關"
         },
-        spaceBetweenChineseEnglish: {
-            name: "中文與英文之間的空格",
-            desc: "在中文和英文之間插入空格，可取消"
+        languagePairSpacing: {
+            name: "語言間空格策略",
+            desc: "定義不同語言/符號類型之間是否自動添加空格"
         },
-        spaceBetweenChineseNumber: {
-            name: "中文與數字之間的空格",
-            desc: "在中文和數字之間插入空格，可取消"
+        prefixDictionary: {
+            name: "前綴詞典",
+            desc: "每行一個詞或 /正則/，匹配的 token 不會被插入空格，正在輸入的前綴也會暫不插入空格"
         },
-        spaceBetweenEnglishNumber: {
-            name: "英文與數字之間的空格",
-            desc: "在英文和數字之間插入空格，可取消"
+        softSpaceSymbols: {
+            leftName: "左側軟空格符號",
+            leftDesc: "這些符號出現在區塊左側時視為已有軟空格",
+            rightName: "右側軟空格符號",
+            rightDesc: "這些符號出現在區塊右側時視為已有軟空格"
         },
-        quoteSpace: {
-            name: "引用符號 > 與文本之間自動空格",
-            desc: "在引用符號 > 與文本之間自動插入空格，不可取消"
-        },
-        deleteSpaceBetweenChinese: {
-            name: "刪除中文字符間的空格",
-            desc: "去除中文字符之間的空格，不可取消"
+        customScriptCategories: {
+            name: "自定義語言/符號集",
+            desc: "添加自定義語言或符號集用於空格策略",
+            namePlaceholder: "名稱",
+            patternPlaceholder: "字元類模式"
         },
         capitalizeFirstLetter: {
             name: "句首字母大寫",
@@ -175,6 +175,10 @@ const locale: Locale = {
         customRegexpBlock: "自定義正則區塊",
         excludeFoldersFiles: "指定文件不自動格式化",
         experimentalFeatures: "實驗功能",
+        languagePairSection: "語言間空格策略",
+        prefixDictSection: "前綴詞典",
+        softSpaceSection: "自定義軟空格符號",
+        customScriptSection: "自定義語言/符號集",
         aboutRegexp: {
             header: "正則表達式相關知識，見 ",
             text: "《阮一峰：正則表達式簡明教程》",
@@ -202,8 +206,7 @@ const locale: Locale = {
         enterTwice: "兩次回車",
         twoSpace: "加兩個空格",
         mixMode: "混合模式",
-        onlyWhenTyping: "輸入時生效",
-        globally: "全局生效",
+
         noRequire: "無要求",
         softSpace: "軟空格",
         strictSpace: "嚴格空格",
@@ -244,7 +247,17 @@ const locale: Locale = {
     },
     button: {
         update: "更新",
-    }
+    },
+    scriptCategoryLabels: {
+        chinese: "中文",
+        japanese: "日文",
+        korean: "韓文",
+        cjk: "中日韓",
+        english: "英文",
+        digit: "數字",
+        russian: "俄文",
+        unknown: "未知",
+    },
 };
 
 export default locale;

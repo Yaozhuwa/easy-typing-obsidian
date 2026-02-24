@@ -1,8 +1,9 @@
 import { SpaceState, string2SpaceState } from 'src/core';
+import { ScriptCategory, CustomScriptDef } from './formatting/script_category';
 import { App, TextComponent, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, Workspace, WorkspaceLeaf, TextAreaComponent, moment } from 'obsidian';
 import EasyTypingPlugin from './main';
 import { getLocale } from './lang/locale';
-import {sprintf} from "sprintf-js";
+import { sprintf } from "sprintf-js";
 import { setDebug } from './utils';
 import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleTriggerMode, RuleScope } from './rule_engine';
 import { DEFAULT_BUILTIN_RULES } from './default_rules';
@@ -15,8 +16,12 @@ export interface PairString {
 	right: string;
 }
 
-export enum WorkMode { OnlyWhenTyping = "typing", Globally = "global" }
 export enum StrictLineMode { EnterTwice = "enter_twice", TwoSpace = "two_space", Mix = "mix_mode" }
+
+export interface LanguagePair {
+	a: ScriptCategory | string;
+	b: ScriptCategory | string;
+}
 
 export interface EasyTypingSettings {
 	Tabout: boolean;
@@ -26,14 +31,13 @@ export interface EasyTypingSettings {
 	AutoFormat: boolean;
 	ExcludeFiles: string;
 	AutoCapital: boolean;
-	AutoCapitalMode: WorkMode;
-	ChineseEnglishSpace: boolean;
-	EnglishNumberSpace: boolean;
-	QuoteSpace: boolean;
-	ChineseNoSpace: boolean;
-	ChineseNumberSpace: boolean;
-	PunctuationSpace: boolean;
-	PunctuationSpaceMode: WorkMode;
+
+
+	languagePairs: LanguagePair[];
+	PrefixDictionary: string;
+	SoftSpaceLeftSymbols: string;
+	SoftSpaceRightSymbols: string;
+	customScriptCategories: CustomScriptDef[];
 	InlineCodeSpaceMode: SpaceState;
 	InlineFormulaSpaceMode: SpaceState;
 	InlineLinkSpaceMode: SpaceState;
@@ -59,25 +63,28 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	BetterBackspace: true,
 	AutoFormat: true,
 	ExcludeFiles: "",
-	ChineseEnglishSpace: true,
-	ChineseNumberSpace: true,
-	EnglishNumberSpace: true,
-	ChineseNoSpace: true,
-	QuoteSpace: true,
-	PunctuationSpace: true,
+
+
 	AutoCapital: true,
-	AutoCapitalMode: WorkMode.OnlyWhenTyping,
-	PunctuationSpaceMode: WorkMode.OnlyWhenTyping,
+	languagePairs: [
+		{ a: ScriptCategory.Chinese, b: ScriptCategory.English },
+		{ a: ScriptCategory.Chinese, b: ScriptCategory.Digit },
+		{ a: ScriptCategory.Digit, b: ScriptCategory.English },
+	],
+	PrefixDictionary: '',
+	SoftSpaceLeftSymbols: '\uFF0C\u3002\u3001\uFF1A\uFF1B\uFF1F\uFF01\uFF5E\uFF09\u300B\u300D\u300F\"\u2019\u3011\u2026\u2014',
+	SoftSpaceRightSymbols: '\uFF08\u300A\u300C\u300E\"\u2018\u3010',
+	customScriptCategories: [],
 	InlineCodeSpaceMode: SpaceState.soft,
 	InlineFormulaSpaceMode: SpaceState.soft,
 	InlineLinkSpaceMode: SpaceState.soft,
 	InlineLinkSmartSpace: true,
 	UserDefinedRegSwitch: true,
-	UserDefinedRegExp: "{{.*?}}|++\n"+
+	UserDefinedRegExp: "{{.*?}}|++\n" +
 		"<.*?>|--\n" +
-		"\\[\\!.*?\\][-+]{0,1}|-+\n"+
-		"(file:///|https?://|ftp://|obsidian://|zotero://|www.)[^\\s（）《》。,，！？;；：“”‘’\\)\\(\\[\\]\\{\\}']+|--\n"+
-		"\n[a-zA-Z0-9_\\-.]+@[a-zA-Z0-9_\\-.]+|++\n"+
+		"\\[\\!.*?\\][-+]{0,1}|-+\n" +
+		"(file:///|https?://|ftp://|obsidian://|zotero://|www.)[^\\s（）《》。,，！？;；：“”‘’\\)\\(\\[\\]\\{\\}']+|--\n" +
+		"\n[a-zA-Z0-9_\\-.]+@[a-zA-Z0-9_\\-.]+|++\n" +
 		"(?<!#)#[\\u4e00-\\u9fa5\\w-\\/]+|++",
 	debug: false,
 
@@ -232,71 +239,76 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		// 空格策略分组标题
+		// ── 语言间空格策略 ──
+		el.createEl('h3', { text: locale.headers.languagePairSection });
+		el.createEl('p', { text: locale.settings.languagePairSpacing.desc, cls: 'setting-item-description' });
+
+		// Capsule container for existing pairs
+		const capsuleContainer = el.createDiv({ cls: 'et-lang-pair-capsules' });
+		const renderCapsules = () => {
+			capsuleContainer.empty();
+			for (let idx = 0; idx < this.plugin.settings.languagePairs.length; idx++) {
+				const pair = this.plugin.settings.languagePairs[idx];
+				const capsule = capsuleContainer.createSpan({ cls: 'et-lang-pair-capsule' });
+				const labelA = locale.scriptCategoryLabels[pair.a] || pair.a;
+				const labelB = locale.scriptCategoryLabels[pair.b] || pair.b;
+				capsule.createSpan({ text: `${labelA} ↔ ${labelB}` });
+				const removeBtn = capsule.createSpan({ cls: 'et-capsule-remove', text: '×' });
+				removeBtn.addEventListener('click', async () => {
+					this.plugin.settings.languagePairs.splice(idx, 1);
+					await this.plugin.saveSettings();
+					renderCapsules();
+				});
+			}
+		};
+		renderCapsules();
+
+		// Add pair row: two dropdowns + add button
+		const addRow = el.createDiv({ cls: 'et-pair-selector-row' });
+		const allCategories = this.getAllScriptCategories();
+		let selectedA = allCategories[0] || '';
+		let selectedB = allCategories[1] || '';
+
+		const selectorSetting = new Setting(addRow);
+		selectorSetting.settingEl.setAttribute('style', 'border: none; padding: 0;');
+		selectorSetting
+			.addDropdown(dd => {
+				for (const cat of allCategories) {
+					dd.addOption(cat, locale.scriptCategoryLabels[cat] || cat);
+				}
+				dd.setValue(selectedA);
+				dd.onChange(v => { selectedA = v; });
+			})
+			.addDropdown(dd => {
+				for (const cat of allCategories) {
+					dd.addOption(cat, locale.scriptCategoryLabels[cat] || cat);
+				}
+				dd.setValue(selectedB);
+				dd.onChange(v => { selectedB = v; });
+			})
+			.addButton(btn => {
+				btn.setButtonText('+').onClick(async () => {
+					if (selectedA === selectedB) return;
+					// Check for duplicate (A-B or B-A)
+					const exists = this.plugin.settings.languagePairs.some(p =>
+						(p.a === selectedA && p.b === selectedB) ||
+						(p.a === selectedB && p.b === selectedA)
+					);
+					if (exists) return;
+					this.plugin.settings.languagePairs.push({ a: selectedA, b: selectedB });
+					await this.plugin.saveSettings();
+					renderCapsules();
+				});
+			});
+
+		// ── 其他格式化选项 ──
 		el.createEl('h3', { text: locale.headers.detailedSetting });
 
-		new Setting(el)
-			.setName(locale.settings.spaceBetweenChineseEnglish.name)
-			.setDesc(locale.settings.spaceBetweenChineseEnglish.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.ChineseEnglishSpace).onChange(async (value) => {
-					this.plugin.settings.ChineseEnglishSpace = value;
-					await this.plugin.saveSettings();
-				});
-			});
 
-		new Setting(el)
-			.setName(locale.settings.spaceBetweenChineseNumber.name)
-			.setDesc(locale.settings.spaceBetweenChineseNumber.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.ChineseNumberSpace).onChange(async (value) => {
-					this.plugin.settings.ChineseNumberSpace = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(el)
-			.setName(locale.settings.spaceBetweenEnglishNumber.name)
-			.setDesc(locale.settings.spaceBetweenEnglishNumber.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.EnglishNumberSpace).onChange(async (value) => {
-					this.plugin.settings.EnglishNumberSpace = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(el)
-			.setName(locale.settings.deleteSpaceBetweenChinese.name)
-			.setDesc(locale.settings.deleteSpaceBetweenChinese.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.ChineseNoSpace).onChange(async (value) => {
-					this.plugin.settings.ChineseNoSpace = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(el)
-			.setName(locale.settings.quoteSpace.name)
-			.setDesc(locale.settings.quoteSpace.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.QuoteSpace).onChange(async (value) => {
-					this.plugin.settings.QuoteSpace = value;
-					await this.plugin.saveSettings();
-				});
-			});
 
 		new Setting(el)
 			.setName(locale.settings.capitalizeFirstLetter.name)
 			.setDesc(locale.settings.capitalizeFirstLetter.desc)
-			.addDropdown((dropdown) => {
-				dropdown.addOption(WorkMode.OnlyWhenTyping, locale.dropdownOptions.onlyWhenTyping);
-				dropdown.addOption(WorkMode.Globally, locale.dropdownOptions.globally);
-				dropdown.setValue(this.plugin.settings.AutoCapitalMode);
-				dropdown.onChange(async (v: WorkMode.OnlyWhenTyping | WorkMode.Globally) => {
-					this.plugin.settings.AutoCapitalMode = v;
-					await this.plugin.saveSettings();
-				})
-			})
 			.addToggle((toggle) => {
 				toggle.setTooltip(locale.toolTip.switch);
 				toggle.setValue(this.plugin.settings.AutoCapital).onChange(async (value) => {
@@ -305,24 +317,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(el)
-			.setName(locale.settings.textPunctuationSpace.name)
-			.setDesc(locale.settings.textPunctuationSpace.desc)
-			.addDropdown((dropdown) => {
-				dropdown.addOption(WorkMode.OnlyWhenTyping, locale.dropdownOptions.onlyWhenTyping);
-				dropdown.addOption(WorkMode.Globally, locale.dropdownOptions.globally);
-				dropdown.setValue(this.plugin.settings.PunctuationSpaceMode);
-				dropdown.onChange(async (v: WorkMode.OnlyWhenTyping | WorkMode.Globally) => {
-					this.plugin.settings.PunctuationSpaceMode = v;
-					await this.plugin.saveSettings();
-				})
-			})
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.PunctuationSpace).onChange(async (value) => {
-					this.plugin.settings.PunctuationSpace = value;
-					await this.plugin.saveSettings();
-				});
-			});
+
 
 		new Setting(el)
 			.setName(locale.settings.spaceStrategyInlineCode.name)
@@ -373,6 +368,98 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					this.plugin.settings.InlineLinkSpaceMode = string2SpaceState(v);
 					await this.plugin.saveSettings();
 				})
+			});
+
+		// ── 前缀词典 ──
+		el.createEl('h3', { text: locale.headers.prefixDictSection });
+		const prefixSetting = new Setting(el);
+		prefixSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
+		prefixSetting
+			.setName(locale.settings.prefixDictionary.name)
+			.setDesc(locale.settings.prefixDictionary.desc);
+		const prefixArea = new TextAreaComponent(prefixSetting.controlEl);
+		setAttributes(prefixArea.inputEl, { style: 'margin-top: 8px; width: 100%; height: 12vh;' });
+		prefixArea
+			.setValue(this.plugin.settings.PrefixDictionary)
+			.onChange(async (value) => {
+				this.plugin.settings.PrefixDictionary = value;
+				this.plugin.saveSettings();
+			});
+
+		// ── 自定义软空格符号 ──
+		el.createEl('h3', { text: locale.headers.softSpaceSection });
+		new Setting(el)
+			.setName(locale.settings.softSpaceSymbols.leftName)
+			.setDesc(locale.settings.softSpaceSymbols.leftDesc)
+			.addText(text => {
+				text.setValue(this.plugin.settings.SoftSpaceLeftSymbols)
+					.onChange(async (value) => {
+						this.plugin.settings.SoftSpaceLeftSymbols = value;
+						await this.plugin.saveSettings();
+					});
+			});
+		new Setting(el)
+			.setName(locale.settings.softSpaceSymbols.rightName)
+			.setDesc(locale.settings.softSpaceSymbols.rightDesc)
+			.addText(text => {
+				text.setValue(this.plugin.settings.SoftSpaceRightSymbols)
+					.onChange(async (value) => {
+						this.plugin.settings.SoftSpaceRightSymbols = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// ── 自定义语言/符号集 ──
+		el.createEl('h3', { text: locale.headers.customScriptSection });
+		const scriptListContainer = el.createDiv({ cls: 'et-custom-scripts' });
+		const renderScripts = () => {
+			scriptListContainer.empty();
+			for (let i = 0; i < this.plugin.settings.customScriptCategories.length; i++) {
+				const cat = this.plugin.settings.customScriptCategories[i];
+				const item = new Setting(scriptListContainer);
+				item.setName(`${cat.name}  [${cat.pattern}]`);
+				item.addExtraButton(btn => {
+					btn.setIcon('trash').setTooltip(locale.toolTip.removeRule).onClick(async () => {
+						// Also remove any language pairs referencing this custom category
+						this.plugin.settings.languagePairs = this.plugin.settings.languagePairs.filter(
+							p => p.a !== cat.name && p.b !== cat.name
+						);
+						this.plugin.settings.customScriptCategories.splice(i, 1);
+						await this.plugin.saveSettings();
+						renderScripts();
+						renderCapsules();
+					});
+				});
+			}
+		};
+		renderScripts();
+
+		// Add new custom script
+		const addScriptRow = new Setting(el);
+		let newScriptName = '';
+		let newScriptPattern = '';
+		addScriptRow
+			.addText(text => {
+				text.setPlaceholder(locale.settings.customScriptCategories.namePlaceholder)
+					.onChange(v => { newScriptName = v; });
+			})
+			.addText(text => {
+				text.setPlaceholder(locale.settings.customScriptCategories.patternPlaceholder)
+					.onChange(v => { newScriptPattern = v; });
+			})
+			.addButton(btn => {
+				btn.setButtonText('+').onClick(async () => {
+					if (!newScriptName.trim() || !newScriptPattern.trim()) return;
+					// Validate regex
+					try { new RegExp(`[${newScriptPattern}]`); } catch { return; }
+					this.plugin.settings.customScriptCategories.push({
+						name: newScriptName.trim(),
+						pattern: newScriptPattern.trim(),
+					});
+					await this.plugin.saveSettings();
+					renderScripts();
+					this.display(); // refresh dropdowns to include new category
+				});
 			});
 
 		// 自定义正则区块
@@ -432,6 +519,23 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					})
 			);
+	}
+
+	/**
+	 * Get all available script categories: built-in + user-defined custom categories.
+	 */
+	private getAllScriptCategories(): string[] {
+		const builtin: string[] = [
+			ScriptCategory.Chinese,
+			ScriptCategory.Japanese,
+			ScriptCategory.Korean,
+			ScriptCategory.CJK,
+			ScriptCategory.English,
+			ScriptCategory.Digit,
+			ScriptCategory.Russian,
+		];
+		const custom = (this.plugin.settings.customScriptCategories || []).map(c => c.name);
+		return [...builtin, ...custom];
 	}
 
 	// ==================== Tab 3: 内置规则 ====================

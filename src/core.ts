@@ -1,14 +1,24 @@
-import { Notice} from "obsidian"
-import { EasyTypingSettings, WorkMode } from './settings'
+import { Notice } from "obsidian"
+import { EasyTypingSettings } from './settings'
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text, Line } from '@codemirror/state';
-import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined} from './utils'
+import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined } from './utils'
 import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
 import { print } from "./utils"
+import {
+    capitalizeFirstLetter, capitalizeMidSentence,
+    applyLanguagePairSpacing,
+    detectBoundarySpaceState,
+    TextFormatContext,
+} from './formatting/text_formatter'
+import { shouldInsertSpaceBetweenParts, shouldPrependSpaceToText } from './formatting/inline_spacing'
+import { PrefixDictionary } from './formatting/prefix_dictionary'
 
-export enum LineType { text = 'text', codeblock = 'codeblock', formula = 'formula', 
-                        code_start = 'code_block_start', code_end = 'code_block_end',
-                        none = 'none', frontmatter="frontmatter",
-                        quote='quote', callout_title='callout_title', list='list', table= 'table' }
+export enum LineType {
+    text = 'text', codeblock = 'codeblock', formula = 'formula',
+    code_start = 'code_block_start', code_end = 'code_block_end',
+    none = 'none', frontmatter = "frontmatter",
+    quote = 'quote', callout_title = 'callout_title', list = 'list', table = 'table'
+}
 
 export enum SpaceState {
     none,
@@ -46,67 +56,66 @@ export interface InlinePart {
 
 export class LineFormater {
     constructor() { }
-    syntaxTreeNodeNameType(name:string):InlineType{
-        if(name.contains('code') && !name.contains("link")){
+    syntaxTreeNodeNameType(name: string): InlineType {
+        if (name.contains('code') && !name.contains("link")) {
             return InlineType.code;
         }
-        else if(name.contains('math')){
+        else if (name.contains('math')) {
             return InlineType.formula;
         }
-        else{
+        else {
             return InlineType.text;
         }
     }
 
     // param lineNum: 1-based line number
-    parseLineWithSyntaxTree(state: EditorState, lineNum:number, regRegExp?: string){
+    parseLineWithSyntaxTree(state: EditorState, lineNum: number, regRegExp?: string) {
         let linePartsOfTxtCodeFormula: InlinePart[] = [];
         let line = state.doc.line(lineNum);
         const tree = syntaxTree(state);
         let pos = line.from;
-        let prevNodeType:InlineType = InlineType.none;
+        let prevNodeType: InlineType = InlineType.none;
         let prevBeginIdx = 0;
-        while(pos<line.to){
+        while (pos < line.to) {
             let node = tree.resolve(pos, 1);
             let curNodeType = this.syntaxTreeNodeNameType(node.name)
-            
-            if(prevNodeType==InlineType.none){
-                prevNodeType=curNodeType;
-                prevBeginIdx=0;
+
+            if (prevNodeType == InlineType.none) {
+                prevNodeType = curNodeType;
+                prevBeginIdx = 0;
             }
-            else if(prevNodeType==curNodeType){}
-            else{
+            else if (prevNodeType == curNodeType) { }
+            else {
                 linePartsOfTxtCodeFormula.push({
-                    content:line.text.substring(prevBeginIdx, pos-line.from),
-                    type:prevNodeType,
-                    begin:prevBeginIdx,
-                    end:pos-line.from,
-                    leftSpaceRequire:SpaceState.none,
-                    rightSpaceRequire:SpaceState.none
+                    content: line.text.substring(prevBeginIdx, pos - line.from),
+                    type: prevNodeType,
+                    begin: prevBeginIdx,
+                    end: pos - line.from,
+                    leftSpaceRequire: SpaceState.none,
+                    rightSpaceRequire: SpaceState.none
                 })
                 prevNodeType = curNodeType;
-                prevBeginIdx = pos-line.from;
+                prevBeginIdx = pos - line.from;
             }
             // update next pos
-            if (curNodeType == InlineType.text){
+            if (curNodeType == InlineType.text) {
                 pos++;
             }
-            else{
+            else {
                 pos = node.to;
             }
 
-            if(pos==line.to){
+            if (pos == line.to) {
                 linePartsOfTxtCodeFormula.push({
-                    content:line.text.substring(prevBeginIdx, pos-line.from),
-                    type:prevNodeType,
-                    begin:prevBeginIdx,
-                    end:pos-line.from,
-                    leftSpaceRequire:SpaceState.none,
-                    rightSpaceRequire:SpaceState.none
+                    content: line.text.substring(prevBeginIdx, pos - line.from),
+                    type: prevNodeType,
+                    begin: prevBeginIdx,
+                    end: pos - line.from,
+                    leftSpaceRequire: SpaceState.none,
+                    rightSpaceRequire: SpaceState.none
                 })
             }
         }
-        // console.log("line parts: ", linePartsOfTxtCodeFormula);
         // =======================================
         let retArray: InlinePart[] = [];
         for (let i = 0; i < linePartsOfTxtCodeFormula.length; i++) {
@@ -119,7 +128,7 @@ export class LineFormater {
                     tempArray = splitTextWithLinkAndUserDefined(linePartsOfTxtCodeFormula[i].content, regRegExp);
                 else
                     tempArray = splitTextWithLinkAndUserDefined(linePartsOfTxtCodeFormula[i].content);
-    
+
                 tempArray.forEach(item => {
                     item.begin += linePartsOfTxtCodeFormula[i].begin;
                     item.end += linePartsOfTxtCodeFormula[i].begin;
@@ -127,7 +136,6 @@ export class LineFormater {
                 });
             }
         }
-        // console.log(retArray)
         return retArray;
     }
 
@@ -135,63 +143,55 @@ export class LineFormater {
         let doc = state.doc;
         let line = doc.lineAt(fromB).text;
         let res = null
-        if (insertedStr.contains("\n"))
-        {
-            // console.log('FromB, ToB', fromB, toB)
+        if (insertedStr.contains("\n")) {
             res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, fromB).ch, offsetToPos(doc, fromB).ch);
         }
-        else
-        {
+        else {
             res = this.formatLine(state, doc.lineAt(fromB).number, settings, offsetToPos(doc, toB).ch, offsetToPos(doc, fromB).ch);
         }
-        if (res ===null || res[2].length==0) return null;
-        
+        if (res === null || res[2].length == 0) return null;
+
         let newline = stringInsertAt(res[0], res[1], "|");
-        // if (settings.debug) console.log("EasyTyping: New Line String:", newline)
 
         let changes: TransactionSpec[] = [];
         let offset = doc.lineAt(fromB).from;
 
-        for(let changeItem of res[2])
-        {
+        for (let changeItem of res[2]) {
             changes.push({
-                changes:{from: offset+changeItem.begin, to:offset+changeItem.end, insert:changeItem.text}, userEvent:"EasyTyping.change"
+                changes: { from: offset + changeItem.begin, to: offset + changeItem.end, insert: changeItem.text }, userEvent: "EasyTyping.change"
             })
         }
-        if (insertedStr.contains("\n")){
+        if (insertedStr.contains("\n")) {
             console.log("insertStr", insertedStr)
-            res[1]+= insertedStr.length;
+            res[1] += insertedStr.length;
         }
-        return [changes, {selection:{anchor:offset+res[1]}, userEvent:"EasyTyping.change"}];
+        return [changes, { selection: { anchor: offset + res[1] }, userEvent: "EasyTyping.change" }];
     }
 
     // 返回值： [最终的行，最终光标位置，内容改变]
     // param lineNum: 1-based line number
     // curCh: 光标在当前行的位置
     // prevCh: 光标在前一时刻在当前行的位置
-    formatLine(state: EditorState, lineNum:number, settings: EasyTypingSettings, curCh: number, prevCh?: number): [string, number, InlineChange[]] | null {
-        // new Notice("format-now");
-        // print("formatLine", lineNum, curCh, prevCh)
+    formatLine(state: EditorState, lineNum: number, settings: EasyTypingSettings, curCh: number, prevCh?: number): [string, number, InlineChange[]] | null {
         let line = state.doc.line(lineNum).text;
         let regNull = /^\s*$/g;
         if (regNull.test(line)) return [line, curCh, []];
-        // 1. 划分一行文字的内部不同模块区域
 
+        // 1. Parse inline parts
         let lineParts = settings.UserDefinedRegSwitch
-        ? this.parseLineWithSyntaxTree(state, lineNum, settings.UserDefinedRegExp)
-        : this.parseLineWithSyntaxTree(state, lineNum);
-        
+            ? this.parseLineWithSyntaxTree(state, lineNum, settings.UserDefinedRegExp)
+            : this.parseLineWithSyntaxTree(state, lineNum);
+
         if (settings.debug) console.log("line parts\n", lineParts);
 
-        // 备份原来的lineParts, 深拷贝
         let linePartsOrigin = JSON.parse(JSON.stringify(lineParts));
         let inlineChangeList: InlineChange[] = [];
 
+        // 2. Find cursor part and insert \0 marker in text parts
         let cursorLinePartIndex = -1;
         let cursorRelativeIndex = -1;
-        let resultCursorCh = 0;     // 输出的光标位置
+        let resultCursorCh = 0;
 
-        // 2. 找到光标所在的部分，如果是 InlinePart.text，则在光标处插入'\0'来标记光标位置
         for (let i = 0; i < lineParts.length; i++) {
             if (curCh > lineParts[i].begin && curCh <= lineParts[i].end) {
                 cursorLinePartIndex = i;
@@ -202,687 +202,238 @@ export class LineFormater {
                 break;
             }
         }
+
+        // Build PrefixDictionary from settings
+        const prefixDict = new PrefixDictionary(settings.PrefixDictionary);
+
         let resultLine = '';
         let offset = 0;
-        // 保存前一部分的区块类型，InlineType.none 代表一行的开始
         let prevPartType: string = InlineType.none;
         let prevTextEndSpaceState = SpaceState.none;
 
-        // 3. 遍历每个行部分，进行格式化处理
+        // 3. Process each part
         for (let i = 0; i < lineParts.length; i++) {
-            // 3.1 如果行内第一部分为文本，则处理句首字母大写的部分
-            if (i === 0 && lineParts[i].type === InlineType.text && settings.AutoCapital) {
-                // 3.1.1 如果 prevCursor 且光标不在此部分，则跳过
-                if (isParamDefined(prevCh) && cursorLinePartIndex != 0) { }
-                else {
-                    let regFirstSentence = /^\s*(\- (\[[x ]\] )?)?“?[a-z\u0401\u0451\u0410-\u044f]/g;
-                    let regHeaderSentence = /^(#+ |>+ ?|“)[a-z\u0401\u0451\u0410-\u044f]/g;
-                    let textcopy = lineParts[0].content;
-                    let match = regFirstSentence.exec(textcopy);
-                    let matchHeader = regHeaderSentence.exec(textcopy);
-                    let dstCharIndex = -1;
-                    if (match) {
-                        dstCharIndex = regFirstSentence.lastIndex - 1;
-                    }
-                    else if (matchHeader) {
-                        dstCharIndex = regHeaderSentence.lastIndex - 1;
-                    }
+            if (lineParts[i].type === InlineType.text) {
+                let content = lineParts[i].content;
+                let ctx: TextFormatContext = { content, curCh, prevCh, offset };
 
-                    if (settings.AutoCapitalMode == WorkMode.Globally || (isParamDefined(prevCh) && dstCharIndex >= prevCh && dstCharIndex < curCh)) { }
-                    else {
-                        dstCharIndex = -1;
+                // 3.1 Capitalization
+                if (settings.AutoCapital) {
+                    if (i === 0) {
+                        ctx = capitalizeFirstLetter(ctx, true, cursorLinePartIndex === 0);
                     }
-
-                    if (dstCharIndex != -1) {
-                        
-                        lineParts[0].content = textcopy.substring(0, dstCharIndex) + textcopy.charAt(dstCharIndex).toUpperCase() + textcopy.substring(dstCharIndex + 1);
-                    }
+                    ctx = capitalizeMidSentence(ctx);
+                    content = ctx.content;
+                    curCh = ctx.curCh;
                 }
-            }
 
-            switch (lineParts[i].type) {
-                // 3.2.1 处理文本区块
-                case InlineType.text:
-                    let content = lineParts[i].content;
-                    // Text.4 处理句首字母大写
-                    if (settings.AutoCapital) {
-                        var reg = /[\.\?\!。！？]([\s]*)[a-z\u0401\u0451\u0410-\u044f]/g;
-                        while (true) {
-                            let match = reg.exec(content);
-                            if (!match) break;
-                            let tempIndex = reg.lastIndex - 1;
-                            // console.log("prevCh, curCh, offset, tempIndex")
-                            // console.log(prevCh, curCh, offset, tempIndex)
-                            let isSpaceDot = tempIndex-2<0 || content.substring(tempIndex-2, tempIndex)==' .';
-                            if (settings.AutoCapitalMode == WorkMode.Globally && !isSpaceDot) {
-                                lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
-                                content = lineParts[i].content;
-                            }
-                            else if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset && !isSpaceDot) {
-                                lineParts[i].content = content.substring(0, tempIndex) + content.charAt(tempIndex).toUpperCase() + content.substring(reg.lastIndex);
-                                content = lineParts[i].content;
-                            }
-                        }
-                    }
+                // 3.2 Language pair spacing (replaces ChineseEnglishSpace etc.)
+                if (settings.debug) console.log('[formatLine] languagePairs:', settings.languagePairs, 'content:', content, 'curCh:', curCh, 'prevCh:', prevCh, 'offset:', offset);
+                if (settings.languagePairs && settings.languagePairs.length > 0) {
+                    ctx = { ...ctx, content, curCh };
+                    ctx = applyLanguagePairSpacing(ctx, settings.languagePairs, prefixDict, settings.customScriptCategories, settings.debug);
+                    content = ctx.content;
+                    curCh = ctx.curCh;
+                }
 
-                    function insertSpace(content: string, reg: RegExp, prevCh: number, curCh: number, offset: number): [string, number] {
-                        while (true) {
-                            let match = reg.exec(content);
-                            if (!match) break;
-                            let tempIndex = reg.lastIndex - 1;
-                            if (isParamDefined(prevCh) && tempIndex >= prevCh - offset && tempIndex < curCh - offset) {
-                                content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
-                                curCh += 1;
-                            }
-                        }
-                        return [content, curCh];
-                    }
+                lineParts[i].content = content;
 
-                    // Text.1 处理中英文之间空格
-                    if (settings.ChineseEnglishSpace) {
-                        let reg1 = /([A-Za-z])([\u4e00-\u9fa5])/gi;
-                        let reg2 = /([\u4e00-\u9fa5])([A-Za-z])/gi;
-                        [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
-                        [content, curCh] = insertSpace(content, reg2, prevCh, curCh, offset);
-                        lineParts[i].content = content;
-                    }
+                // 3.5 Detect boundary space state
+                const boundary = detectBoundarySpaceState(
+                    content,
+                    settings.SoftSpaceLeftSymbols || '',
+                    settings.SoftSpaceRightSymbols || '',
+                );
 
-                    if (settings.ChineseNumberSpace){
-                        let reg = /([0-9])([\u4e00-\u9fa5])/g;
-                        let reg1 = /([\u4e00-\u9fa5])([0-9])/g;
-                        [content, curCh] = insertSpace(content, reg, prevCh, curCh, offset);
-                        [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
-                        lineParts[i].content = content;
-                    }
-
-                    if (settings.EnglishNumberSpace){
-                        let reg = /([A-Za-z])(\d)/g;
-                        let reg1 = /(\d)([A-Za-z])/g;
-                        [content, curCh] = insertSpace(content, reg, prevCh, curCh, offset);
-                        [content, curCh] = insertSpace(content, reg1, prevCh, curCh, offset);
-                        lineParts[i].content = content;
-                    }
-
-                    // Text.2 处理中文间无空格
-                    if (settings.ChineseNoSpace) {
-                        let reg = /([\u4e00-\u9fa5，。、！；‘’《》]+)(\s+)([\u4e00-\u9fa5，。、！；‘’《》]+)/g;
-                        while (reg.exec(content)) {
-                            lineParts[i].content = content.replace(reg, "$1$3");
+                // 3.6 Handle spacing from previous part to this text
+                if (prevPartType !== InlineType.none) {
+                    if (prevPartType === InlineType.wikilink || prevPartType === InlineType.mdlink) {
+                        // Smart link spacing (complex logic preserved from original)
+                        if (!settings.InlineLinkSmartSpace && settings.InlineLinkSpaceMode > boundary.start) {
+                            lineParts[i].content = ' ' + lineParts[i].content;
                             content = lineParts[i].content;
-                        }
-                    }
-
-                    // 标点与文本空格
-                    if (settings.PunctuationSpace) {
-                        // Text.3 处理标点与文本空格
-                        // if(settings.EnglishSpace)
-                        {
-                            let reg = /([,\.;\?\!\)])([0-9A-Za-z\u0401\u0451\u0410-\u044f\u4e00-\u9fa5])|([A-Za-z0-9\u4e00-\u9fa5:,\.\?\!'"]+)(\()|[,\.;\?:!][\u4e00-\u9fa5]/gi;
-                            while (true) {
-                                let match = reg.exec(content);
-                                if (!match) break;
-                                let tempIndex = reg.lastIndex - 1;
-                                let isSpaceDot = '!.?;,'.contains(content.charAt(tempIndex-1)) && ((tempIndex-2<0 && i==0) || content.charAt(tempIndex-2)==' ');
-                                let isNumPuncNum = /[,.]\d/.test(content.substring(tempIndex-1, tempIndex+1)) && 
-                                                    (tempIndex-2<0 || /\d/.test(content.charAt(tempIndex-2)))
-
-                                if (settings.PunctuationSpaceMode == WorkMode.Globally && !isSpaceDot && !isNumPuncNum) {
-                                    content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
-                                }
-                                else if (isParamDefined(prevCh) && tempIndex >= prevCh - offset 
-                                                                && tempIndex < curCh - offset 
-                                                                && !isSpaceDot && !isNumPuncNum) {
-                                    content = content.substring(0, tempIndex) + " " + content.substring(tempIndex);
-                                    curCh += 1;
-                                }
-                            }
-
-                            // 单独处理冒号后文本的自动空格，为了兼容 :emoji: 格式的输入
-                            let reg2 = /(:)([A-Za-z0-9_]+[ ,\.\?\\\/;'"，。？；‘“”’、\[\]\-\{\}])/gi;
-                            lineParts[i].content = content.replace(reg2, "$1 $2");
-                            content = lineParts[i].content;
-
-                            let reg3 = /(:)(["'])/g;
-                            lineParts[i].content = content.replace(reg3, "$1 $2");
-                            content = lineParts[i].content;
-                        }
-                    }
-
-                    // Text.7 得到文本部分是否以空白符开始或结束，用来判断后续文本前后是否需要添加空格
-                    let regStrictSpaceStart = /^\0?\s/;
-                    let regStrictSpaceEnd = /\s\0?$/;
-                    let regStartWithSpace = /^\0?[\s,\.;\?\!，。；》？：:！~\*、（）"”\[\]\)\{\}]/;
-                    let regEndWithSpace = /[\s，。、：；？！（）~\*"《“\[\]\(\{\}]\0?$/;
-                    let txtStartSpaceSate = SpaceState.none;
-                    let txtEndSpaceState = SpaceState.none;
-                    if (regStartWithSpace.test(content)||content.startsWith("<br>")) {
-                        if (regStrictSpaceStart.test(content))
-                            txtStartSpaceSate = SpaceState.strict
-                        else
-                            txtStartSpaceSate = SpaceState.soft
-                    }
-
-                    if (regEndWithSpace.test(content) || content.endsWith("<br>")) {
-                        if (regStrictSpaceEnd.test(content))
-                            txtEndSpaceState = SpaceState.strict;
-                        else
-                            txtEndSpaceState = SpaceState.soft;
-                    }
-
-                    // Text.8 根据前一部分的区块类型处理空格添加的问题
-                    switch (prevPartType) {
-                        case InlineType.none:
-                            break;
-                        case InlineType.code:
-                            if (settings.InlineCodeSpaceMode > txtStartSpaceSate) {
-                                lineParts[i].content = ' ' + content;
-                                content = lineParts[i].content;
-                            }
-                            break;
-                        case InlineType.formula:
-                            if (settings.InlineFormulaSpaceMode > txtStartSpaceSate) {
-                                lineParts[i].content = ' ' + content;
-                                content = lineParts[i].content;
-                            }
-                            break;
-                        case InlineType.wikilink:
-                        case InlineType.mdlink:
-                            if (!settings.InlineLinkSmartSpace && settings.InlineLinkSpaceMode > txtStartSpaceSate) {
-                                lineParts[i].content = ' ' + content;
-                                content = lineParts[i].content;
-                            }
-                            else if (settings.InlineLinkSmartSpace && txtStartSpaceSate == SpaceState.none) {
-                                let charAtTextBegin = content.charAt(0);
-                                let regMdLinkEnd = /\]/;
-                                let charAtLinkEndIndex = lineParts[i - 1].content.search(regMdLinkEnd) - 1;
-                                let charAtLinkEnd = lineParts[i - 1].content.charAt(charAtLinkEndIndex);
-                                if (charAtLinkEnd === '[') break;
-                                let twoNeighborChars = charAtLinkEnd + charAtTextBegin;
-                                let regNotNeedSpace = /[\u4e00-\u9fa5，。？：；”“’‘-）}][\u4e00-\u9fa5]/g;
+                        } else if (settings.InlineLinkSmartSpace && boundary.start === SpaceState.none) {
+                            const charAtTextBegin = content.charAt(0) === '\0' ? content.charAt(1) : content.charAt(0);
+                            const regMdLinkEnd = /\]/;
+                            const charAtLinkEndIndex = lineParts[i - 1].content.search(regMdLinkEnd) - 1;
+                            const charAtLinkEnd = lineParts[i - 1].content.charAt(charAtLinkEndIndex);
+                            if (charAtLinkEnd !== '[') {
+                                const twoNeighborChars = charAtLinkEnd + charAtTextBegin;
+                                const regNotNeedSpace = /[\u4e00-\u9fa5，。？：；""''\-）}][\u4e00-\u9fa5]/g;
                                 if (!regNotNeedSpace.test(twoNeighborChars)) {
-                                    lineParts[i].content = ' ' + content;
+                                    lineParts[i].content = ' ' + lineParts[i].content;
                                     content = lineParts[i].content;
                                 }
                             }
-                            break;
-                        case InlineType.user:
-                            if (lineParts[i - 1].rightSpaceRequire > txtStartSpaceSate) {
-                                lineParts[i].content = ' ' + content;
-                                content = lineParts[i].content;
-                            }
-                            break;
+                        }
+                    } else if (shouldPrependSpaceToText(
+                        prevPartType as InlineType,
+                        boundary.start,
+                        i > 0 ? lineParts[i - 1].rightSpaceRequire : SpaceState.none,
+                        settings,
+                    )) {
+                        lineParts[i].content = ' ' + lineParts[i].content;
+                        content = lineParts[i].content;
                     }
+                }
 
-                    // Text.9 如果光标在该区块，则计算最终光标的位置
-                    if (i === cursorLinePartIndex) {
-                        let reg = '\0';
-                        let n = content.search(reg)
-                        resultCursorCh = offset + n;
-                        // 删除 \0
-                        lineParts[i].content = stringDeleteAt(content, n);
-                    }
+                // 3.7 Find cursor position
+                if (i === cursorLinePartIndex) {
+                    const n = content.search('\0');
+                    resultCursorCh = offset + n;
+                    lineParts[i].content = stringDeleteAt(content, n);
+                }
 
-                    resultLine += lineParts[i].content;
-                    offset += lineParts[i].content.length;
+                resultLine += lineParts[i].content;
+                offset += lineParts[i].content.length;
+                prevPartType = InlineType.text;
+                prevTextEndSpaceState = boundary.end;
+
+            } else {
+                // Non-text part (code, formula, link, user)
+
+                // Skip qquad formula (treated as text spacer)
+                if (lineParts[i].type === InlineType.formula && lineParts[i].content === "$\\qquad$") {
                     prevPartType = InlineType.text;
-                    prevTextEndSpaceState = txtEndSpaceState;
-                    break;
-                
-                // 3.2.2 处理行内代码块部分
-                case InlineType.code:
-                    // Code.1 根据前一区块类型和settings添加空格
-                    switch(prevPartType)
-                    {
-                        case InlineType.none:
-                            break;
-                        case InlineType.text:
-                            if (settings.InlineCodeSpaceMode > prevTextEndSpaceState)
-                            {
-                                lineParts[i-1].content += ' ';
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.code:
-                            if (settings.InlineCodeSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.formula:
-                            if (settings.InlineCodeSpaceMode>SpaceState.none || 
-                                settings.InlineFormulaSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.mdlink:
-                        case InlineType.wikilink:
-                            if (settings.InlineCodeSpaceMode>SpaceState.none || 
-                                settings.InlineLinkSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.user:
-                            if (settings.InlineCodeSpaceMode>SpaceState.none &&
-                                lineParts[i-1].rightSpaceRequire>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;                        
-                    }
-                    // Code.2 如果光标在该区块，则计算最终光标的位置
-                    if(i === cursorLinePartIndex)
-                    {
-                        resultCursorCh = offset + cursorRelativeIndex;
-                    }
-                    // Code.3 变量更新
+                    prevTextEndSpaceState = SpaceState.strict;
                     resultLine += lineParts[i].content;
                     offset += lineParts[i].content.length;
-                    prevPartType = InlineType.code;
-                    prevTextEndSpaceState = SpaceState.none;
-                    break;
-                
-                // 3.2.3 处理行内公式的部分
-                case InlineType.formula:
-                    if (lineParts[i].content == "$\\qquad$") {
-                        prevPartType = InlineType.text;
-                        prevTextEndSpaceState = SpaceState.strict;
-                        break;
-                    }
-                    // Formula.1 根据前一区块类型和settings添加空格
-                    switch(prevPartType)
-                    {
-                        case InlineType.none:
-                            break;
-                        case InlineType.text:
-                            if (settings.InlineFormulaSpaceMode>prevTextEndSpaceState)
-                            {
-                                lineParts[i-1].content += ' ';
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.code:
-                            if (settings.InlineFormulaSpaceMode>SpaceState.none ||
-                                settings.InlineCodeSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.formula:
-                            if (settings.InlineCodeSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.mdlink:
-                        case InlineType.wikilink:
-                            if (settings.InlineFormulaSpaceMode>SpaceState.none || 
-                                settings.InlineLinkSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.user:
-                            if (settings.InlineFormulaSpaceMode>SpaceState.none &&
-                                lineParts[i-1].rightSpaceRequire>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;         
-                    }
-                    // Formula.2 如果光标在该区块，则计算最终光标的位置
-                    if(i === cursorLinePartIndex)
-                    {
-                        resultCursorCh = offset + cursorRelativeIndex;
-                    }
-                    // Formula.3 变量更新
-                    resultLine += lineParts[i].content;
-                    offset += lineParts[i].content.length;
-                    prevPartType = InlineType.formula;
-                    prevTextEndSpaceState = SpaceState.none;
-                    break;
+                    continue;
+                }
 
-                case InlineType.mdlink:
-                case InlineType.wikilink:
-                    switch(prevPartType)
-                    {
-                        case InlineType.none:
-                            break;
-                        case InlineType.text:
-                            if (prevTextEndSpaceState>=settings.InlineLinkSpaceMode &&  !settings.InlineLinkSmartSpace) break;
-                            if (prevTextEndSpaceState==SpaceState.strict && settings.InlineLinkSpaceMode==SpaceState.strict) break;
-                            
-                            let charAtTextEnd = lineParts[i - 1].content.charAt(lineParts[i - 1].content.length - 1);
-                            let charAtLinkBegin: string = "";
-                            if (lineParts[i].type == InlineType.wikilink) {
-                                let regAlias = /\|/;
-                                let charOfAliasBegin = lineParts[i].content.search(regAlias);
-                                // console.log("charOfAliasBegin",charOfAliasBegin)
-                                let beginIndex = 2;
-                                if (lineParts[i].content.charAt(0) === '!') beginIndex = 3;
-
-                                if (charOfAliasBegin != -1) {
-                                    beginIndex = charOfAliasBegin + 1;
-                                }
-                                else if (lineParts[i].content.charAt(beginIndex) == '#') {
-                                    beginIndex += 1;
-                                }
-
-                                charAtLinkBegin = lineParts[i].content.charAt(beginIndex);
-                                // console.log("beginIndex", beginIndex);
-                                if (charAtLinkBegin == ']') break;
+                // Handle link → text spacing (special case for smart link space)
+                if ((lineParts[i].type === InlineType.wikilink || lineParts[i].type === InlineType.mdlink)
+                    && prevPartType === InlineType.text) {
+                    // Link-specific text→link spacing
+                    const prevEnd = prevTextEndSpaceState;
+                    if (prevEnd >= settings.InlineLinkSpaceMode && !settings.InlineLinkSmartSpace) {
+                        // already has enough space
+                    } else if (prevEnd === SpaceState.strict && settings.InlineLinkSpaceMode === SpaceState.strict) {
+                        // already strict
+                    } else if (settings.InlineLinkSpaceMode === SpaceState.strict && prevEnd < SpaceState.strict) {
+                        lineParts[i - 1].content += ' ';
+                        resultLine += ' ';
+                        offset += 1;
+                    } else if (settings.InlineLinkSmartSpace && lineParts[i - 1].content.endsWith(' ')) {
+                        // Smart space: possibly revert space between two Chinese chars
+                        let charAtLinkBegin = this.getLinkBeginChar(lineParts[i]);
+                        if (charAtLinkBegin) {
+                            const tempContent = lineParts[i - 1].content + charAtLinkBegin;
+                            const regRevertSpace = /[\u4e00-\u9fa5] [\u4e00-\u9fa5]$/;
+                            if (regRevertSpace.test(tempContent)) {
+                                lineParts[i - 1].content = lineParts[i - 1].content.substring(0, lineParts[i - 1].content.length - 1);
+                                resultLine = resultLine.substring(0, resultLine.length - 1);
+                                offset -= 1;
                             }
-                            else {
-                                let regMdLinkBegin = /\[/;
-                                let charAtLinkBeginIndex = lineParts[i].content.search(regMdLinkBegin) + 1;
-                                charAtLinkBegin = lineParts[i].content.charAt(charAtLinkBeginIndex);
-                                if (charAtLinkBegin === ']') break;
-                            } 
-
-
-                            if (settings.InlineLinkSpaceMode==SpaceState.strict && prevTextEndSpaceState<SpaceState.strict)
-                            {
-                                lineParts[i-1].content += ' ';
+                        }
+                    } else if (settings.InlineLinkSmartSpace && prevEnd === SpaceState.none) {
+                        const charAtTextEnd = lineParts[i - 1].content.charAt(lineParts[i - 1].content.length - 1);
+                        const charAtLinkBegin = this.getLinkBeginChar(lineParts[i]);
+                        if (charAtLinkBegin) {
+                            const regNoNeedSpace = /[\u4e00-\u9fa5][\u4e00-\u9fa5]/g;
+                            const twoNeighborChars = charAtTextEnd + charAtLinkBegin;
+                            if (!regNoNeedSpace.test(twoNeighborChars)) {
+                                lineParts[i - 1].content += ' ';
                                 resultLine += ' ';
                                 offset += 1;
                             }
-                            else if (settings.InlineLinkSmartSpace && lineParts[i-1].content.endsWith(' ')){
-                                let tempContent = lineParts[i-1].content+charAtLinkBegin;
-                                let regRevertSpace = /[\u4e00-\u9fa5] [\u4e00-\u9fa5]$/;
-                                if (regRevertSpace.test(tempContent)){
-                                    lineParts[i-1].content = lineParts[i-1].content.substring(0, lineParts[i-1].content.length-1);
-                                    resultLine = resultLine.substring(0, resultLine.length-1);
-                                    offset -= 1;
-                                }
-                            }
-                            else if (settings.InlineLinkSmartSpace && prevTextEndSpaceState==SpaceState.none)
-                            {
-                                let regNoNeedSpace = /[\u4e00-\u9fa5][\u4e00-\u9fa5]/g;
-                                let twoNeighborChars = charAtTextEnd+charAtLinkBegin;
-                                if(!regNoNeedSpace.test(twoNeighborChars))
-                                {
-                                    lineParts[i-1].content += ' ';
-                                    resultLine += ' ';
-                                    offset += 1;
-                                }
-                            }
-                            else if(!settings.InlineLinkSmartSpace && settings.InlineLinkSpaceMode>prevTextEndSpaceState){
-                                lineParts[i-1].content += ' ';
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.code:
-                            if (settings.InlineLinkSpaceMode>SpaceState.none ||
-                                settings.InlineCodeSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.formula:
-                            if (settings.InlineLinkSpaceMode>SpaceState.none||
-                                settings.InlineFormulaSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.mdlink:
-                        case InlineType.wikilink:
-                            if (settings.InlineLinkSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.user:
-                            if (lineParts[i-1].rightSpaceRequire>SpaceState.none &&
-                                settings.InlineLinkSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
+                        }
+                    } else if (!settings.InlineLinkSmartSpace && settings.InlineLinkSpaceMode > prevEnd) {
+                        lineParts[i - 1].content += ' ';
+                        resultLine += ' ';
+                        offset += 1;
                     }
-                    // Link.2 如果该区块有光标，则计算最终光标位置
-                    if(i === cursorLinePartIndex)
-                    {
-                        resultCursorCh = offset + cursorRelativeIndex;
+                } else if (prevPartType === InlineType.text) {
+                    // text → non-link: check if prev text needs trailing space
+                    if (shouldInsertSpaceBetweenParts(
+                        InlineType.text, lineParts[i].type,
+                        prevTextEndSpaceState,
+                        i > 0 ? lineParts[i - 1].rightSpaceRequire : SpaceState.none,
+                        lineParts[i].leftSpaceRequire,
+                        settings
+                    )) {
+                        lineParts[i - 1].content += ' ';
+                        resultLine += ' ';
+                        offset += 1;
                     }
-                    // Link.3 更新变量
-                    resultLine += lineParts[i].content;
-                    offset += lineParts[i].content.length;
-                    prevPartType = lineParts[i].type;
-                    prevTextEndSpaceState = SpaceState.none;
-                    break;
-                
-                // 3.2.5 处理用户自定义区块的部分
-                case InlineType.user:
-                    // User.1 根据前一区块类型和settings添加空格
-                    switch(prevPartType)
-                    {
-                        case InlineType.none:
-                            break;
-                        case InlineType.text:
-                            if (lineParts[i].leftSpaceRequire>prevTextEndSpaceState)
-                            {
-                                lineParts[i-1].content += ' ';
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.code:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
-                                settings.InlineCodeSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.formula:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
-                                settings.InlineFormulaSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.mdlink:
-                        case InlineType.wikilink:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
-                                settings.InlineLinkSpaceMode>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
-                        case InlineType.user:
-                            if (lineParts[i].leftSpaceRequire>SpaceState.none &&
-                                lineParts[i-1].rightSpaceRequire>SpaceState.none)
-                            {
-                                inlineChangeList.push(
-                                    {
-                                        text:' ',
-                                        begin: lineParts[i].begin,
-                                        end: lineParts[i].begin,
-                                        origin:''
-                                    }
-                                );
-                                resultLine += ' ';
-                                offset += 1;
-                            }
-                            break;
+                } else if (prevPartType !== InlineType.none) {
+                    // non-text → non-text: insert space via inlineChangeList
+                    if (shouldInsertSpaceBetweenParts(
+                        prevPartType as InlineType, lineParts[i].type,
+                        prevTextEndSpaceState,
+                        i > 0 ? lineParts[i - 1].rightSpaceRequire : SpaceState.none,
+                        lineParts[i].leftSpaceRequire,
+                        settings
+                    )) {
+                        inlineChangeList.push({
+                            text: ' ',
+                            begin: lineParts[i].begin,
+                            end: lineParts[i].begin,
+                            origin: ''
+                        });
+                        resultLine += ' ';
+                        offset += 1;
                     }
-                    // User.2 如果该区块有光标，则计算最终光标位置
-                    if(i === cursorLinePartIndex)
-                    {
-                        resultCursorCh = offset + cursorRelativeIndex;
-                    }
-                    // Link.3 更新变量
-                    resultLine += lineParts[i].content;
-                    offset += lineParts[i].content.length;
-                    prevPartType = InlineType.user;
-                    prevTextEndSpaceState = SpaceState.none;
-                    break;
+                }
+
+                // Cursor in non-text part
+                if (i === cursorLinePartIndex) {
+                    resultCursorCh = offset + cursorRelativeIndex;
+                }
+
+                resultLine += lineParts[i].content;
+                offset += lineParts[i].content.length;
+                prevPartType = lineParts[i].type;
+                prevTextEndSpaceState = SpaceState.none;
             }
         }
 
-        for(let i=0;i<lineParts.length;i++)
-        {
-            if(lineParts[i].type === InlineType.text && lineParts[i].content!=linePartsOrigin[i].content)
-            {
-                inlineChangeList.push(
-                    {
-                        text: lineParts[i].content,
-                        begin: linePartsOrigin[i].begin,
-                        end: linePartsOrigin[i].end,
-                        origin: linePartsOrigin[i].content
-                    }
-                )
+        // 4. Collect text changes
+        for (let i = 0; i < lineParts.length; i++) {
+            if (lineParts[i].type === InlineType.text && lineParts[i].content != linePartsOrigin[i].content) {
+                inlineChangeList.push({
+                    text: lineParts[i].content,
+                    begin: linePartsOrigin[i].begin,
+                    end: linePartsOrigin[i].end,
+                    origin: linePartsOrigin[i].content
+                });
             }
         }
-    
-        inlineChangeList = inlineChangeList.sort((a, b):number=>a.begin-b.begin);
-        // console.log('resultLine', resultLine)
+
+        inlineChangeList = inlineChangeList.sort((a, b): number => a.begin - b.begin);
         return [resultLine, resultCursorCh, inlineChangeList];
     }
-    
+
+    /**
+     * Extract the display-relevant first character of a link for smart spacing.
+     */
+    private getLinkBeginChar(part: InlinePart): string | null {
+        if (part.type === InlineType.wikilink) {
+            const regAlias = /\|/;
+            const charOfAliasBegin = part.content.search(regAlias);
+            let beginIndex = 2;
+            if (part.content.charAt(0) === '!') beginIndex = 3;
+            if (charOfAliasBegin !== -1) {
+                beginIndex = charOfAliasBegin + 1;
+            } else if (part.content.charAt(beginIndex) === '#') {
+                beginIndex += 1;
+            }
+            const ch = part.content.charAt(beginIndex);
+            return ch === ']' ? null : ch;
+        } else {
+            const regMdLinkBegin = /\[/;
+            const charAtLinkBeginIndex = part.content.search(regMdLinkBegin) + 1;
+            const ch = part.content.charAt(charAtLinkBeginIndex);
+            return ch === ']' ? null : ch;
+        }
+    }
+
+
 }
 
 
-export class MarkdownParser{
-    constructor(){}
+export class MarkdownParser {
+    constructor() { }
 
 }
 
@@ -899,7 +450,7 @@ function matchWithReg(text: string, regExp: RegExp, type: InlineType, inlineType
         // 检查冲突
         if (checkArray) {
             for (let i = 0; i < retArray.length; i++) {
-                if(regExp.lastIndex>retArray[i].begin && retArray[i].end>match.index){
+                if (regExp.lastIndex > retArray[i].begin && retArray[i].end > match.index) {
                     valid = false;
                     break;
                 }
@@ -922,7 +473,7 @@ function matchWithReg(text: string, regExp: RegExp, type: InlineType, inlineType
     return retArray;
 }
 
-function matchWithAbbr(text: string, type: InlineType, inlineTypeArray: InlinePart[], checkArray = false){
+function matchWithAbbr(text: string, type: InlineType, inlineTypeArray: InlinePart[], checkArray = false) {
     let retArray = inlineTypeArray;
     let matchArray: InlinePart[] = [];
     retArray = retArray.sort((a, b): number => a.begin - b.begin);
@@ -931,23 +482,22 @@ function matchWithAbbr(text: string, type: InlineType, inlineTypeArray: InlinePa
         let match = regAbbr.exec(text);
         if (!match) break;
         let valid = true;
-        let isInBlockBegin:boolean = (match.index==0);
+        let isInBlockBegin: boolean = (match.index == 0);
         // 检查冲突
         if (checkArray) {
             for (let i = 0; i < retArray.length; i++) {
-                if(match.index == retArray[i].end){
+                if (match.index == retArray[i].end) {
                     isInBlockBegin = true;
                 }
-                if(regAbbr.lastIndex>retArray[i].begin && retArray[i].end>match.index){
+                if (regAbbr.lastIndex > retArray[i].begin && retArray[i].end > match.index) {
                     valid = false;
                     break;
                 }
             }
         }
-        if(!isInBlockBegin && valid)
-        {
+        if (!isInBlockBegin && valid) {
             let regChar = /[a-zA-Z0-9]/;
-            if(regChar.test(text.charAt(match.index-1))){
+            if (regChar.test(text.charAt(match.index - 1))) {
                 valid = false;
             }
         }
@@ -996,7 +546,7 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
             if (regNull.test(regs[i])) continue;
 
             if ((!regSRequire.test(regs[i])) || regs[i].length <= 3) {
-                new Notice("EasyTyping: 第" + String(i) + "行自定义正则不符合规范\n"+regs[i]);
+                new Notice("EasyTyping: 第" + String(i) + "行自定义正则不符合规范\n" + regs[i]);
                 continue;
             }
             let regItem = regs[i].substring(0, regs[i].length - 3);
@@ -1026,10 +576,10 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
     }
 
     // 匹配时间戳
-    retArray = matchWithReg(text, /\d{1,2}:\d{1,2}(:\d{0,2}){0,1}/g, InlineType.user, retArray, true, SpaceState.none, SpaceState.none);
+    // retArray = matchWithReg(text, /\d{1,2}:\d{1,2}(:\d{0,2}){0,1}/g, InlineType.user, retArray, true, SpaceState.none, SpaceState.none);
 
     // 4. 匹配缩写如 a.m.
-    retArray = matchWithAbbr(text, InlineType.user, retArray, true);
+    // retArray = matchWithAbbr(text, InlineType.user, retArray, true);
 
     // 5. 得到剩余的文本部分
     retArray = retArray.sort((a, b): number => a.begin - b.begin);
@@ -1087,16 +637,15 @@ function str2SpaceState(s: string): SpaceState {
 }
 
 
-export function string2SpaceState(s:string):SpaceState
-{
-    if(Number(s)==SpaceState.none) return SpaceState.none;
-    if(Number(s)==SpaceState.soft) return SpaceState.soft;
-    if(Number(s)==SpaceState.strict) return SpaceState.strict;
+export function string2SpaceState(s: string): SpaceState {
+    if (Number(s) == SpaceState.none) return SpaceState.none;
+    if (Number(s) == SpaceState.soft) return SpaceState.soft;
+    if (Number(s) == SpaceState.strict) return SpaceState.strict;
     return SpaceState.none;
 }
 
 
-export function getPosLineType(state: EditorState, pos: number):LineType {
+export function getPosLineType(state: EditorState, pos: number): LineType {
     const line = state.doc.lineAt(pos)
     let line_number = line.number
     // const tree = syntaxTree(state);
@@ -1107,64 +656,64 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
     //     console.log(p-line.from, tree.resolve(p, 1).name)
     // }
 
-    if (token.contains('table')){
+    if (token.contains('table')) {
         return LineType.table;
     }
 
-    if (token.contains('hmd-frontmatter')){
+    if (token.contains('hmd-frontmatter')) {
         return LineType.frontmatter;
     }
 
-    if(token.contains('math')){
-        for(let p=line.from+1;p<line.to;p+=1){
-            if(!tree.resolve(p, 1).name.contains('math')){
+    if (token.contains('math')) {
+        for (let p = line.from + 1; p < line.to; p += 1) {
+            if (!tree.resolve(p, 1).name.contains('math')) {
                 return LineType.text;
             }
         }
         return LineType.formula
     }
-    else if(token.contains('code') && token.contains('block')){
-        for(let p=line.from+1;p<line.to;p+=1){
+    else if (token.contains('code') && token.contains('block')) {
+        for (let p = line.from + 1; p < line.to; p += 1) {
             let t = tree.resolve(p, 1).name
-            if(!(t.contains('code') && t.contains('block'))){
+            if (!(t.contains('code') && t.contains('block'))) {
                 return LineType.text
             }
         }
         return LineType.codeblock
     }
-    else if(token.contains('quote') && !token.contains('callout')){
+    else if (token.contains('quote') && !token.contains('callout')) {
         // 接下来判断该行是否为callout块内的代码块
         // 首先判断是否为callout
         let callout_start_line = -1;
-        for(let l=line_number-1; l>=1; l-=1){
+        for (let l = line_number - 1; l >= 1; l -= 1) {
             let l_line = state.doc.line(l)
             let l_token = tree.resolve(l_line.from, 1).name
-            if(!l_token.contains('quote')){
+            if (!l_token.contains('quote')) {
                 break;
             }
-            if (l_token.contains('callout')){
+            if (l_token.contains('callout')) {
                 callout_start_line = l;
                 break;
             }
         }
-        if (callout_start_line==-1) return LineType.text;
-        
+        if (callout_start_line == -1) return LineType.text;
+
         // 然后判断是否为代码块
-        let is_code_block:boolean = false;
-        let reset:boolean = false;
+        let is_code_block: boolean = false;
+        let reset: boolean = false;
         let reg_code_begin = /^>+ ```/;
         let reg_code_end = /^>+ ```$/;
-        for (let l=callout_start_line+1; l<=line_number; l+=1){
+        for (let l = callout_start_line + 1; l <= line_number; l += 1) {
             let l_line = state.doc.line(l)
-            if (reset){
+            if (reset) {
                 is_code_block = false;
                 reset = false;
             }
-            if(is_code_block && reg_code_end.test(l_line.text)){
+            if (is_code_block && reg_code_end.test(l_line.text)) {
                 is_code_block = true;
                 reset = true;
             }
-            else if(!is_code_block && reg_code_begin.test(l_line.text)){
+            else if (!is_code_block && reg_code_begin.test(l_line.text)) {
                 is_code_block = true;
             }
         }
@@ -1173,10 +722,10 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
         }
         else return LineType.text;
     }
-    else if(token.contains('list')){
-        for(let p=line.from+1;p<line.to;p+=1){
+    else if (token.contains('list')) {
+        for (let p = line.from + 1; p < line.to; p += 1) {
             let t = tree.resolve(p, 1).name
-            if((t.contains('code') && t.contains('block'))){
+            if ((t.contains('code') && t.contains('block'))) {
                 return LineType.codeblock
             }
         }
@@ -1185,44 +734,44 @@ export function getPosLineType(state: EditorState, pos: number):LineType {
 }
 
 
-export function getPosLineType2(state: EditorState, pos: number):LineType {
+export function getPosLineType2(state: EditorState, pos: number): LineType {
     const line = state.doc.lineAt(pos)
     const tree = syntaxTree(state);
     const token = tree.resolve(line.from, 1).name
-    if (token.contains('hmd-frontmatter')){
+    if (token.contains('hmd-frontmatter')) {
         return LineType.frontmatter
     }
 
-    if(token.contains('math')){
-        for(let p=line.from+1;p<line.to;p+=1){
-            if(!tree.resolve(p, 1).name.contains('math')){
+    if (token.contains('math')) {
+        for (let p = line.from + 1; p < line.to; p += 1) {
+            if (!tree.resolve(p, 1).name.contains('math')) {
                 return LineType.text
             }
         }
         return LineType.formula
     }
-    else if(token.contains('code') && token.contains('block')){
-        for(let p=line.from+1;p<line.to;p+=1){
+    else if (token.contains('code') && token.contains('block')) {
+        for (let p = line.from + 1; p < line.to; p += 1) {
             let t = tree.resolve(p, 1).name
-            if(!(t.contains('code') && t.contains('block'))){
+            if (!(t.contains('code') && t.contains('block'))) {
                 return LineType.text
             }
         }
         return LineType.codeblock
     }
 
-    for(let p=line.from;p<line.to;p+=1){
-        if(tree.resolve(p, 1).name.contains('list')){
+    for (let p = line.from; p < line.to; p += 1) {
+        if (tree.resolve(p, 1).name.contains('list')) {
             return LineType.list
         }
-        else if(tree.resolve(p, 1).name.contains('callout')){
+        else if (tree.resolve(p, 1).name.contains('callout')) {
             return LineType.callout_title;
         }
     }
 
-    if(token.contains('quote')){
+    if (token.contains('quote')) {
         return LineType.quote;
     }
-    
+
     return LineType.text
 }

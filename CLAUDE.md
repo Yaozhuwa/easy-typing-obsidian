@@ -44,7 +44,7 @@ npm run version # 更新 manifest.json 和 versions.json 中的版本号
 
 ### 核心设计模式
 
-1. **事务过滤**：[main.ts:~1600](src/main.ts) 中的 `transactionFilterPlugin` 在所有编辑器更改应用前拦截
+1. **事务过滤**：[main.ts](src/main.ts) 中的 `transactionFilterPlugin` 在所有编辑器更改应用前拦截
 2. **语法树分析**：通过 `syntax.ts` 使用 CodeMirror 的 Lezer 解析器实现上下文感知格式化
 3. **基于规则的转换**：支持正则表达式和 tabstop 的声明式转换规则
 4. **IME 处理**：特殊的状态跟踪以兼容输入法编辑器
@@ -202,9 +202,6 @@ interface SimpleRule {
 #### 规则管理
 
 - 规则文件存储在插件目录：`builtin-rules.json`、`user-rules.json`
-- 增删改查方法在 `main.ts`：`addUserRule()`、`updateUserRule()`、`deleteUserRule()`、`toggleRuleEnabled()` 等
-- 设置 UI 在 `settings.ts`：`RuleEditModal`（新建/编辑规则弹窗）、`buildCustomRulesTab()`（Custom Rules 标签页）
-- 已删除的内置规则 ID 记录在 `settings.deletedBuiltinRuleIds`，可恢复
 
 ### 行类型检测
 

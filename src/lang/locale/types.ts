@@ -5,13 +5,12 @@ export interface Locale {
         backspaceEdit: { name: string; desc: string };
         tabOut: { name: string; desc: string };
         autoFormatting: { name: string; desc: string };
-        spaceBetweenChineseEnglish: { name: string; desc: string };
-        spaceBetweenChineseNumber: { name: string; desc: string };
-        spaceBetweenEnglishNumber: { name: string; desc: string };
-        quoteSpace: { name: string; desc: string };
-        deleteSpaceBetweenChinese: { name: string; desc: string };
+        languagePairSpacing: { name: string; desc: string };
+        prefixDictionary: { name: string; desc: string };
+        softSpaceSymbols: { leftName: string; leftDesc: string; rightName: string; rightDesc: string };
+        customScriptCategories: { name: string; desc: string; namePlaceholder: string; patternPlaceholder: string };
         capitalizeFirstLetter: { name: string; desc: string };
-        textPunctuationSpace: { name: string; desc: string };
+
         spaceStrategyInlineCode: { name: string; desc: string };
         spaceStrategyInlineFormula: { name: string; desc: string };
         spaceStrategyLinkText: { name: string; desc: string };
@@ -78,6 +77,10 @@ export interface Locale {
         customRegexpBlock: string;
         excludeFoldersFiles: string;
         experimentalFeatures: string;
+        languagePairSection: string;
+        prefixDictSection: string;
+        softSpaceSection: string;
+        customScriptSection: string;
         aboutRegexp: { header: string; text: string };
         instructionsRegexp: { header: string; text: string };
         customizeSelectionRule: string;
@@ -99,8 +102,7 @@ export interface Locale {
         enterTwice: string;
         twoSpace: string;
         mixMode: string;
-        onlyWhenTyping: string;
-        globally: string;
+
         noRequire: string;
         softSpace: string;
         strictSpace: string;
@@ -142,4 +144,5 @@ export interface Locale {
     button: {
         update: string;
     };
+    scriptCategoryLabels: Record<string, string>;
 }

@@ -23,17 +23,16 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
 			let changestr_ = changedStr.replace(/\s/g, '0')
 			let insertedStr = inserted.sliceString(0);
-			if (ctx.settings?.debug)
-			{
+			if (ctx.settings?.debug) {
 				console.log("[TransactionFilter] type, fromA, toA, changed, fromB, toB, inserted");
-				console.log(changeTypeStr, fromA, toA, changedStr,fromB, toB, insertedStr);
+				console.log(changeTypeStr, fromA, toA, changedStr, fromB, toB, insertedStr);
 			}
 
 			// 表格编辑时直接返回，解决表格内容编辑有时候会跳出聚焦状态的 Bug
-			if (getPosLineType(tr.startState, fromA)==LineType.table) return tr;
+			if (getPosLineType(tr.startState, fromA) == LineType.table) return tr;
 
 			// ========== Selection Replace ============
-			if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB)||insertedStr=='——'||insertedStr=='……')) {
+			if ((changeTypeStr == 'input.type' || changeTypeStr == "input.type.compose") && fromA != toA && ((fromB + 1 === toB) || insertedStr == '——' || insertedStr == '……')) {
 				const selScope = detectRuleScope(tr.startState, fromA);
 				const selCtx: TxContext = {
 					kind: RuleType.SelectKey,
@@ -69,18 +68,18 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			}
 
 			// 在代码块中粘贴时智能添加缩进
-			if (ctx.settings.BetterCodeEdit && changeTypeStr.contains('paste') && fromA==fromB &&
-					isCodeBlockInPos(tr.startState, fromA)){
+			if (ctx.settings.BetterCodeEdit && changeTypeStr.contains('paste') && fromA == fromB &&
+				isCodeBlockInPos(tr.startState, fromA)) {
 				print("检测到在代码块中粘贴")
 				let line = tr.startState.doc.lineAt(fromB).text;
 				let base_indent_num = getCodeBlockInfoInPos(tr.startState, fromA)?.indent;
-				let base_indent = base_indent_num==0 ? '' : ' '.repeat(base_indent_num);
+				let base_indent = base_indent_num == 0 ? '' : ' '.repeat(base_indent_num);
 				let inserted_lines = insertedStr.split('\n');
 
-				if(inserted_lines.length>1){
+				if (inserted_lines.length > 1) {
 					// 找出所有行的最小共同缩进
 					let min_indent_space = Infinity;
-					for (let line of inserted_lines){
+					for (let line of inserted_lines) {
 						if (!/^\s*$/.test(line)) {  // 忽略空行
 							let indent = line.match(/^\s*/)[0].length;
 							min_indent_space = Math.min(min_indent_space, indent);
@@ -88,7 +87,7 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 					}
 
 					// 删除每行的最小缩进，并给除第一行以外的行添加基础缩进
-					let adjusted_lines = inserted_lines.map((line:string, index:number) => {
+					let adjusted_lines = inserted_lines.map((line: string, index: number) => {
 						let trimmed_line = line.substring(min_indent_space);
 						trimmed_line = trimmed_line.replace(/[\t]/g, ctx.getDefaultIndentChar())
 						if (index === 0) {
@@ -101,8 +100,8 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 					// console.log('default indent: ', ctx.getDefaultIndentChar().length)
 					let new_insertedStr = adjusted_lines.join('\n');
 					changes.push({
-						changes: {from: fromA, to: toA, insert: new_insertedStr},
-						selection: {anchor: fromA+new_insertedStr.length},
+						changes: { from: fromA, to: toA, insert: new_insertedStr },
+						selection: { anchor: fromA + new_insertedStr.length },
 						userEvent: "EasyTyping.change"
 					});
 					tr = tr.startState.update(...changes);
@@ -111,19 +110,19 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			}
 
 			// 在引用块或者列表块中粘贴时，自动添加缩进和引用/列表符号
-			if (ctx.settings.SmartPaste && changeTypeStr.contains('paste') && fromA==fromB && fromA == tr.startState.doc.lineAt(toA).to){
+			if (ctx.settings.SmartPaste && changeTypeStr.contains('paste') && fromA == fromB && fromA == tr.startState.doc.lineAt(toA).to) {
 				// 检查是否在列表或引用块中
 				const lineContent = tr.startState.doc.lineAt(toA).text;
 				const listMatch = lineContent.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/);
 				const quoteMatch = lineContent.match(/^(\s*)(>+)(\s)?/);
-				if (listMatch || quoteMatch){
-					let prefix = listMatch ? listMatch[1]+listMatch[2]+' ' : quoteMatch[1]+quoteMatch[2]+' ';
+				if (listMatch || quoteMatch) {
+					let prefix = listMatch ? listMatch[1] + listMatch[2] + ' ' : quoteMatch[1] + quoteMatch[2] + ' ';
 					let indent_num = listMatch ? listMatch[1].length : quoteMatch[1].length;
-					let indent_str = indent_num==0 ? '' : ' '.repeat(indent_num);
+					let indent_str = indent_num == 0 ? '' : ' '.repeat(indent_num);
 					let inserted_lines = insertedStr.split('\n');
 					// 找出所有行的最小共同缩进
 					let min_indent_space = Infinity;
-					for (let line of inserted_lines){
+					for (let line of inserted_lines) {
 						if (!/^\s*$/.test(line)) {  // 忽略空行
 							let indent = line.match(/^\s*/)[0].length;
 							min_indent_space = Math.min(min_indent_space, indent);
@@ -131,22 +130,22 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 					}
 					// 考虑粘贴列表时
 					let paste_list = true;
-					for (let line of inserted_lines){
-						if (line.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/) || /^\s*$/.test(line)){
+					for (let line of inserted_lines) {
+						if (line.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/) || /^\s*$/.test(line)) {
 							continue;
 						}
 						else {
 							let indent = line.match(/^\s*/)[0].length;
-							if (indent < min_indent_space+2){
+							if (indent < min_indent_space + 2) {
 								paste_list = false;
 								break;
 							}
 						}
 					}
 
-					let adjusted_lines:string[] = [];
-					if (paste_list && listMatch){
-						adjusted_lines = inserted_lines.map((line:string, index:number) => {
+					let adjusted_lines: string[] = [];
+					if (paste_list && listMatch) {
+						adjusted_lines = inserted_lines.map((line: string, index: number) => {
 							let trimmed_line = line.substring(min_indent_space);
 							trimmed_line = trimmed_line.replace(/[\t]/g, ctx.getDefaultIndentChar())
 							if (index === 0) {
@@ -159,7 +158,7 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 					}
 					else {
 						// 删除每行的最小缩进，并给除第一行以外的行添加基础缩进
-						adjusted_lines = inserted_lines.map((line:string, index:number) => {
+						adjusted_lines = inserted_lines.map((line: string, index: number) => {
 							let trimmed_line = line.substring(min_indent_space);
 							trimmed_line = trimmed_line.replace(/[\t]/g, ctx.getDefaultIndentChar())
 							if (index === 0) {
@@ -172,8 +171,8 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 
 					let new_insertedStr = adjusted_lines.join('\n');
 					changes.push({
-						changes: {from: fromA, to: toA, insert: new_insertedStr},
-						selection: {anchor: fromA+new_insertedStr.length},
+						changes: { from: fromA, to: toA, insert: new_insertedStr },
+						selection: { anchor: fromA + new_insertedStr.length },
 						userEvent: "EasyTyping.change"
 					});
 					tr = tr.startState.update(...changes);
@@ -188,7 +187,7 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			// 尝试解决微软旧版输入法的问题~
 			if (ctx.settings.TryFixMSIME &&
 				changeTypeStr == "input.type.compose" &&
-				changedStr == '' && /^[\u4e00-\u9fa5]+$/.test(insertedStr)){
+				changedStr == '' && /^[\u4e00-\u9fa5]+$/.test(insertedStr)) {
 				print("MS-IME Compose detected:", insertedStr);
 				tr = tr.startState.update(...changes);
 				return tr;
@@ -198,7 +197,7 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			// print(codeblockinfo, toA)
 			// 列表下的代码块删除功能优化
 			if (ctx.settings.BetterCodeEdit && changeTypeStr == "delete.backward" && !selected &&
-				codeblockinfo && toA>tr.startState.doc.lineAt(codeblockinfo.start_pos).to
+				codeblockinfo && toA > tr.startState.doc.lineAt(codeblockinfo.start_pos).to
 			) {
 				let line_number = tr.startState.doc.lineAt(toA).number;
 				let cur_line = tr.startState.doc.lineAt(toA);
@@ -207,12 +206,12 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 				if (list_code_indent !== 0) {
 					print('list_code, indent: ', list_code_indent);
 					if (toA == cur_line.from + list_code_indent) {
-						changes.push({ changes: { from: tr.startState.doc.line(line_number-1).to, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
+						changes.push({ changes: { from: tr.startState.doc.line(line_number - 1).to, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
 						tr = tr.startState.update(...changes);
 						return tr;
 					}
-					if (fromA>=cur_line.from && fromA < cur_line.from+list_code_indent && toA>cur_line.from+list_code_indent){
-						changes.push({ changes: { from: cur_line.from+list_code_indent, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
+					if (fromA >= cur_line.from && fromA < cur_line.from + list_code_indent && toA > cur_line.from + list_code_indent) {
+						changes.push({ changes: { from: cur_line.from + list_code_indent, to: toA, insert: '' }, userEvent: "EasyTyping.change" });
 						tr = tr.startState.update(...changes);
 						return tr;
 					}
@@ -298,8 +297,14 @@ function tryProcessInput(
 	const insertedStr = update.view.state.doc.sliceString(changeFrom, cursorPos);
 	const changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, changeFrom, cursorPos, insertedStr);
 	if (changes) {
-		update.view.dispatch(...changes[0]);
-		update.view.dispatch(changes[1]);
+		// Merge selection into the last change spec so cursor is positioned
+		// atomically — dispatching them separately causes CodeMirror to
+		// remap the cursor to the end of the replaced range.
+		const allSpecs = changes[0];
+		if (allSpecs.length > 0) {
+			allSpecs[allSpecs.length - 1] = { ...allSpecs[allSpecs.length - 1], ...changes[1] };
+		}
+		update.view.dispatch(...allSpecs);
 		return true;
 	}
 	return false;
@@ -415,7 +420,7 @@ export async function normalPaste(editor: Editor, debug?: boolean): Promise<void
 	let mainSelection = editorView.state.selection.asSingle().main;
 	editorView.dispatch({
 		changes: { from: mainSelection.from, to: mainSelection.to, insert: clipboardText },
-		selection: {anchor: mainSelection.from + clipboardText.length},
+		selection: { anchor: mainSelection.from + clipboardText.length },
 		userEvent: "EasyTyping.paste"
 	});
 }

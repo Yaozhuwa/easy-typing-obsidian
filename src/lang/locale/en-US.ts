@@ -22,40 +22,37 @@ const locale: Locale = {
             name: "Auto formatting when typing",
             desc: "Toggle auto-formatting of text while editing the document."
         },
-        spaceBetweenChineseEnglish: {
-            name: "Space between Chinese and English",
-            desc: "Insert space between Chinese and English characters."
+        languagePairSpacing: {
+            name: "Language Pair Spacing",
+            desc: "Define which language/symbol pairs should have automatic spacing"
         },
-        spaceBetweenChineseNumber: {
-            name: "Space between Chinese and Number",
-            desc: "Insert space between Chinese characters and numbers."
+        prefixDictionary: {
+            name: "Prefix Dictionary",
+            desc: "One word or /regex/ per line. Matching tokens won't have spaces inserted; prefixes being typed are also suppressed"
         },
-        spaceBetweenEnglishNumber: {
-            name: "Space between English and Number",
-            desc: "Insert space between English characters and numbers."
+        softSpaceSymbols: {
+            leftName: "Left Soft Space Symbols",
+            leftDesc: "These symbols at block start count as having a soft space",
+            rightName: "Right Soft Space Symbols",
+            rightDesc: "These symbols at block end count as having a soft space"
         },
-        quoteSpace: {
-            name: "Space between quote character > and text",
-            desc: "Insert space between quote character > and text."
+        customScriptCategories: {
+            name: "Custom Script Categories",
+            desc: "Add custom language or symbol sets for spacing strategies",
+            namePlaceholder: "Name",
+            patternPlaceholder: "Char class pattern"
         },
-        deleteSpaceBetweenChinese: {
-            name: "Delete the Space between Chinese characters",
-            desc: "Remove spaces between Chinese characters."
-        },
+
         capitalizeFirstLetter: {
             name: "Capitalize the first letter of every sentence",
             desc: "Capitalize the first letter of each sentence in English."
         },
-        textPunctuationSpace: {
-            name: "Smartly insert space between text and punctuation",
-            desc: "Insert space between text and punctuation intelligently."
-        },
         spaceStrategyInlineCode: {
             name: "Space strategy between inline code and text",
             desc: "No requirement: No space requirement between this category block and the surrounding text. " +
-                      "Soft space: Only requires a soft space between this category block and the surrounding blocks. " +
-                      "Soft space example: If the adjacent text on the left side of the current block is full-width punctuation like . , ; ? etc., and the adjacent text on the right side of the current block is all full-width or half-width punctuation. " +
-                      "Strict space: Strictly add spaces between the current block and the adjacent text."
+                "Soft space: Only requires a soft space between this category block and the surrounding blocks. " +
+                "Soft space example: If the adjacent text on the left side of the current block is full-width punctuation like . , ; ? etc., and the adjacent text on the right side of the current block is all full-width or half-width punctuation. " +
+                "Strict space: Strictly add spaces between the current block and the adjacent text."
         },
         spaceStrategyInlineFormula: {
             name: "Space strategy between inline formula and text",
@@ -71,8 +68,8 @@ const locale: Locale = {
         },
         userDefinedRegexp: {
             name: "User-defined Regular Expression, one expression per line",
-            desc: "User-defined regular expression, matched to the content is not formatted, one expression per line, do not feel free to add spaces at the end of the line."+
-                "The end of each line of three characters fixed as | and two space strategy symbols, space strategy symbols for - = +, respectively, on behalf of not requiring spaces (-), soft spaces (=), strict spaces (+)."+
+            desc: "User-defined regular expression, matched to the content is not formatted, one expression per line, do not feel free to add spaces at the end of the line." +
+                "The end of each line of three characters fixed as | and two space strategy symbols, space strategy symbols for - = +, respectively, on behalf of not requiring spaces (-), soft spaces (=), strict spaces (+)." +
                 "These two space strategy symbols are the space strategy for the left and right sides of the matching block respectively"
         },
         excludeFoldersFiles: {
@@ -176,13 +173,17 @@ const locale: Locale = {
         customRegexpBlock: "Custom regular expressions block",
         excludeFoldersFiles: "Exclude Folders/Files",
         experimentalFeatures: "Experimental Features",
+        languagePairSection: "Language Pair Spacing",
+        prefixDictSection: "Prefix Dictionary",
+        softSpaceSection: "Soft Space Symbols",
+        customScriptSection: "Custom Script Categories",
         aboutRegexp: {
             header: "For knowledge about regular expressions, see ",
             text: "Yifeng Nguyen: A Concise Tutorial on Regular Expressions",
         },
         instructionsRegexp: {
             header: "Instructions and examples for using regular expression rules: ",
-            text:"Customizing Regular Expression Rules",
+            text: "Customizing Regular Expression Rules",
         },
         customizeSelectionRule: "Customize Selection Replace Rule",
         customizeDeleteRule: "Customize Delete Rule",
@@ -203,8 +204,7 @@ const locale: Locale = {
         enterTwice: "Enter Twice",
         twoSpace: "Two Space",
         mixMode: "Mix Mode",
-        onlyWhenTyping: "Only When Typing",
-        globally: "Work Globally",
+
         noRequire: "No Require",
         softSpace: "Soft Space",
         strictSpace: "Strict Space",
@@ -238,14 +238,24 @@ const locale: Locale = {
         noticeWarnTriggerExists: "warning! Trigger %s is already exist!",
         noticeMissingInput: "missing input",
         beforeDelete: "Before Delete",
-		newPattern: "New Pattern",
+        newPattern: "New Pattern",
         noticeInvaidTriggerPatternContainSymbol: "Inlvalid trigger, pattern must contain symbol \| which indicate cursor position",
         beforeConvert: "Before Convert",
-        noticeInvalidPatternString:"Invalid pattern string!",
+        noticeInvalidPatternString: "Invalid pattern string!",
     },
     button: {
         update: "Update",
-    }
+    },
+    scriptCategoryLabels: {
+        chinese: "Chinese",
+        japanese: "Japanese",
+        korean: "Korean",
+        cjk: "CJK",
+        english: "English",
+        digit: "Digit",
+        russian: "Russian",
+        unknown: "Unknown",
+    },
 };
 
 export default locale;
