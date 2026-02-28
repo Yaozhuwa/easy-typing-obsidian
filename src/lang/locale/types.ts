@@ -37,6 +37,7 @@ export interface Locale {
             editTitle: string;
             fieldType: string;
             fieldTrigger: string;
+            fieldTriggerSelectKey: string;
             fieldTriggerRight: string;
             fieldReplacement: string;
             fieldIsRegex: string;

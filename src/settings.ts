@@ -1016,12 +1016,13 @@ export class RuleEditModal extends Modal {
 		triggerModeSetting.settingEl.dataset.field = 'triggerMode';
 
 		// Trigger
-		new Setting(contentEl)
+		const triggerSetting = new Setting(contentEl)
 			.setName(locale.settings.ruleEditModal.fieldTrigger)
 			.addText(text => {
 				text.setValue(this.trigger);
 				text.onChange(v => this.trigger = v);
 			});
+		triggerSetting.settingEl.dataset.field = 'trigger';
 
 		// Trigger Right (hidden for SelectKey)
 		const triggerRightSetting = new Setting(contentEl)
@@ -1066,12 +1067,13 @@ export class RuleEditModal extends Modal {
 		fnHint.style.fontFamily = 'var(--font-monospace)';
 
 		// Is Regex
-		new Setting(contentEl)
+		const isRegexSetting = new Setting(contentEl)
 			.setName(locale.settings.ruleEditModal.fieldIsRegex)
 			.addToggle(toggle => {
 				toggle.setValue(this.isRegex);
 				toggle.onChange(v => this.isRegex = v);
 			});
+		isRegexSetting.settingEl.dataset.field = 'isRegex';
 
 		// Is Function
 		const fnSetting = new Setting(contentEl)
@@ -1149,6 +1151,23 @@ export class RuleEditModal extends Modal {
 		const triggerRightEl = contentEl.querySelector('[data-field="triggerRight"]') as HTMLElement;
 		if (triggerRightEl) {
 			triggerRightEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
+		}
+
+		// Trigger Label
+		const triggerEl = contentEl.querySelector('[data-field="trigger"]') as HTMLElement;
+		if (triggerEl) {
+			const nameEl = triggerEl.querySelector('.setting-item-name');
+			if (nameEl) {
+				nameEl.textContent = this.ruleType === EngineRuleType.SelectKey
+					? locale.settings.ruleEditModal.fieldTriggerSelectKey
+					: locale.settings.ruleEditModal.fieldTrigger;
+			}
+		}
+
+		// Is Regex only applies to Input/Delete rules
+		const isRegexEl = contentEl.querySelector('[data-field="isRegex"]') as HTMLElement;
+		if (isRegexEl) {
+			isRegexEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
 		}
 
 		// Trigger Mode only applies to Input rules
