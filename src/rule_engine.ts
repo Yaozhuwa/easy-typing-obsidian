@@ -39,8 +39,8 @@ export interface ConvertRule {
 		isRegex: boolean;
 	};
 	replacement: string |
-		((leftMatches: string[], rightMatches: string[]) => string | void) |
-		((selectionText: string, key: string) => string | void);
+	((leftMatches: string[], rightMatches: string[]) => string | void) |
+	((selectionText: string, key: string) => string | void);
 }
 
 export interface SimpleRule {
@@ -48,8 +48,8 @@ export interface SimpleRule {
 	trigger: string;
 	trigger_right?: string;
 	replacement: string |
-		((leftMatches: string[], rightMatches: string[]) => string | void) |
-		((selectionText: string, key: string) => string | void);
+	((leftMatches: string[], rightMatches: string[]) => string | void) |
+	((selectionText: string, key: string) => string | void);
 	options?: string;
 	enabled?: boolean;
 	description?: string;
@@ -109,7 +109,7 @@ export class RuleEngine {
 	} {
 		const type = options.includes('d') ? RuleType.Delete
 			: options.includes('s') ? RuleType.SelectKey
-			: RuleType.Input;
+				: RuleType.Input;
 
 		const triggerMode = options.includes('T') ? RuleTriggerMode.Tab
 			: RuleTriggerMode.Auto;
@@ -480,8 +480,8 @@ export class RuleEngine {
 			? rule.match.right
 			: escapeRegex(rule.match.right);
 
-		const leftRegex = leftPattern ? new RegExp(leftPattern + '$') : null;
-		const rightRegex = rightPattern ? new RegExp('^' + rightPattern) : null;
+		const leftRegex = leftPattern ? new RegExp('(?:' + leftPattern + ')$') : null;
+		const rightRegex = rightPattern ? new RegExp('^(?:' + rightPattern + ')') : null;
 
 		const leftMatch = leftRegex ? leftDoc.match(leftRegex) : [''];
 		const rightMatch = rightRegex ? rightDoc.match(rightRegex) : [''];
