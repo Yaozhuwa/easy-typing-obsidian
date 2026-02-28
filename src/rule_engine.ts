@@ -163,21 +163,17 @@ export class RuleEngine {
 		return result;
 	}
 
-	static parseTriggerKeys(pattern: string): string[] {
-		if (pattern.startsWith('[') && pattern.endsWith(']')) {
-			const inner = pattern.slice(1, -1);
-			const keys: string[] = [];
-			for (let i = 0; i < inner.length; i++) {
-				if (inner[i] === '\\' && i + 1 < inner.length) {
-					keys.push(inner[i + 1]);
-					i++;
-				} else {
-					keys.push(inner[i]);
-				}
+	static parseSelectKeyRuleTriggerKeys(pattern: string): string[] {
+		const keys: string[] = [];
+		for (let i = 0; i < pattern.length; i++) {
+			if (pattern[i] === '\\' && i + 1 < pattern.length) {
+				keys.push(pattern[i + 1]);
+				i++;
+			} else {
+				keys.push(pattern[i]);
 			}
-			return keys;
 		}
-		return [pattern];
+		return keys;
 	}
 
 	static normalizeRule(simple: SimpleRule): Omit<ConvertRule, 'id'> {
@@ -207,7 +203,7 @@ export class RuleEngine {
 				enabled: simple.enabled ?? true,
 				type: RuleType.SelectKey,
 				triggerMode: RuleTriggerMode.Auto,
-				triggerKeys: RuleEngine.parseTriggerKeys(simple.trigger),
+				triggerKeys: RuleEngine.parseSelectKeyRuleTriggerKeys(simple.trigger),
 				scope: opts.scope,
 				scopeLanguage: simple.scope_language,
 				priority: simple.priority ?? 100,

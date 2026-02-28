@@ -115,7 +115,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	// ===== 选中替换 (priority 40) =====
 	{
 		id: 'builtin-sel-wrap-brackets',
-		trigger: `[【¥￥]`,
+		trigger: `【¥￥`,
 		replacement: "const m={'¥': ['$', '$'], '￥': ['$', '$'], '【': ['[', ']']}; \nreturn m[key][0] + '${0:${SELECTION}}' + m[key][1];",
 		options: 'sF',
 		priority: 40,
@@ -123,11 +123,19 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	},
 	{
 		id: 'builtin-sel-wrap-quotes',
-		trigger: `[“”‘’]`,
+		trigger: `“”‘’`,
 		replacement: "const m={'“': ['“','”'], '”': ['“','”'], '‘': ['‘','’'], '’': ['‘','’']}; return m[key][0] + '${0:${SELECTION}}' + m[key][1];",
 		options: 'sF',
 		priority: 40,
-		description: '选中文字后输入全角，配对引号包裹',
+		description: '选中文字后输入全角引号，配对引号包裹',
+	},
+	{
+		id: 'builtin-sel-wrap-angle-brackets',
+		trigger: `《（`,
+		replacement: "const m={'《': ['《','》'], '（': ['（','）']}; return m[key][0] + '${0:${SELECTION}}' + m[key][1];",
+		options: 'sF',
+		priority: 40,
+		description: '选中文字后输入《（，配对括号包裹',
 	},
 
 	// ===== 引用处理 (priority 50) =====
