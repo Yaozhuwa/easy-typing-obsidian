@@ -136,6 +136,8 @@ const locale: Locale = {
             fieldTriggerSelectKey: "Символ запуска",
             fieldTriggerRight: "Совпадение после курсора",
             fieldReplacement: "Замена",
+            fieldReplacementDescSelectKey: "${SEL}: выделенный текст, ${0:${SEL}}: оставить текст выделенным.",
+            fieldReplacementDescInputDelete: "[[0]]: 0-я левая группа захвата, [[R1]]: 1-я правая группа захвата.",
             fieldIsRegex: "Регулярное выражение",
             fieldTriggerMode: "Режим запуска",
             fieldScope: "Область",

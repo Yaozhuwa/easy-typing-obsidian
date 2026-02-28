@@ -132,6 +132,8 @@ const locale: Locale = {
             fieldTriggerSelectKey: "Trigger Key",
             fieldTriggerRight: "Match After Cursor",
             fieldReplacement: "Replacement",
+            fieldReplacementDescSelectKey: "${SEL}: selected text, ${0:${SEL}}: select the text.",
+            fieldReplacementDescInputDelete: "[[0]]: 0th left capture group, [[R1]]: 1st right capture group.",
             fieldIsRegex: "Is Regex",
             fieldTriggerMode: "Trigger Mode",
             fieldScope: "Scope",

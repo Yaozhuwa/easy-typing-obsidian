@@ -40,6 +40,8 @@ export interface Locale {
             fieldTriggerSelectKey: string;
             fieldTriggerRight: string;
             fieldReplacement: string;
+            fieldReplacementDescSelectKey: string;
+            fieldReplacementDescInputDelete: string;
             fieldIsRegex: string;
             fieldTriggerMode: string;
             fieldScope: string;

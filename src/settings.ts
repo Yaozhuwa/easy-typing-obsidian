@@ -1035,7 +1035,8 @@ export class RuleEditModal extends Modal {
 
 		// Replacement (textarea for string mode)
 		const replacementSetting = new Setting(contentEl)
-			.setName(locale.settings.ruleEditModal.fieldReplacement);
+			.setName(locale.settings.ruleEditModal.fieldReplacement)
+			.setDesc('');
 		replacementSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
 		replacementSetting.settingEl.dataset.field = 'replacementTextarea';
 		const replacementArea = new TextAreaComponent(replacementSetting.controlEl);
@@ -1174,6 +1175,17 @@ export class RuleEditModal extends Modal {
 		const triggerModeEl = contentEl.querySelector('[data-field="triggerMode"]') as HTMLElement;
 		if (triggerModeEl) {
 			triggerModeEl.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
+		}
+
+		// Replacement Desc
+		const replacementSettingEl = contentEl.querySelector('[data-field="replacementTextarea"]') as HTMLElement;
+		if (replacementSettingEl) {
+			const descEl = replacementSettingEl.querySelector('.setting-item-description');
+			if (descEl) {
+				descEl.textContent = this.ruleType === EngineRuleType.SelectKey
+					? locale.settings.ruleEditModal.fieldReplacementDescSelectKey
+					: locale.settings.ruleEditModal.fieldReplacementDescInputDelete;
+			}
 		}
 
 		// Function hint

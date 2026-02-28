@@ -117,7 +117,7 @@ interface SimpleRule {
 
 | 语法 | 含义 |
 |------|------|
-| `${SELECTION}` | 选中的文本 |
+| `${SEL}` | 选中的文本 |
 | `${KEY}` | 触发的按键 |
 
 **转义序列**（用户输入的规则会自动处理）：
@@ -182,7 +182,7 @@ interface SimpleRule {
 { "trigger": "([-+*]) \\[.\\] ", "replacement": "[[1]] ", "options": "dr" }
 
 // 选中替换：选中文字按 - 加删除线
-{ "trigger": "-", "replacement": "~~${SELECTION}~~", "options": "s" }
+{ "trigger": "-", "replacement": "~~${SEL}~~", "options": "s" }
 ```
 
 #### 内置规则

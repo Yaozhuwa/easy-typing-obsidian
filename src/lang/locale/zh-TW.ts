@@ -135,6 +135,8 @@ const locale: Locale = {
             fieldTriggerSelectKey: "觸發按鍵字符",
             fieldTriggerRight: "游標後匹配",
             fieldReplacement: "替換內容",
+            fieldReplacementDescSelectKey: "${SEL}：選中的文本內容，${0:${SEL}}：游標繼續選中。",
+            fieldReplacementDescInputDelete: "[[0]]：左側第0捕獲組，[[R1]]：右側第1捕獲組。",
             fieldIsRegex: "正則表達式",
             fieldTriggerMode: "觸發方式",
             fieldScope: "作用域",

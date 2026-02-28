@@ -334,9 +334,9 @@ export class RuleEngine {
 			return match.leftMatches[idx] ?? match.rightMatches[idx] ?? '';
 		});
 
-		// Standalone ${SELECTION} and ${KEY}
+		// Standalone ${SEL} and ${KEY}
 		if (match.selectionText !== undefined) {
-			text = text.replace(/\$\{SELECTION\}/g, match.selectionText);
+			text = text.replace(/\$\{SEL\}/g, match.selectionText);
 		}
 		if (match.key !== undefined) {
 			text = text.replace(/\$\{KEY\}/g, match.key);
@@ -381,7 +381,7 @@ export class RuleEngine {
 						defaultVal = inner.substring(colonIdx + 1);
 						// Expand nested variables in default value
 						if (match?.selectionText !== undefined)
-							defaultVal = defaultVal.replace(/\$\{SELECTION\}/g, match.selectionText);
+							defaultVal = defaultVal.replace(/\$\{SEL\}/g, match.selectionText);
 						if (match?.key !== undefined)
 							defaultVal = defaultVal.replace(/\$\{KEY\}/g, match.key);
 					} else {
@@ -536,10 +536,10 @@ export class RuleEngine {
 		// Unescape \n, \t, \r, \\ in replacement text
 		text = RuleEngine.unescapeText(text);
 
-		// Expand [[n]], standalone ${SELECTION}, ${KEY}
+		// Expand [[n]], standalone ${SEL}, ${KEY}
 		text = this.expandVariables(text, match);
 
-		// Parse tabstops (including nested ${SELECTION}/${KEY} in defaults)
+		// Parse tabstops (including nested ${SEL}/${KEY} in defaults)
 		const [finalText, tabstops] = this.parseTabstops(text, match.matchRange.from, match);
 
 		const cursor = tabstops.length > 0
