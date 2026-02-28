@@ -229,7 +229,8 @@ const locale: Locale = {
         addRule: "Add Rule",
         enableRule: "Enable/Disable rule",
         restoreRule: "Restore this rule",
-        resetAllRules: "Reset all built-in rules to defaults",
+        resetAllRules: "Reset all built-in rules",
+        resetSuccess: "Built-in rules reset successfully",
     },
     placeHolder: {
         triggerSymbol: "Trigger Symbol",

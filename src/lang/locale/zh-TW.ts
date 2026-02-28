@@ -232,7 +232,8 @@ const locale: Locale = {
         addRule: "添加規則",
         enableRule: "啟用/停用規則",
         restoreRule: "恢復此規則",
-        resetAllRules: "重置所有內建規則為預設值",
+        resetAllRules: "重置內建規則",
+        resetSuccess: "內建規則已重置",
     },
     placeHolder: {
         triggerSymbol: "觸發符",

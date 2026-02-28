@@ -233,7 +233,8 @@ const locale: Locale = {
         addRule: "Добавить правило",
         enableRule: "Включить/Выключить правило",
         restoreRule: "Восстановить это правило",
-        resetAllRules: "Сбросить все встроенные правила к значениям по умолчанию",
+        resetAllRules: "Сбросить встроенные правила",
+        resetSuccess: "Встроенные правила успешно сброшены",
     },
     placeHolder: {
         triggerSymbol: "Символ триггера",

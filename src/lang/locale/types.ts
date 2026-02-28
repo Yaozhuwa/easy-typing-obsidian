@@ -132,6 +132,7 @@ export interface Locale {
         enableRule: string;
         restoreRule: string;
         resetAllRules: string;
+        resetSuccess: string;
     };
     placeHolder: {
         triggerSymbol: string;

@@ -562,9 +562,13 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const infoEl = headerEl.createDiv({ cls: 'setting-item-info' });
 		infoEl.createEl('h3', { text: locale.headers.builtinRulesSection });
 		const controlEl = headerEl.createDiv({ cls: 'setting-item-control' });
-		const resetBtn = controlEl.createEl('button', { text: locale.toolTip.resetAllRules });
+		const resetBtn = controlEl.createEl('button', {
+			text: locale.toolTip.resetAllRules,
+			cls: 'et-reset-btn'
+		});
 		resetBtn.addEventListener('click', async () => {
 			await this.plugin.ruleManager.resetAllBuiltinRules();
+			new Notice(locale.toolTip.resetSuccess);
 			this.display();
 		});
 

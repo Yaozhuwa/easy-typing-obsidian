@@ -248,3 +248,25 @@ span[class="easy-typing-cursor-widget"] {
     border: none;
     padding: 4px 0;
 }
+
+/* ========== Settings UI Buttons ========== */
+.et-reset-btn {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.2s ease,
+        background-color 0.2s ease,
+        color 0.2s ease;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.et-reset-btn:hover {
+    background-color: rgba(220, 53, 69, 0.08);
+    /* Subtle red tint */
+    border-color: rgba(220, 53, 69, 0.3);
+    color: var(--text-error);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.1);
+}
+
+.et-reset-btn:active {
+    transform: scale(0.95);
+    background-color: rgba(220, 53, 69, 0.15);
+}
