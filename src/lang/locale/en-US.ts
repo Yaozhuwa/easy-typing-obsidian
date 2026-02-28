@@ -49,10 +49,7 @@ const locale: Locale = {
         },
         spaceStrategyInlineCode: {
             name: "Space strategy between inline code and text",
-            desc: "No requirement: No space requirement between this category block and the surrounding text. " +
-                "Soft space: Only requires a soft space between this category block and the surrounding blocks. " +
-                "Soft space example: If the adjacent text on the left side of the current block is full-width punctuation like . , ; ? etc., and the adjacent text on the right side of the current block is all full-width or half-width punctuation. " +
-                "Strict space: Strictly add spaces between the current block and the adjacent text."
+            desc: "Define the spacing strategy between inline code and text."
         },
         spaceStrategyInlineFormula: {
             name: "Space strategy between inline formula and text",
@@ -169,14 +166,16 @@ const locale: Locale = {
         enhancedEditing: "Enhanced Editing Setting",
         customizeEditRule: "Customize Edit Convertion Rule",
         autoformatSetting: "Autoformat Setting",
-        detailedSetting: "Detailed Setting Below",
+        detailedSetting: "Spacing Between Inline Elements",
         customRegexpBlock: "Custom regular expressions block",
         excludeFoldersFiles: "Exclude Folders/Files",
         experimentalFeatures: "Experimental Features",
         languagePairSection: "Language Pair Spacing",
+        addLanguagePair: "Add New Language/Symbol Pair:",
         prefixDictSection: "Prefix Dictionary",
         softSpaceSection: "Soft Space Symbols",
         customScriptSection: "Custom Script Categories",
+        spaceStrategyIntro: "Spacing Strategy:\nNo Require: No space requirement between this category block and the surrounding text.\nSoft Space: Only requires a soft space between this category block and the surrounding blocks (e.g., if adjacent text is punctuation, no real space is added).\nStrict Space: Strictly add real spaces between the current block and the adjacent text.",
         aboutRegexp: {
             header: "For knowledge about regular expressions, see ",
             text: "Yifeng Nguyen: A Concise Tutorial on Regular Expressions",

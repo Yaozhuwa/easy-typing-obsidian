@@ -10,6 +10,7 @@ export interface Locale {
         softSpaceSymbols: { leftName: string; leftDesc: string; rightName: string; rightDesc: string };
         customScriptCategories: { name: string; desc: string; namePlaceholder: string; patternPlaceholder: string };
         capitalizeFirstLetter: { name: string; desc: string };
+        textPunctuationSpace?: { name: string; desc: string };
 
         spaceStrategyInlineCode: { name: string; desc: string };
         spaceStrategyInlineFormula: { name: string; desc: string };
@@ -78,9 +79,11 @@ export interface Locale {
         excludeFoldersFiles: string;
         experimentalFeatures: string;
         languagePairSection: string;
+        addLanguagePair: string;
         prefixDictSection: string;
         softSpaceSection: string;
         customScriptSection: string;
+        spaceStrategyIntro: string;
         aboutRegexp: { header: string; text: string };
         instructionsRegexp: { header: string; text: string };
         customizeSelectionRule: string;

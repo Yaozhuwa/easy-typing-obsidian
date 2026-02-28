@@ -228,7 +228,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	buildAutoFormatTab(el: HTMLElement): void {
 		const locale = getLocale();
 		// 主开关
-		new Setting(el)
+		const masterSwitch = new Setting(el)
 			.setName(locale.settings.autoFormatting.name)
 			.setDesc(locale.settings.autoFormatting.desc)
 			.addToggle((toggle) => {
@@ -238,13 +238,34 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+		// masterSwitch.settingEl.style.borderBottom = '2px solid var(--color-accent)';
+		// masterSwitch.settingEl.style.paddingBottom = '1em';
+		// masterSwitch.settingEl.style.marginBottom = '1.5em';
+		// masterSwitch.nameEl.style.fontWeight = 'bold';
+		// masterSwitch.nameEl.style.fontSize = '1.2em';
+		// masterSwitch.nameEl.style.color = 'var(--text-accent)';
 
-		// ── 语言间空格策略 ──
+		new Setting(el)
+			.setName(locale.settings.capitalizeFirstLetter.name)
+			.setDesc(locale.settings.capitalizeFirstLetter.desc)
+			.addToggle((toggle) => {
+				toggle.setTooltip(locale.toolTip.switch);
+				toggle.setValue(this.plugin.settings.AutoCapital).onChange(async (value) => {
+					this.plugin.settings.AutoCapital = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		// ── 自定义语言/符号集 与 语言间空格策略 ──
 		el.createEl('h3', { text: locale.headers.languagePairSection });
 		el.createEl('p', { text: locale.settings.languagePairSpacing.desc, cls: 'setting-item-description' });
 
-		// Capsule container for existing pairs
+		// 首先是 自定义语言/符号集
+		const scriptListContainer = el.createDiv({ cls: 'et-custom-scripts', attr: { style: 'margin-bottom: 15px;' } });
+
+		// Then Language Pair spacing capsules
 		const capsuleContainer = el.createDiv({ cls: 'et-lang-pair-capsules' });
+
 		const renderCapsules = () => {
 			capsuleContainer.empty();
 			for (let idx = 0; idx < this.plugin.settings.languagePairs.length; idx++) {
@@ -261,7 +282,60 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			}
 		};
+
+		const renderScripts = () => {
+			scriptListContainer.empty();
+			for (let i = 0; i < this.plugin.settings.customScriptCategories.length; i++) {
+				const cat = this.plugin.settings.customScriptCategories[i];
+				const item = new Setting(scriptListContainer);
+				item.setName(`${cat.name}  [${cat.pattern}]`);
+				item.addExtraButton(btn => {
+					btn.setIcon('trash').setTooltip(locale.toolTip.removeRule).onClick(async () => {
+						// Also remove any language pairs referencing this custom category
+						this.plugin.settings.languagePairs = this.plugin.settings.languagePairs.filter(
+							p => p.a !== cat.name && p.b !== cat.name
+						);
+						this.plugin.settings.customScriptCategories.splice(i, 1);
+						await this.plugin.saveSettings();
+						renderScripts();
+						renderCapsules();
+					});
+				});
+			}
+		};
+
+		renderScripts();
 		renderCapsules();
+
+		// Add new custom script
+		const addScriptRow = new Setting(el);
+		let newScriptName = '';
+		let newScriptPattern = '';
+		addScriptRow
+			.setName(locale.headers.customScriptSection)
+			.addText(text => {
+				text.setPlaceholder(locale.settings.customScriptCategories.namePlaceholder)
+					.onChange(v => { newScriptName = v; });
+			})
+			.addText(text => {
+				text.setPlaceholder(locale.settings.customScriptCategories.patternPlaceholder)
+					.onChange(v => { newScriptPattern = v; });
+			})
+			.addButton(btn => {
+				btn.setButtonText('+').onClick(async () => {
+					if (!newScriptName.trim() || !newScriptPattern.trim()) return;
+					// Validate regex
+					try { new RegExp(`[${newScriptPattern}]`); } catch { return; }
+					this.plugin.settings.customScriptCategories.push({
+						name: newScriptName.trim(),
+						pattern: newScriptPattern.trim(),
+					});
+					await this.plugin.saveSettings();
+					renderScripts();
+					this.display(); // refresh dropdowns to include new category
+				});
+			});
+
 
 		// Add pair row: two dropdowns + add button
 		const addRow = el.createDiv({ cls: 'et-pair-selector-row' });
@@ -270,8 +344,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		let selectedB = allCategories[1] || '';
 
 		const selectorSetting = new Setting(addRow);
-		selectorSetting.settingEl.setAttribute('style', 'border: none; padding: 0;');
 		selectorSetting
+			.setName(locale.headers.addLanguagePair)
 			.addDropdown(dd => {
 				for (const cat of allCategories) {
 					dd.addOption(cat, locale.scriptCategoryLabels[cat] || cat);
@@ -301,23 +375,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		// ── 其他格式化选项 ──
+
+
+
+		// ── 详细设置（行内元素间空格） ──
 		el.createEl('h3', { text: locale.headers.detailedSetting });
 
-
-
-		new Setting(el)
-			.setName(locale.settings.capitalizeFirstLetter.name)
-			.setDesc(locale.settings.capitalizeFirstLetter.desc)
-			.addToggle((toggle) => {
-				toggle.setTooltip(locale.toolTip.switch);
-				toggle.setValue(this.plugin.settings.AutoCapital).onChange(async (value) => {
-					this.plugin.settings.AutoCapital = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-
+		// 介绍空格策略
+		const introDiv = el.createDiv({ cls: 'et-space-strategy-intro setting-item-description' });
+		introDiv.setAttribute('style', 'white-space: pre-wrap; margin-bottom: 20px;');
+		introDiv.innerText = locale.headers.spaceStrategyIntro ||
+			"空格策略说明：\n无要求：对相关区块与左右文本没有空格要求。\n软空格：只要求有软空格。\n严格空格：严格添加真实空格。";
 
 		new Setting(el)
 			.setName(locale.settings.spaceStrategyInlineCode.name)
@@ -370,6 +438,29 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			});
 
+
+		new Setting(el)
+			.setName(locale.settings.softSpaceSymbols.leftName)
+			.setDesc(locale.settings.softSpaceSymbols.leftDesc)
+			.addText(text => {
+				text.setValue(this.plugin.settings.SoftSpaceLeftSymbols)
+					.onChange(async (value) => {
+						this.plugin.settings.SoftSpaceLeftSymbols = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(el)
+			.setName(locale.settings.softSpaceSymbols.rightName)
+			.setDesc(locale.settings.softSpaceSymbols.rightDesc)
+			.addText(text => {
+				text.setValue(this.plugin.settings.SoftSpaceRightSymbols)
+					.onChange(async (value) => {
+						this.plugin.settings.SoftSpaceRightSymbols = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
 		// ── 前缀词典 ──
 		el.createEl('h3', { text: locale.headers.prefixDictSection });
 		const prefixSetting = new Setting(el);
@@ -386,84 +477,20 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				this.plugin.saveSettings();
 			});
 
-		// ── 自定义软空格符号 ──
-		el.createEl('h3', { text: locale.headers.softSpaceSection });
-		new Setting(el)
-			.setName(locale.settings.softSpaceSymbols.leftName)
-			.setDesc(locale.settings.softSpaceSymbols.leftDesc)
-			.addText(text => {
-				text.setValue(this.plugin.settings.SoftSpaceLeftSymbols)
-					.onChange(async (value) => {
-						this.plugin.settings.SoftSpaceLeftSymbols = value;
-						await this.plugin.saveSettings();
-					});
-			});
-		new Setting(el)
-			.setName(locale.settings.softSpaceSymbols.rightName)
-			.setDesc(locale.settings.softSpaceSymbols.rightDesc)
-			.addText(text => {
-				text.setValue(this.plugin.settings.SoftSpaceRightSymbols)
-					.onChange(async (value) => {
-						this.plugin.settings.SoftSpaceRightSymbols = value;
-						await this.plugin.saveSettings();
-					});
-			});
-
-		// ── 自定义语言/符号集 ──
-		el.createEl('h3', { text: locale.headers.customScriptSection });
-		const scriptListContainer = el.createDiv({ cls: 'et-custom-scripts' });
-		const renderScripts = () => {
-			scriptListContainer.empty();
-			for (let i = 0; i < this.plugin.settings.customScriptCategories.length; i++) {
-				const cat = this.plugin.settings.customScriptCategories[i];
-				const item = new Setting(scriptListContainer);
-				item.setName(`${cat.name}  [${cat.pattern}]`);
-				item.addExtraButton(btn => {
-					btn.setIcon('trash').setTooltip(locale.toolTip.removeRule).onClick(async () => {
-						// Also remove any language pairs referencing this custom category
-						this.plugin.settings.languagePairs = this.plugin.settings.languagePairs.filter(
-							p => p.a !== cat.name && p.b !== cat.name
-						);
-						this.plugin.settings.customScriptCategories.splice(i, 1);
-						await this.plugin.saveSettings();
-						renderScripts();
-						renderCapsules();
-					});
-				});
-			}
-		};
-		renderScripts();
-
-		// Add new custom script
-		const addScriptRow = new Setting(el);
-		let newScriptName = '';
-		let newScriptPattern = '';
-		addScriptRow
-			.addText(text => {
-				text.setPlaceholder(locale.settings.customScriptCategories.namePlaceholder)
-					.onChange(v => { newScriptName = v; });
-			})
-			.addText(text => {
-				text.setPlaceholder(locale.settings.customScriptCategories.patternPlaceholder)
-					.onChange(v => { newScriptPattern = v; });
-			})
-			.addButton(btn => {
-				btn.setButtonText('+').onClick(async () => {
-					if (!newScriptName.trim() || !newScriptPattern.trim()) return;
-					// Validate regex
-					try { new RegExp(`[${newScriptPattern}]`); } catch { return; }
-					this.plugin.settings.customScriptCategories.push({
-						name: newScriptName.trim(),
-						pattern: newScriptPattern.trim(),
-					});
-					await this.plugin.saveSettings();
-					renderScripts();
-					this.display(); // refresh dropdowns to include new category
-				});
-			});
 
 		// 自定义正则区块
 		el.createEl('h3', { text: locale.headers.customRegexpBlock });
+
+		const regexInfoDiv = el.createDiv({ cls: 'setting-item-description' });
+		regexInfoDiv.style.marginBottom = "10px";
+		regexInfoDiv.appendChild(createFragment((frag) => {
+			frag.appendText(locale.headers.aboutRegexp.header);
+			const a1 = frag.createEl('a', { text: locale.headers.aboutRegexp.text, href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#" });
+			frag.createEl('br');
+			frag.appendText(locale.headers.instructionsRegexp.header);
+			const a2 = frag.createEl('a', { text: locale.headers.instructionsRegexp.text, href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md" });
+		}));
+
 		new Setting(el)
 			.setName(locale.settings.userDefinedRegexpSwitch.name)
 			.setDesc(locale.settings.userDefinedRegexpSwitch.desc)
@@ -473,16 +500,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-
-		el.createEl("p", { text: locale.headers.aboutRegexp.header }).createEl("a", {
-			text: locale.headers.aboutRegexp.text,
-			href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#",
-		});
-
-		el.createEl("p", { text: locale.headers.instructionsRegexp.header }).createEl("a", {
-			text: locale.headers.instructionsRegexp.text,
-			href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md",
-		});
 
 		const regContentAreaSetting = new Setting(el);
 		regContentAreaSetting.settingEl.setAttribute(

@@ -195,20 +195,29 @@ span[class="easy-typing-cursor-widget"] {
 .et-lang-pair-capsules {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .et-lang-pair-capsule {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    background-color: var(--background-modifier-hover);
+    gap: 2px;
+    padding: 3px 6px 3px 12px;
+    border-radius: 16px;
+    font-size: var(--font-ui-small);
+    background-color: var(--background-primary);
     border: 1px solid var(--background-modifier-border);
     color: var(--text-normal);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    /* Slight elevation */
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.et-lang-pair-capsule:hover {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
 .et-capsule-remove {
@@ -217,14 +226,22 @@ span[class="easy-typing-cursor-widget"] {
     line-height: 1;
     color: var(--text-muted);
     margin-left: 2px;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .et-capsule-remove:hover {
-    color: var(--text-error);
+    color: var(--text-on-accent);
+    background-color: var(--text-error);
 }
 
 .et-pair-selector-row {
-    margin-bottom: 12px;
+    margin-bottom: 15px;
 }
 
 .et-custom-scripts .setting-item {

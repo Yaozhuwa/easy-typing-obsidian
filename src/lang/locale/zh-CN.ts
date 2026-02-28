@@ -49,9 +49,7 @@ const locale: Locale = {
         },
         spaceStrategyInlineCode: {
             name: "行内代码和文本之间的空格策略",
-            desc: "无要求：对本类别块与左右文本没有空格的要求，" +
-                "软空格：对本类别块与周围区块只要求有软空格，软空格如当前块左边的临近文本为。，；？等全角标点，当前块右边的临近文本为所有全半角标点，" +
-                "严格空格：当前块与临近文本之间严格添加空格。"
+            desc: "定义行内代码和文本之间的空格策略"
         },
         spaceStrategyInlineFormula: {
             name: "行内公式和文本之间的空格策略",
@@ -168,14 +166,16 @@ const locale: Locale = {
         enhancedEditing: "增强编辑设置",
         customizeEditRule: "自定义编辑转换规则",
         autoformatSetting: "自动格式化设置",
-        detailedSetting: "详细设置如下",
+        detailedSetting: "行内元素间空格",
         customRegexpBlock: "自定义正则区块",
         excludeFoldersFiles: "指定文件不自动格式化",
         experimentalFeatures: "实验功能",
         languagePairSection: "语言间空格策略",
+        addLanguagePair: "添加新语言/符号对：",
         prefixDictSection: "前缀词典",
         softSpaceSection: "自定义软空格符号",
         customScriptSection: "自定义语言/符号集",
+        spaceStrategyIntro: "空格策略说明：\n无要求：对相关区块与左右文本没有空格要求。\n软空格：对相关区块与周围区块只要求有软空格（例如当前块左右临近文本为标点符号时，不需要再插入真实空格）。\n严格空格：当前块与临近文本之间严格添加真实空格。",
         aboutRegexp: {
             header: "正则表达式相关知识，见 ",
             text: "《阮一峰：正则表达式简明教程》",
