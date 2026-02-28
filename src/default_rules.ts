@@ -13,11 +13,20 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	// ===== 自动配对 (priority 10) =====
 	{
 		id: 'builtin-autopair-input',
-		trigger: '[（《「『“‘《]',
-		replacement: "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','‘':'‘$0’','《':'《$0》'}; return p[leftMatches[0]];",
+		trigger: '[（《「『“”‘’《]',
+		replacement: "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','”':'“$0”','‘':'‘$0’','’':'‘$0’','《':'《$0》'}; return p[leftMatches[0]];",
 		options: 'rF',
 		priority: 10,
 		description: '输入全角括号/引号时自动补全配对',
+	},
+	{
+		id: 'builtin-autopair-jump',
+		trigger: "《》|“”|““|‘’|‘‘|（）",
+		trigger_right: "》|”|’|）",
+		replacement: "const map = {\n  \"《》\": [\"》\", \"《》\"],\n  \"（）\": [\"）\", \"（）\"],\n  \"“”\": [\"”\", \"“”\"],\n  \"““\": [\"”\", \"“”\"],\n  \"‘’\": [\"’\", \"‘’\"],\n  \"‘‘\": [\"’\", \"‘’\"]\n}\nif(map[leftMatches[0]][0]==rightMatches[0]){\n  return map[leftMatches[0]][1];\n}\nreturn undefined;",
+		options: 'rF',
+		priority: 5,
+		description: '配对符号光标跳转'
 	},
 	{
 		id: 'builtin-autopair-delete',
@@ -73,11 +82,11 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	// ===== 全角转半角 (priority 20) =====
 	{
 		id: 'builtin-fw2hw-double',
-		trigger: '([。！；，：？》｜（《“”‘’])\\1',
-		trigger_right: '[）》”’]?',
-		replacement: "const p={'\uFF08':['\uFF09','($0)'],'\u300A':['\u300B','<$0'],'\u201c':['\u201d','\"$0\"'],'\u201d':['\u201d','\"$0\"'],'\u2018':['\u2019',\"'$0'\"],'\u2019':['\u2019',\"'$0'\"]}; const m={'\u3002':'.$0','\uFF01':'!$0','\uFF1B':';$0','\uFF0C':',$0','\uFF1A':':$0','\uFF1F':'?$0','\u300B':'>$0','\uFF5C':'|$0','\uFF08':'($0)','\u300A':'<$0','\u201c':'\"$0\"','\u201d':'\"$0\"','\u2018':\"'$0'\",'\u2019':\"'$0'\"}; const c=leftMatches[1],r=rightMatches[0]||'',e=p[c]; return e&&e[0]===r?e[1]:m[c];",
+		trigger: "([。！；，：？》｜（《])\\1",
+		trigger_right: '[）》]?',
+		replacement: "const p={'（':['）','($0)'],'《':['》','<$0']};\nconst m={'。':'.$0','！':'!$0','；':';$0','，':',$0','：':':$0','？':'?$0','》':'>$0','｜':'|$0','（':'($0)','《':'<$0'};\nconst c=leftMatches[1],r=rightMatches[0]||'',e=p[c]; \nreturn e&&e[0]===r?e[1]:m[c];",
 		options: 'rF',
-		priority: 20,
+		priority: 3,
 		description: '连续输入两个相同全角标点转对应半角',
 	},
 
@@ -94,15 +103,31 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		priority: 30,
 		description: '快速删除空代码块',
 	},
+	{
+		id: 'builtin-del-wikilink',
+		trigger: ' ?!?\\[\\[[^\\n\\[\\]]*\\]\\]',
+		replacement: '',
+		options: 'dr',
+		priority: 30,
+		description: '快速删除双链',
+	},
 
 	// ===== 选中替换 (priority 40) =====
 	{
-		id: 'builtin-sel-wrap',
-		trigger: `[【¥“”]`,
-		replacement: "const m={'¥': ['$', '$'], '【': ['[', ']'], '“': ['“','”'], '”': ['“','”']}; \nreturn m[key][0] + '${0:${SELECTION}}' + m[key][1];",
+		id: 'builtin-sel-wrap-brackets',
+		trigger: `[【¥￥]`,
+		replacement: "const m={'¥': ['$', '$'], '￥': ['$', '$'], '【': ['[', ']']}; \nreturn m[key][0] + '${0:${SELECTION}}' + m[key][1];",
 		options: 'sF',
 		priority: 40,
-		description: '选中文字后输入全角符号包裹为对应半角',
+		description: '选中文字后输入符号包裹（【/¥）',
+	},
+	{
+		id: 'builtin-sel-wrap-quotes',
+		trigger: `[“”‘’]`,
+		replacement: "const m={'“': ['“','”'], '”': ['“','”'], '‘': ['‘','’'], '’': ['‘','’']}; return m[key][0] + '${0:${SELECTION}}' + m[key][1];",
+		options: 'sF',
+		priority: 40,
+		description: '选中文字后输入全角，配对引号包裹',
 	},
 
 	// ===== 引用处理 (priority 50) =====
