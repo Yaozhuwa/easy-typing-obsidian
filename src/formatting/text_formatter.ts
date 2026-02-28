@@ -300,9 +300,10 @@ export function detectBoundarySpaceState(
     leftSymbols: string,
     rightSymbols: string,
 ): { start: SpaceState; end: SpaceState } {
+    const builtInSymbols = '【】（）《》，。、？：；‘’“”「『』」！';
     // Build dynamic regexps from the configured symbols
-    const escapedLeft = escapeForCharClass(leftSymbols);
-    const escapedRight = escapeForCharClass(rightSymbols);
+    const escapedLeft = escapeForCharClass(leftSymbols + builtInSymbols);
+    const escapedRight = escapeForCharClass(rightSymbols + builtInSymbols);
 
     const regStrictSpaceStart = /^\0?\s/;
     const regStrictSpaceEnd = /\s\0?$/;

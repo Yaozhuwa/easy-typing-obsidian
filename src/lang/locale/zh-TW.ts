@@ -31,10 +31,10 @@ const locale: Locale = {
             desc: "每行一個詞或 /正則/，匹配的 token 不會被插入空格，正在輸入的前綴也會暫不插入空格"
         },
         softSpaceSymbols: {
-            leftName: "左側軟空格符號",
-            leftDesc: "這些符號出現在區塊左側時視為已有軟空格",
-            rightName: "右側軟空格符號",
-            rightDesc: "這些符號出現在區塊右側時視為已有軟空格"
+            leftName: "自定義左側軟空格額外符號",
+            leftDesc: "常見的全角標點已內置支持。在此添加額外的符號（如-）",
+            rightName: "自定義右側軟空格額外符號",
+            rightDesc: "常見的全角標點已內置支持。在此添加額外的符號（如-）"
         },
         customScriptCategories: {
             name: "自定義語言/符號集",

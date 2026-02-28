@@ -31,10 +31,10 @@ const locale: Locale = {
             desc: "One word or /regex/ per line. Matching tokens won't have spaces inserted; prefixes being typed are also suppressed"
         },
         softSpaceSymbols: {
-            leftName: "Left Soft Space Symbols",
-            leftDesc: "These symbols at block start count as having a soft space",
-            rightName: "Right Soft Space Symbols",
-            rightDesc: "These symbols at block end count as having a soft space"
+            leftName: "Custom Extra Left Soft Space Symbols",
+            leftDesc: "Common full-width punctuations are built-in. Add extra symbols here (like -).",
+            rightName: "Custom Extra Right Soft Space Symbols",
+            rightDesc: "Common full-width punctuations are built-in. Add extra symbols here (like -)."
         },
         customScriptCategories: {
             name: "Custom Script Categories",
