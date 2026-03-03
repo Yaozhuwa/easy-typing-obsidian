@@ -1,6 +1,6 @@
 import { SpaceState, string2SpaceState } from 'src/core';
 import { ScriptCategory } from '../formatting/script_category';
-import { App, Notice, PluginSettingTab, Setting, TextAreaComponent } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, TextAreaComponent, setIcon } from 'obsidian';
 import EasyTypingPlugin from '../main';
 import { getLocale } from '../lang/locale';
 import { setDebug } from '../utils';
@@ -8,6 +8,7 @@ import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleTriggerMode } f
 import { DEFAULT_BUILTIN_RULES } from '../default_rules';
 import { StrictLineMode } from './settings_types';
 import { RuleEditModal } from './rule_edit_modal';
+import { sprintf } from 'sprintf-js';
 
 function setAttributes(element: any, attributes: any) {
 	for (let key in attributes) {
@@ -543,6 +544,68 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				await this.plugin.ruleManager.addUserRule(rule);
 				this.display();
 			}).open();
+		});
+
+		// 导出按钮
+		const exportBtn = controlEl.createEl('button', { cls: 'clickable-icon' });
+		exportBtn.setAttribute('aria-label', locale.toolTip.exportRules);
+		setIcon(exportBtn, 'download');
+		exportBtn.addEventListener('click', () => {
+			const rules = this.plugin.ruleManager.cachedUserRules;
+			if (rules.length === 0) {
+				new Notice(locale.toolTip.noRulesToExport);
+				return;
+			}
+			const json = JSON.stringify(rules, null, 2);
+			const blob = new Blob([json], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'easy-typing-user-rules.json';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		});
+
+		// 导入按钮
+		const importBtn = controlEl.createEl('button', { cls: 'clickable-icon' });
+		importBtn.setAttribute('aria-label', locale.toolTip.importRules);
+		setIcon(importBtn, 'upload');
+		importBtn.addEventListener('click', () => {
+			const input = document.createElement('input');
+			input.type = 'file';
+			input.accept = '.json';
+			input.style.display = 'none';
+			input.addEventListener('change', async () => {
+				const file = input.files?.[0];
+				if (!file) return;
+				try {
+					const text = await file.text();
+					let parsed: any;
+					try {
+						parsed = JSON.parse(text);
+					} catch {
+						new Notice(`[EasyTyping] ${locale.toolTip.importInvalidJson}`);
+						return;
+					}
+					if (!Array.isArray(parsed) || parsed.length === 0) {
+						new Notice(`[EasyTyping] ${locale.toolTip.importNoRules}`);
+						return;
+					}
+					const { imported, skipped } = await this.plugin.ruleManager.importUserRules(parsed);
+					if (imported === 0 && skipped > 0) {
+						new Notice(`[EasyTyping] ${locale.toolTip.importNoRules}`);
+					} else {
+						new Notice(`[EasyTyping] ${sprintf(locale.toolTip.importSuccess, imported, skipped)}`);
+					}
+					this.display();
+				} finally {
+					input.remove();
+				}
+			});
+			document.body.appendChild(input);
+			input.click();
 		});
 
 		for (const rule of this.plugin.ruleManager.cachedUserRules) {
