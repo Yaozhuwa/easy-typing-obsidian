@@ -107,6 +107,43 @@ export class RuleManager {
 		return id;
 	}
 
+	async importUserRules(incoming: SimpleRule[]): Promise<{ imported: number; skipped: number }> {
+		const existingSet = new Set(
+			this.cachedUserRules.map(r => {
+				const isRegex = (r.options ?? '').includes('r');
+				return `${r.trigger}\0${r.trigger_right ?? ''}\0${isRegex}`;
+			})
+		);
+
+		let imported = 0;
+		let skipped = 0;
+
+		for (const rule of incoming) {
+			if (!rule.trigger || rule.replacement === undefined) {
+				skipped++;
+				continue;
+			}
+			const isRegex = (rule.options ?? '').includes('r');
+			const key = `${rule.trigger}\0${rule.trigger_right ?? ''}\0${isRegex}`;
+			if (existingSet.has(key)) {
+				skipped++;
+				continue;
+			}
+			existingSet.add(key);
+			const id = `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+			rule.id = id;
+			rule.enabled = rule.enabled ?? true;
+			this.cachedUserRules.push(rule);
+			this.ruleEngine.addSimpleRule(rule);
+			imported++;
+		}
+
+		if (imported > 0) {
+			await this.saveRulesFile(this.USER_RULES_FILE, this.cachedUserRules);
+		}
+		return { imported, skipped };
+	}
+
 	async updateUserRule(id: string, rule: SimpleRule): Promise<void> {
 		const idx = this.cachedUserRules.findIndex(r => r.id === id);
 		if (idx === -1) return;
