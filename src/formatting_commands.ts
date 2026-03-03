@@ -103,7 +103,8 @@ export function preFormatOneLine(ctx: PluginContext, editor: Editor, lineNumber:
 	if (ch != -1) {
 		curCh = ch;
 	}
-	if (getPosLineType(state, line.from) == LineType.text || getPosLineType(state, line.from) == LineType.table) {
+	const lineType = getPosLineType(state, line.from);
+	if (lineType == LineType.text || lineType == LineType.table) {
 		let newLineData = ctx.Formater.formatLine(state, lineNumber, ctx.settings, curCh, 0);
 		newLine = newLineData[0];
 		newCh = newLineData[1];
@@ -118,7 +119,8 @@ export function formatOneLine(ctx: PluginContext, editor: Editor, lineNumber: nu
 	let state = editorView.state;
 	let line = state.doc.line(lineNumber)
 
-	if (getPosLineType(state, line.from) == LineType.text || getPosLineType(state, line.from) == LineType.table) {
+	const lineType = getPosLineType(state, line.from);
+	if (lineType == LineType.text || lineType == LineType.table) {
 		let oldLine = line.text;
 		let newLine = ctx.Formater.formatLine(state, lineNumber, ctx.settings, oldLine.length, 0)[0];
 		if (oldLine != newLine) {

@@ -230,6 +230,7 @@ function enterStrictLineBreak(ctx: PluginContext, view: EditorView): boolean {
 	const pos = s.main.to;
 	const line = doc.lineAt(pos);
 	const codeBlockInfo = getCodeBlockInfoInPos(state, pos);
+	const lineType = getPosLineType2(state, pos);
 
 	// 如果当前行为空白行，不做处理
 	if (/^\s*$/.test(line.text)) return false;
@@ -237,7 +238,7 @@ function enterStrictLineBreak(ctx: PluginContext, view: EditorView): boolean {
 	// 如果光标在当前行首，不做处理
 	if (pos == line.from) return false;
 
-	if (getPosLineType2(state, pos) == LineType.quote) {
+	if (lineType == LineType.quote) {
 		let reg_quote = /^(\s*)(>+ ?)/;
 		let quote_match = line.text.match(reg_quote);
 		if (!quote_match) return false;
@@ -268,7 +269,7 @@ function enterStrictLineBreak(ctx: PluginContext, view: EditorView): boolean {
 	}
 
 	if (ctx.settings.StrictLineMode == StrictLineMode.TwoSpace &&
-		getPosLineType2(state, pos) == LineType.text) {
+		lineType == LineType.text) {
 		let inserted_str = space_str + '\n';
 		view.dispatch({
 			changes: { from: pos, to: pos, insert: inserted_str },
@@ -278,7 +279,7 @@ function enterStrictLineBreak(ctx: PluginContext, view: EditorView): boolean {
 		return true;
 	}
 
-	if (getPosLineType2(state, pos) == LineType.text ||
+	if (lineType == LineType.text ||
 		(codeBlockInfo && pos == codeBlockInfo.end_pos && codeBlockInfo.indent == 0)) {
 		view.dispatch({
 			changes: {

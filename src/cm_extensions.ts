@@ -289,11 +289,11 @@ function tryProcessInput(
 	changeFrom: number, cursorPos: number,
 	isCompose: boolean
 ): boolean {
-	if (getPosLineType(update.view.state, changeFrom) === LineType.table) return false;
+	const lineType = getPosLineType(update.view.state, changeFrom);
+	if (lineType === LineType.table) return false;
 	if (triggerCvtRule(ctx, update.view, cursorPos)) return true;
 	if (!ctx.settings.AutoFormat || isCurrentFileExclude(ctx)) return false;
-	const lineType = getPosLineType(update.view.state, changeFrom);
-	if (lineType !== LineType.text && lineType !== LineType.table) return false;
+	if (lineType !== LineType.text) return false;
 	const insertedStr = update.view.state.doc.sliceString(changeFrom, cursorPos);
 	const changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, changeFrom, cursorPos, insertedStr);
 	if (changes) {
