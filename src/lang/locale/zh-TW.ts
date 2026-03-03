@@ -263,6 +263,27 @@ const locale: Locale = {
         russian: "俄文",
         unknown: "未知",
     },
+    builtinRuleDescriptions: {
+        'builtin-autopair-input': '輸入全角括號/引號時自動補全配對',
+        'builtin-autopair-jump': '輸入右側配對符號時自動跳過，避免重複插入',
+        'builtin-autopair-delete': '刪除全角括號/引號時同時刪除配對',
+        'builtin-conv-backtick': '連續中文間隔號 ·· 轉行內代碼',
+        'builtin-conv-codeblock': '行內代碼中繼續輸入 · 升級為代碼塊',
+        'builtin-conv-formula': '￥/$ 符號組合轉行內或塊級公式',
+        'builtin-conv-linestart': '行首 》 轉引用標記、行首 、 轉斜線',
+        'builtin-conv-hw2fw': 'CJK字元後半角標點轉全角',
+        'builtin-fw2hw-double': '連續輸入兩個相同全角標點轉對應半角',
+        'builtin-del-inline-formula': '刪除行內公式 $...$ 配對',
+        'builtin-del-highlight': '刪除高亮 ==...== 配對',
+        'builtin-del-block-formula': '刪除塊級公式 $$...$$ 配對',
+        'builtin-del-codeblock': '快速刪除空代碼塊',
+        'builtin-del-wikilink': '快速刪除雙鏈及嵌入（![[]]）',
+        'builtin-sel-wrap-symbols': '選中文字後輸入 【/¥/￥ 包裹為 []/$$',
+        'builtin-sel-wrap-quotes': '選中文字後輸入全角引號，配對引號包裹',
+        'builtin-sel-wrap-cjk-brackets': '選中文字後輸入《（，配對括號包裹',
+        'builtin-quote-convert': '輸入 > 或 》 轉為 Markdown 引用標記',
+        'builtin-quote-space': '引用標記 > 後自動補空格',
+    },
 };
 
 export default locale;

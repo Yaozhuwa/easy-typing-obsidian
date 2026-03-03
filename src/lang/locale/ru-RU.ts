@@ -264,6 +264,27 @@ const locale: Locale = {
         russian: "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
         unknown: "\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0439",
     },
+    builtinRuleDescriptions: {
+        'builtin-autopair-input': 'Автодополнение парных полноширинных скобок/кавычек',
+        'builtin-autopair-jump': 'Перескок через закрывающий парный символ',
+        'builtin-autopair-delete': 'Удаление обеих сторон парных полноширинных скобок/кавычек',
+        'builtin-conv-backtick': 'Двойная средняя точка ·· преобразуется в строчный код',
+        'builtin-conv-codeblock': 'Ввод · в строчном коде превращает его в блок кода',
+        'builtin-conv-formula': 'Комбинации ￥/$ преобразуются в строчную или блочную формулу',
+        'builtin-conv-linestart': '》 в начале строки → цитата, 、 в начале строки → косая черта',
+        'builtin-conv-hw2fw': 'Преобразование полуширинной пунктуации в полноширинную после CJK-символов',
+        'builtin-fw2hw-double': 'Двойная одинаковая полноширинная пунктуация преобразуется в полуширинную',
+        'builtin-del-inline-formula': 'Удаление пары строчной формулы $...$',
+        'builtin-del-highlight': 'Удаление пары выделения ==...==',
+        'builtin-del-block-formula': 'Удаление пары блочной формулы $$...$$',
+        'builtin-del-codeblock': 'Быстрое удаление пустого блока кода',
+        'builtin-del-wikilink': 'Быстрое удаление вики-ссылки и вставки (![[]])',
+        'builtin-sel-wrap-symbols': 'Обернуть выделение в []/$ с помощью 【/¥/￥',
+        'builtin-sel-wrap-quotes': 'Обернуть выделение парными полноширинными кавычками',
+        'builtin-sel-wrap-cjk-brackets': 'Обернуть выделение скобками 《》 или （）',
+        'builtin-quote-convert': 'Преобразование > или 》 в маркер цитаты Markdown',
+        'builtin-quote-space': 'Автовставка пробела после маркера цитаты >',
+    },
 };
 
 export default locale;

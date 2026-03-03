@@ -153,4 +153,5 @@ export interface Locale {
         update: string;
     };
     scriptCategoryLabels: Record<string, string>;
+    builtinRuleDescriptions: Record<string, string>;
 }

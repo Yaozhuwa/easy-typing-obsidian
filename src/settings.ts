@@ -587,7 +587,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				const opts = RuleEngine.parseOptions(defaultRule.options);
 				const typeLabel = this.getRuleTypeLabel(opts.type);
 				const typeCls = this.getRuleTypeCls(opts.type);
-				const preview = defaultRule.description || `${RuleEngine.escapeText(defaultRule.trigger)} → ${typeof defaultRule.replacement === 'string' ? defaultRule.replacement : '(fn)'}`;
+				const preview = (defaultRule.id && locale.builtinRuleDescriptions[defaultRule.id]) || defaultRule.description || `${RuleEngine.escapeText(defaultRule.trigger)} → ${typeof defaultRule.replacement === 'string' ? defaultRule.replacement : '(fn)'}`;
 				new Setting(details)
 					.setName(createFragment(f => {
 						f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
@@ -634,7 +634,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const isFn = opts.isFunctionReplacement;
 
 		let preview: string;
-		if (rule.description) {
+		const localeDesc = rule.id ? locale.builtinRuleDescriptions[rule.id] : undefined;
+		if (localeDesc) {
+			preview = localeDesc;
+		} else if (rule.description) {
 			preview = rule.description;
 		} else {
 			const repl = typeof rule.replacement === 'string' ? rule.replacement : '(fn)';

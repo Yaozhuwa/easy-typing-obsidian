@@ -26,7 +26,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		replacement: "const map = {\n  \"《》\": [\"》\", \"《》\"],\n  \"（）\": [\"）\", \"（）\"],\n  \"“”\": [\"”\", \"“”\"],\n  \"““\": [\"”\", \"“”\"],\n  \"‘’\": [\"’\", \"‘’\"],\n  \"‘‘\": [\"’\", \"‘’\"]\n}\nif(map[leftMatches[0]][0]==rightMatches[0]){\n  return map[leftMatches[0]][1];\n}\nreturn undefined;",
 		options: 'rF',
 		priority: 5,
-		description: '配对符号光标跳转'
+		description: '输入右侧配对符号时自动跳过，避免重复插入'
 	},
 	{
 		id: 'builtin-autopair-delete',
@@ -47,7 +47,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		replacement: '[[1]]```$0\n[[1]]```',
 		options: 'r',
 		priority: 10,
-		description: '全角间隔号 `·` 转代码块',
+		description: '行内代码中继续输入 · 升级为代码块',
 	},
 	{
 		id: 'builtin-conv-formula',
@@ -70,7 +70,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 
 	// ===== 半角转全角 (priority 15) =====
 	{
-		id: 'builtin-punc-cjk',
+		id: 'builtin-conv-hw2fw',
 		trigger: '([\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af])([,.:?!;\(])',
 		trigger_right: '\\)?',
 		replacement: "const m={',':'，','.':'。','?':'？','!':'！',':':'：',';':'；','(':'（$0）'}; return leftMatches[1] + m[leftMatches[2]];",
@@ -109,17 +109,17 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		replacement: '',
 		options: 'dr',
 		priority: 30,
-		description: '快速删除双链',
+		description: '快速删除双链及嵌入（![[]]）',
 	},
 
 	// ===== 选中替换 (priority 40) =====
 	{
-		id: 'builtin-sel-wrap-brackets',
+		id: 'builtin-sel-wrap-symbols',
 		trigger: `【¥￥`,
 		replacement: "const m={'¥': ['$', '$'], '￥': ['$', '$'], '【': ['[', ']']}; \nreturn m[key][0] + '${0:${SEL}}' + m[key][1];",
 		options: 'sF',
 		priority: 40,
-		description: '选中文字后输入符号包裹（【/¥）',
+		description: '选中文字后输入 【/¥/￥ 包裹为 []/$$',
 	},
 	{
 		id: 'builtin-sel-wrap-quotes',
@@ -130,7 +130,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		description: '选中文字后输入全角引号，配对引号包裹',
 	},
 	{
-		id: 'builtin-sel-wrap-angle-brackets',
+		id: 'builtin-sel-wrap-cjk-brackets',
 		trigger: `《（`,
 		replacement: "const m={'《': ['《','》'], '（': ['（','）']}; return m[key][0] + '${0:${SEL}}' + m[key][1];",
 		options: 'sF',

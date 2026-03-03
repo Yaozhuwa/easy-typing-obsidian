@@ -260,6 +260,27 @@ const locale: Locale = {
         russian: "Russian",
         unknown: "Unknown",
     },
+    builtinRuleDescriptions: {
+        'builtin-autopair-input': 'Auto-complete paired full-width brackets/quotes',
+        'builtin-autopair-jump': 'Skip over closing paired symbol to avoid duplicates',
+        'builtin-autopair-delete': 'Delete both sides of full-width bracket/quote pairs',
+        'builtin-conv-backtick': 'Double middle dot ·· converts to inline code',
+        'builtin-conv-codeblock': 'Type · inside inline code to upgrade to code block',
+        'builtin-conv-formula': '￥/$ combinations convert to inline or block formula',
+        'builtin-conv-linestart': '》 at line start → blockquote, 、 at line start → slash',
+        'builtin-conv-hw2fw': 'Convert half-width punctuation to full-width after CJK characters',
+        'builtin-fw2hw-double': 'Double identical full-width punctuation converts to half-width',
+        'builtin-del-inline-formula': 'Delete inline formula $...$ pair',
+        'builtin-del-highlight': 'Delete highlight ==...== pair',
+        'builtin-del-block-formula': 'Delete block formula $$...$$ pair',
+        'builtin-del-codeblock': 'Quickly delete empty code block',
+        'builtin-del-wikilink': 'Quickly delete wikilink and embed (![[]])',
+        'builtin-sel-wrap-symbols': 'Wrap selection with []/$ using 【/¥/￥',
+        'builtin-sel-wrap-quotes': 'Wrap selection with paired full-width quotes',
+        'builtin-sel-wrap-cjk-brackets': 'Wrap selection with 《》 or （） brackets',
+        'builtin-quote-convert': 'Convert > or 》 to Markdown blockquote marker',
+        'builtin-quote-space': 'Auto-insert space after blockquote marker >',
+    },
 };
 
 export default locale;
