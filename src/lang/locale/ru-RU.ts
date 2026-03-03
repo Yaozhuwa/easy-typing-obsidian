@@ -143,6 +143,7 @@ const locale: Locale = {
             fieldScope: "Область",
             fieldScopeLanguage: "Язык (необязательно)",
             fieldPriority: "Приоритет",
+            fieldPriorityDesc: "Чем меньше число, тем выше приоритет, по умолчанию 100",
             fieldDescription: "Описание",
             buttonSave: "Сохранить",
             invalidRegex: "Недопустимое регулярное выражение",

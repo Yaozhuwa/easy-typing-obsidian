@@ -139,6 +139,7 @@ const locale: Locale = {
             fieldScope: "作用域",
             fieldScopeLanguage: "语言（可选）",
             fieldPriority: "优先级",
+            fieldPriorityDesc: "数值越小，优先级越高，默认 100",
             fieldDescription: "描述",
             buttonSave: "保存",
             invalidRegex: "正则表达式无效",

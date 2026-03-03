@@ -20,6 +20,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	plugin: EasyTypingPlugin;
 	// 记住当前激活的 Tab，避免 display() 刷新时重置
 	activeTab: string = "edit-enhance";
+	// 拖拽状态
+	private dragSourceIndex: number = -1;
 
 	constructor(app: App, plugin: EasyTypingPlugin) {
 		super(app, plugin);
@@ -549,7 +551,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		// 导出按钮
 		const exportBtn = controlEl.createEl('button', { cls: 'clickable-icon' });
 		exportBtn.setAttribute('aria-label', locale.toolTip.exportRules);
-		setIcon(exportBtn, 'download');
+		setIcon(exportBtn, 'arrow-up-from-line');
 		exportBtn.addEventListener('click', () => {
 			const rules = this.plugin.ruleManager.cachedUserRules;
 			if (rules.length === 0) {
@@ -571,7 +573,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		// 导入按钮
 		const importBtn = controlEl.createEl('button', { cls: 'clickable-icon' });
 		importBtn.setAttribute('aria-label', locale.toolTip.importRules);
-		setIcon(importBtn, 'upload');
+		setIcon(importBtn, 'arrow-down-to-line');
 		importBtn.addEventListener('click', () => {
 			const input = document.createElement('input');
 			input.type = 'file';
@@ -608,12 +610,12 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			input.click();
 		});
 
-		for (const rule of this.plugin.ruleManager.cachedUserRules) {
-			this.buildRuleItem(el, rule, false);
-		}
+		this.plugin.ruleManager.cachedUserRules.forEach((rule, index) => {
+			this.buildRuleItem(el, rule, false, index);
+		});
 	}
 
-	buildRuleItem(container: HTMLElement, rule: SimpleRule, isBuiltin: boolean): void {
+	buildRuleItem(container: HTMLElement, rule: SimpleRule, isBuiltin: boolean, ruleIndex?: number): void {
 		const locale = getLocale();
 		const opts = RuleEngine.parseOptions(rule.options);
 		const typeLabel = this.getRuleTypeLabel(opts.type);
@@ -694,6 +696,100 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		if (!enabled) {
 			setting.settingEl.style.opacity = '0.5';
+		}
+
+		// 用户规则：添加拖拽手柄和拖拽事件
+		if (!isBuiltin && ruleIndex !== undefined) {
+			const el = setting.settingEl;
+			el.dataset.ruleIndex = String(ruleIndex);
+
+			// 插入 grip 手柄到 settingEl 最前面
+			const handle = el.createDiv({ cls: 'et-rule-drag-handle' });
+			setIcon(handle, 'grip-vertical');
+			el.prepend(handle);
+
+			handle.draggable = true;
+
+			handle.addEventListener('dragstart', (e: DragEvent) => {
+				const idx = parseInt(el.dataset.ruleIndex!);
+				this.dragSourceIndex = idx;
+				el.addClass('et-rule-dragging');
+				e.dataTransfer!.effectAllowed = 'move';
+			});
+
+			handle.addEventListener('dragend', () => {
+				this.dragSourceIndex = -1;
+				el.removeClass('et-rule-dragging');
+				el.parentElement?.querySelectorAll('.et-rule-drag-over-top, .et-rule-drag-over-bottom').forEach(
+					item => item.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom')
+				);
+			});
+
+			el.addEventListener('dragover', (e: DragEvent) => {
+				if (this.dragSourceIndex === -1) return;
+				e.preventDefault();
+				e.dataTransfer!.dropEffect = 'move';
+
+				el.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom');
+				const rect = el.getBoundingClientRect();
+				const midY = rect.top + rect.height / 2;
+				if (e.clientY < midY) {
+					el.addClass('et-rule-drag-over-top');
+				} else {
+					el.addClass('et-rule-drag-over-bottom');
+				}
+			});
+
+			el.addEventListener('dragleave', () => {
+				el.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom');
+			});
+
+			el.addEventListener('drop', async (e: DragEvent) => {
+				e.preventDefault();
+				el.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom');
+
+				const fromIndex = this.dragSourceIndex;
+				if (fromIndex === -1) return;
+				const currentIndex = parseInt(el.dataset.ruleIndex!);
+
+				const rect = el.getBoundingClientRect();
+				const midY = rect.top + rect.height / 2;
+				const dropOnBottom = e.clientY >= midY;
+
+				// 计算目标位置（splice 后的索引）
+				let toIndex: number;
+				if (fromIndex < currentIndex) {
+					toIndex = dropOnBottom ? currentIndex : currentIndex - 1;
+				} else {
+					toIndex = dropOnBottom ? currentIndex + 1 : currentIndex;
+				}
+
+				if (fromIndex === toIndex) return;
+
+				await this.plugin.ruleManager.reorderUserRule(fromIndex, toIndex);
+
+				// DOM 直接移动，避免全量刷新
+				const parent = el.parentElement!;
+				const ruleItems = Array.from(parent.querySelectorAll('.et-rule-item[data-rule-index]')) as HTMLElement[];
+				const sourceEl = ruleItems[fromIndex];
+				if (!sourceEl) return;
+
+				// 在 DOM 中，toIndex 对应的是原数组位置
+				if (toIndex < fromIndex) {
+					parent.insertBefore(sourceEl, ruleItems[toIndex]);
+				} else {
+					const ref = ruleItems[toIndex];
+					if (ref.nextSibling) {
+						parent.insertBefore(sourceEl, ref.nextSibling);
+					} else {
+						parent.appendChild(sourceEl);
+					}
+				}
+
+				// 更新所有 data-rule-index
+				const updatedItems = Array.from(parent.querySelectorAll('.et-rule-item[data-rule-index]')) as HTMLElement[];
+				updatedItems.forEach((item, i) => item.dataset.ruleIndex = String(i));
+			});
 		}
 	}
 

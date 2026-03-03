@@ -139,6 +139,7 @@ const locale: Locale = {
             fieldScope: "Scope",
             fieldScopeLanguage: "Language (optional)",
             fieldPriority: "Priority",
+            fieldPriorityDesc: "Lower number = higher priority, default 100",
             fieldDescription: "Description",
             buttonSave: "Save",
             invalidRegex: "Invalid regex",

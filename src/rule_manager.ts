@@ -180,6 +180,15 @@ export class RuleManager {
 		this.ruleEngine.setEnabled(id, enabled);
 	}
 
+	async reorderUserRule(fromIndex: number, toIndex: number): Promise<void> {
+		if (fromIndex === toIndex) return;
+		if (fromIndex < 0 || fromIndex >= this.cachedUserRules.length) return;
+		if (toIndex < 0 || toIndex >= this.cachedUserRules.length) return;
+		const [rule] = this.cachedUserRules.splice(fromIndex, 1);
+		this.cachedUserRules.splice(toIndex, 0, rule);
+		await this.saveRulesFile(this.USER_RULES_FILE, this.cachedUserRules);
+	}
+
 	async updateRuleTriggerMode(id: string, isBuiltin: boolean, tabMode: boolean): Promise<void> {
 		const cache = isBuiltin ? this.cachedBuiltinRules : this.cachedUserRules;
 		const file = isBuiltin ? this.BUILTIN_RULES_FILE : this.USER_RULES_FILE;

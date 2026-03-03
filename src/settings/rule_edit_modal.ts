@@ -316,6 +316,7 @@ export class RuleEditModal extends Modal {
 		// Priority
 		new Setting(contentEl)
 			.setName(locale.settings.ruleEditModal.fieldPriority)
+			.setDesc(locale.settings.ruleEditModal.fieldPriorityDesc)
 			.addText(text => {
 				text.setValue(String(this.priority));
 				text.inputEl.type = 'number';

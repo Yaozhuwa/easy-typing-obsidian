@@ -47,6 +47,7 @@ export interface Locale {
             fieldScope: string;
             fieldScopeLanguage: string;
             fieldPriority: string;
+            fieldPriorityDesc: string;
             fieldDescription: string;
             buttonSave: string;
             invalidRegex: string;

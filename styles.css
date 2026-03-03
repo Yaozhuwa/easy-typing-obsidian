@@ -134,6 +134,39 @@ span[class="easy-typing-cursor-widget"] {
     filter: brightness(1.2);
 }
 
+/* Rule Drag and Drop */
+.et-rule-drag-handle {
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    color: var(--text-faint);
+    padding: 4px 2px;
+    margin-right: 4px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.et-rule-drag-handle:hover {
+    color: var(--text-muted);
+    background-color: var(--background-modifier-hover);
+}
+
+.et-rule-drag-handle:active {
+    cursor: grabbing;
+}
+
+.et-rule-dragging {
+    opacity: 0.4;
+}
+
+.et-rule-drag-over-top {
+    box-shadow: 0 2px 0 0 var(--interactive-accent) inset;
+}
+
+.et-rule-drag-over-bottom {
+    box-shadow: 0 -2px 0 0 var(--interactive-accent) inset;
+}
+
 .et-rule-item .setting-item-name {
     white-space: nowrap;
     overflow: hidden;
