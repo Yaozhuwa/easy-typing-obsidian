@@ -145,6 +145,7 @@ const locale: Locale = {
             fieldPriority: "Приоритет",
             fieldDescription: "Описание",
             buttonSave: "Сохранить",
+            invalidRegex: "Недопустимое регулярное выражение",
             fieldIsFunction: "Функция",
             functionHintInputDelete: "Аргументы: leftMatches (string[]), rightMatches (string[]). Верните строку или undefined для пропуска.",
             functionHintSelectKey: "Аргументы: selectionText (string), key (string). Верните строку или undefined для пропуска.",

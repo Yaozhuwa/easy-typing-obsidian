@@ -141,6 +141,7 @@ const locale: Locale = {
             fieldPriority: "Priority",
             fieldDescription: "Description",
             buttonSave: "Save",
+            invalidRegex: "Invalid regex",
             fieldIsFunction: "Is Function",
             functionHintInputDelete: "Args: leftMatches (string[]), rightMatches (string[]). Return string or undefined to skip.",
             functionHintSelectKey: "Args: selectionText (string), key (string). Return string or undefined to skip.",

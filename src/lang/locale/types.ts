@@ -49,6 +49,7 @@ export interface Locale {
             fieldPriority: string;
             fieldDescription: string;
             buttonSave: string;
+            invalidRegex: string;
             fieldIsFunction: string;
             functionHintInputDelete: string;
             functionHintSelectKey: string;

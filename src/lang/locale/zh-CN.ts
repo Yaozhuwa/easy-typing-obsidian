@@ -141,6 +141,7 @@ const locale: Locale = {
             fieldPriority: "优先级",
             fieldDescription: "描述",
             buttonSave: "保存",
+            invalidRegex: "正则表达式无效",
             fieldIsFunction: "函数式替换",
             functionHintInputDelete: "参数：leftMatches (string[])、rightMatches (string[])。返回字符串或 undefined 跳过。",
             functionHintSelectKey: "参数：selectionText (string)、key (string)。返回字符串或 undefined 跳过。",

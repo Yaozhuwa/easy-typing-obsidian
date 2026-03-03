@@ -1143,8 +1143,14 @@ export class RuleEditModal extends Modal {
 				btn.setButtonText(locale.settings.ruleEditModal.buttonSave)
 					.setCta()
 					.onClick(() => {
+						const rule = this.buildSimpleRule();
+						const regexError = RuleEngine.validateRegex(rule);
+						if (regexError) {
+							new Notice(`[EasyTyping] ${locale.settings.ruleEditModal.invalidRegex}: ${regexError}`);
+							return;
+						}
 						this.close();
-						this.onSubmit(this.buildSimpleRule());
+						this.onSubmit(rule);
 					});
 			});
 

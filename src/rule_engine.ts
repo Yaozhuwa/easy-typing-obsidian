@@ -106,7 +106,7 @@ export class RuleEngine {
 	private fnErrorLastNotify: Map<string, number> = new Map();
 
 	// Cache for compiled regex patterns: key is rule.id
-	private regexCache: Map<string, CachedRegex> = new Map();
+	private regexCache: Map<string, CachedRegex | null> = new Map();
 
 	// ===== Static Utilities =====
 
@@ -138,6 +138,34 @@ export class RuleEngine {
 		}
 
 		return { type, triggerMode, isRegex, isFunctionReplacement, scope };
+	}
+
+	/**
+	 * Validate regex patterns in a SimpleRule before saving.
+	 * Returns null if valid, or an error message string if invalid.
+	 */
+	static validateRegex(rule: SimpleRule): string | null {
+		const opts = RuleEngine.parseOptions(rule.options);
+		if (!opts.isRegex) return null;
+
+		const leftPattern = rule.trigger;
+		const rightPattern = rule.trigger_right ?? '';
+
+		if (leftPattern) {
+			try {
+				new RegExp('(?:' + leftPattern + ')$');
+			} catch (e) {
+				return `trigger: ${(e as Error).message}`;
+			}
+		}
+		if (rightPattern) {
+			try {
+				new RegExp('^(?:' + rightPattern + ')');
+			} catch (e) {
+				return `trigger_right: ${(e as Error).message}`;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -342,9 +370,9 @@ export class RuleEngine {
 	 * Get or create cached regex patterns for a rule.
 	 * Caches the compiled RegExp objects to avoid recompiling on every input.
 	 */
-	private getCachedRegex(rule: ConvertRule): CachedRegex {
-		let cached = this.regexCache.get(rule.id);
-		if (cached) return cached;
+	private getCachedRegex(rule: ConvertRule): CachedRegex | null {
+		const existing = this.regexCache.get(rule.id);
+		if (existing !== undefined) return existing;
 
 		const leftPattern = rule.match.isRegex
 			? rule.match.left
@@ -353,12 +381,19 @@ export class RuleEngine {
 			? rule.match.right
 			: escapeRegex(rule.match.right);
 
-		cached = {
-			left: leftPattern ? new RegExp('(?:' + leftPattern + ')$') : null,
-			right: rightPattern ? new RegExp('^(?:' + rightPattern + ')') : null,
-		};
-		this.regexCache.set(rule.id, cached);
-		return cached;
+		try {
+			const cached: CachedRegex = {
+				left: leftPattern ? new RegExp('(?:' + leftPattern + ')$') : null,
+				right: rightPattern ? new RegExp('^(?:' + rightPattern + ')') : null,
+			};
+			this.regexCache.set(rule.id, cached);
+			return cached;
+		} catch (e) {
+			console.error(`[RuleEngine] Invalid regex in rule "${rule.id}":`, e);
+			new Notice(`[EasyTyping] Rule "${rule.id}" has invalid regex: ${(e as Error).message}`);
+			this.regexCache.set(rule.id, null);
+			return null;
+		}
 	}
 
 	// ===== Template Expansion =====
@@ -513,6 +548,7 @@ export class RuleEngine {
 
 		// Use cached regex patterns
 		const cached = this.getCachedRegex(rule);
+		if (!cached) return null; // invalid regex, skip
 		const leftRegex = cached.left;
 		const rightRegex = cached.right;
 
