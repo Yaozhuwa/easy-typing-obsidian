@@ -6,27 +6,75 @@
 [[中文](https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/README_ZH.md) | English]
 </div>
 
-Easy Typing is an enhancement plugin for [Obsidian](https://obsidian.md) that improves the writing experience. It includes automatic text formatting and symbol editing enhancements during editing.
+Easy Typing is an enhancement plugin for [Obsidian](https://obsidian.md) that improves the writing experience through automatic text formatting, smart editing enhancements, and a powerful rule engine for custom text transformations.
 
 ## Core Features
 
-1. **Text Auto-formatting**: Capitalizes the first letter and automatically adds spaces between specific parts of each line according to user-defined rules. This feature also includes user-defined regular expression blocks for handling special text formats.
+### 1. Text Auto-formatting
 
-2. **Edit Enhancements**: Includes symbol auto-pairing/deletion, symbol editing enhancement for selected text, continuous full-width symbol to half-width conversion, Obsidian syntax-related editing enhancements, Tabout, code block editing enhancements, and Backspace editing enhancements.
+Automatically formats text as you type:
+- **Auto-capitalize** the first letter of sentences
+- **Auto-spacing** between different script pairs (e.g. Chinese and English, Chinese and digits, etc.)
+- **Inline element spacing** for code, formulas, and links — configurable as none, soft, or strict
+- **User-defined regex blocks** to protect special text patterns from formatting
+- **Prefix dictionary** to suppress premature space insertion while typing
 
-3. **Customizable Conversion Rules**: Supports user-defined conversion rules for various editing scenarios.
+Supports Chinese, Japanese, Korean, English, Russian, digits, and user-defined script categories.
 
-4. **Plugin Built-in Commands**: Includes the deletion of extra blank lines, formatting the entire document, formatting the current line/selected area, creating a new line after the current line and jumping (Ctrl+Enter), and toggling comments (supports comments within code blocks, Mod+/).
+[Detailed documentation →](./Doc/AutoFormatting.md)
 
-5. **Experimental Features**: Includes some experimental features, including strict line breaks where Enter inputs two line breaks, automatic punctuation correction (only during input, English punctuation between Chinese is converted to Chinese punctuation), etc.
+### 2. Edit Enhancements
 
-## Detailed Documentation
+Smart editing features that work as you type:
+- **Better Code Edit**: Enhanced editing inside code blocks (Cmd/Ctrl+A selection, Tab indent, delete, paste)
+- **Better Backspace**: Enhanced deletion of empty list items and empty quote lines
+- **Tabout**: Press Tab to jump out of paired symbols (`【】`, `（）`, `《》`, quotes, inline code, etc.)
+- **Enhanced Mod+A**: Progressive selection expansion (current line → current block → entire document)
+- **Smart Paste**: Auto-add indentation and list/quote prefixes when pasting inside lists or quotes
 
-For detailed information on each feature, please refer to the following documents:
+[Detailed documentation →](./Doc/EditEnhancements.md)
 
-- [Text Auto-formatting](./Doc/AutoFormatting.md)
-- [Edit Enhancements](./Doc/EditEnhancements.md)
-- [Customizable Conversion Rules](./Doc/CustomRules.md)
+### 3. Rule Engine
+
+A powerful, unified rule engine handles all text transformations with three rule types:
+
+| Type | Trigger | Example |
+|------|---------|---------|
+| **Input** | Triggered when you type a matching pattern | `··` → `` `$0` `` (inline code) |
+| **Delete** | Triggered on Backspace | Delete `$` → delete entire `$...$` pair |
+| **SelectKey** | Triggered when you type after selecting text | Select text + `￥` → `$text$` |
+
+Rules support:
+- **Regex matching** with capture group references (`[[1]]`, `[[R1]]`)
+- **Tabstop placeholders** (`$0`, `$1`, `${1:default}`) with Tab navigation
+- **Scope-aware execution** — restrict rules to text, formula, or code contexts
+- **Function replacements** — write JavaScript logic in the replacement field
+- **Priority-based ordering** and drag-and-drop reordering
+- **Tab-triggered** or **auto-triggered**
+- **Import/Export** user rules as JSON
+
+[Detailed documentation →](./Doc/CustomRules.md)
+
+### 4. Built-in Commands
+
+| Command | Default Hotkey | Description |
+|---------|---------------|-------------|
+| Format Article | `Mod+Shift+S` | Apply auto-formatting to the entire document |
+| Format Selection/Line | `Mod+Shift+L` | Format selected text or current line |
+| Delete Blank Lines | `Mod+Shift+K` | Remove extra blank lines |
+| New Line After Current | `Mod+Enter` | Create new line below and jump to it |
+| Insert Code Block | `Mod+Shift+N` | Convert selection to code block |
+| Toggle Auto-format | `Ctrl+Tab` | Enable/disable auto-formatting |
+| Paste Without Format | `Mod+Shift+V` | Plain paste (bypass Smart Paste) |
+| Toggle Comment | `Mod+/` | Toggle comments (supports code block languages) |
+| Select Block | — | Expand selection to current block |
+
+### 5. Other Settings
+
+- **Strict Line Break**: Enter creates double line break (Markdown paragraph break)
+- **Collapsed Heading Enter**: Enter on a collapsed heading adds a sibling heading without expanding
+- **IME fixes**: Compatibility options for Chinese IME, macOS context menu, and MS IME
+- **File exclusion**: Exclude specific files from auto-formatting by path pattern
 
 ## Changelog
 

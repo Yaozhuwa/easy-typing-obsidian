@@ -49,9 +49,8 @@ export const tabstopsStateField = StateField.define<TabstopGroup[]>({
 
 
 export function getTabstopGroupsFromView(view: EditorView) {
-	const currentTabstopGroups = view.state.field(tabstopsStateField);
-
-	return currentTabstopGroups;
+	const currentTabstopGroups = view.state.field(tabstopsStateField, false);
+	return currentTabstopGroups ?? [];
 }
 
 export function hasTabstops(view: EditorView) {

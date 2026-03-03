@@ -650,6 +650,7 @@ export function getPosLineType(state: EditorState, pos: number): LineType {
     let line_number = line.number
     // const tree = syntaxTree(state);
     const tree = ensureSyntaxTree(state, line.to);
+    if (!tree) return LineType.text;
     const token = tree.resolve(line.from, 1).name
 
     // for (let p=line.from; p<line.to; p+=1){

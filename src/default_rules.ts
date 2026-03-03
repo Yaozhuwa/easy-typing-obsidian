@@ -97,7 +97,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	{
 		id: 'builtin-del-codeblock',
 		trigger: '(?<=^|\\n)([ \\t]*)```',
-		trigger_right: '\\n([ \\t]*)```',
+		trigger_right: '[ \\t]*\\n([ \\t]*)```',
 		replacement: '[[1]]',
 		options: 'dr',
 		priority: 30,
