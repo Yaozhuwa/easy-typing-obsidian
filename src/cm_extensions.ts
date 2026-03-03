@@ -23,10 +23,10 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
 			let changestr_ = changedStr.replace(/\s/g, '0')
 			let insertedStr = inserted.sliceString(0);
-			if (ctx.settings?.debug) {
-				console.log("[TransactionFilter] type, fromA, toA, changed, fromB, toB, inserted");
-				console.log(changeTypeStr, fromA, toA, changedStr, fromB, toB, insertedStr);
-			}
+			// if (ctx.settings?.debug) {
+			// 	console.log("[TransactionFilter] type, fromA, toA, changed, fromB, toB, inserted");
+			// 	console.log(changeTypeStr, fromA, toA, changedStr, fromB, toB, insertedStr);
+			// }
 
 			// 表格编辑时直接返回，解决表格内容编辑有时候会跳出聚焦状态的 Bug
 			if (getPosLineType(tr.startState, fromA) == LineType.table) return tr;

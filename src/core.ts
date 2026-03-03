@@ -162,7 +162,7 @@ export class LineFormater {
             })
         }
         if (insertedStr.contains("\n")) {
-            console.log("insertStr", insertedStr)
+            print("insertStr", insertedStr)
             res[1] += insertedStr.length;
         }
         return [changes, { selection: { anchor: offset + res[1] }, userEvent: "EasyTyping.change" }];
@@ -228,7 +228,7 @@ export class LineFormater {
                 }
 
                 // 3.2 Language pair spacing (replaces ChineseEnglishSpace etc.)
-                if (settings.debug) console.log('[formatLine] languagePairs:', settings.languagePairs, 'content:', content, 'curCh:', curCh, 'prevCh:', prevCh, 'offset:', offset);
+                // if (settings.debug) console.log('[formatLine] languagePairs:', settings.languagePairs, 'content:', content, 'curCh:', curCh, 'prevCh:', prevCh, 'offset:', offset);
                 if (settings.languagePairs && settings.languagePairs.length > 0) {
                     ctx = { ...ctx, content, curCh };
                     ctx = applyLanguagePairSpacing(ctx, settings.languagePairs, prefixDict, settings.customScriptCategories, settings.debug);
