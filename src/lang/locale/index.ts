@@ -3,6 +3,8 @@ import enUS from './en-US';
 import zhCN from './zh-CN';
 import zhTW from './zh-TW';
 import ruRU from './ru-RU';
+import jaJP from './ja-JP';
+import koKR from './ko-KR';
 import type { Locale } from './types';
 
 const localeMap: Record<string, Locale> = {
@@ -11,6 +13,8 @@ const localeMap: Record<string, Locale> = {
     'zh-cn': zhCN,
     'zh-tw': zhTW,
     'ru': ruRU,
+    'ja': jaJP,
+    'ko': koKR,
 };
 
 let cached: Locale | null = null;
