@@ -90,8 +90,8 @@ const locale: Locale = {
             desc: "第一次选中当前行，第二次选中当前文本块，第三次选中全文。"
         },
         collapsePersistentEnter: {
-            name: "标题折叠保序",
-            desc: "在折叠的同级标题行按回车不会展开，直接添加同级标题行"
+            name: "折叠标题回车不展开",
+            desc: "在折叠的标题行按回车时，不展开折叠内容，直接在下方添加同级标题行"
         },
         printDebugInfo: {
             name: "在控制台输出调试信息",

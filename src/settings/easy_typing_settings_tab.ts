@@ -94,16 +94,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	// ==================== Tab 1: 编辑增强 ====================
 	buildEditEnhanceTab(el: HTMLElement): void {
 		const locale = getLocale();
-		new Setting(el)
-			.setName(locale.settings.smartPaste.name)
-			.setDesc(locale.settings.smartPaste.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.SmartPaste)
-					.onChange(async (value) => {
-						this.plugin.settings.SmartPaste = value;
-						await this.plugin.saveSettings();
-					});
-			});
 
 		new Setting(el)
 			.setName(locale.settings.codeblockEdit.name)
@@ -138,6 +128,26 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
+		new Setting(el)
+			.setName(locale.settings.enhanceModA.name)
+			.setDesc(locale.settings.enhanceModA.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.EnhanceModA).onChange(async (value) => {
+					this.plugin.settings.EnhanceModA = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(el)
+			.setName(locale.settings.smartPaste.name)
+			.setDesc(locale.settings.smartPaste.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.SmartPaste)
+					.onChange(async (value) => {
+						this.plugin.settings.SmartPaste = value;
+						await this.plugin.saveSettings();
+					});
+			});
 	}
 
 	// ==================== Tab 2: 自动格式化 ====================
@@ -662,16 +672,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.StrictModeEnter).onChange(async (value) => {
 					this.plugin.settings.StrictModeEnter = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(el)
-			.setName(locale.settings.enhanceModA.name)
-			.setDesc(locale.settings.enhanceModA.desc)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.EnhanceModA).onChange(async (value) => {
-					this.plugin.settings.EnhanceModA = value;
 					await this.plugin.saveSettings();
 				});
 			});

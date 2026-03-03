@@ -93,8 +93,8 @@ const locale: Locale = {
             desc: "第一次選中當前行，第二次選中當前文本塊，第三次選中全文。"
         },
         collapsePersistentEnter: {
-            name: "標題折叠保序",
-            desc: "在折叠的同级標題行按回車不會展開，直接添加同級標題行"
+            name: "折疊標題回車不展開",
+            desc: "在折疊的標題行按回車時，不展開折疊內容，直接在下方添加同級標題行"
         },
         printDebugInfo: {
             name: "在控制台輸出調試資訊",

@@ -90,8 +90,8 @@ const locale: Locale = {
             desc: "First select the current line, second select the current text block, third select the entire text."
         },
         collapsePersistentEnter: {
-            name: "Collapse Persistent Enter",
-            desc: "Adds same-level header line without expanding when pressing Enter on a collapsed header."
+            name: "Keep Collapsed on Enter",
+            desc: "Pressing Enter on a collapsed heading inserts a same-level heading below without expanding the fold."
         },
         printDebugInfo: {
             name: "Print debug info in console",
