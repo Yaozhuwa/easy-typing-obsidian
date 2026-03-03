@@ -236,6 +236,12 @@ const locale: Locale = {
         restoreRule: "Восстановить это правило",
         resetAllRules: "Сбросить встроенные правила",
         resetSuccess: "Встроенные правила успешно сброшены",
+        exportRules: "Экспорт правил",
+        importRules: "Импорт правил",
+        noRulesToExport: "Нет пользовательских правил для экспорта",
+        importSuccess: "Импортировано %d правил, пропущено %d дубликатов",
+        importInvalidJson: "Ошибка формата: недопустимый JSON",
+        importNoRules: "В файле нет правил для импорта",
     },
     placeHolder: {
         triggerSymbol: "Символ триггера",

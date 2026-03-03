@@ -235,6 +235,12 @@ const locale: Locale = {
         restoreRule: "恢復此規則",
         resetAllRules: "重置內建規則",
         resetSuccess: "內建規則已重置",
+        exportRules: "匯出規則",
+        importRules: "匯入規則",
+        noRulesToExport: "沒有可匯出的使用者規則",
+        importSuccess: "匯入了 %d 條規則，跳過 %d 條重複規則",
+        importInvalidJson: "檔案格式錯誤：不是有效的 JSON",
+        importNoRules: "檔案中沒有可匯入的規則",
     },
     placeHolder: {
         triggerSymbol: "觸發符",

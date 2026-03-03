@@ -232,6 +232,12 @@ const locale: Locale = {
         restoreRule: "Restore this rule",
         resetAllRules: "Reset all built-in rules",
         resetSuccess: "Built-in rules reset successfully",
+        exportRules: "Export Rules",
+        importRules: "Import Rules",
+        noRulesToExport: "No user rules to export",
+        importSuccess: "Imported %d rules, skipped %d duplicates",
+        importInvalidJson: "Invalid file: not valid JSON",
+        importNoRules: "No importable rules found in file",
     },
     placeHolder: {
         triggerSymbol: "Trigger Symbol",
