@@ -90,6 +90,13 @@ function escapeRegex(s: string): string {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ===== Regex Cache Types =====
+
+interface CachedRegex {
+	left: RegExp | null;
+	right: RegExp | null;
+}
+
 // ===== RuleEngine =====
 
 export class RuleEngine {
@@ -97,6 +104,9 @@ export class RuleEngine {
 	private sortedRules: ConvertRule[] = [];
 	private ruleIdCounter: number = 0;
 	private fnErrorLastNotify: Map<string, number> = new Map();
+
+	// Cache for compiled regex patterns: key is rule.id
+	private regexCache: Map<string, CachedRegex> = new Map();
 
 	// ===== Static Utilities =====
 
@@ -271,6 +281,7 @@ export class RuleEngine {
 	removeRule(id: string): boolean {
 		if (!this.rulesById.has(id)) return false;
 		this.rulesById.delete(id);
+		this.regexCache.delete(id);
 		const idx = this.sortedRules.findIndex(r => r.id === id);
 		if (idx !== -1) this.sortedRules.splice(idx, 1);
 		return true;
@@ -279,6 +290,11 @@ export class RuleEngine {
 	updateRule(id: string, patch: Partial<Omit<ConvertRule, 'id'>>): boolean {
 		const existing = this.rulesById.get(id);
 		if (!existing) return false;
+
+		// Invalidate regex cache if match pattern changed
+		if (patch.match !== undefined || patch.type !== undefined) {
+			this.regexCache.delete(id);
+		}
 
 		const priorityChanged = patch.priority !== undefined && patch.priority !== existing.priority;
 		Object.assign(existing, patch);
@@ -311,12 +327,38 @@ export class RuleEngine {
 	clear(): void {
 		this.rulesById.clear();
 		this.sortedRules = [];
+		this.regexCache.clear();
 	}
 
 	loadFromFiles(builtinRules: SimpleRule[], userRules: SimpleRule[]): void {
 		this.clear();
 		this.addSimpleRules(builtinRules);
 		this.addSimpleRules(userRules);
+	}
+
+	// ===== Regex Cache =====
+
+	/**
+	 * Get or create cached regex patterns for a rule.
+	 * Caches the compiled RegExp objects to avoid recompiling on every input.
+	 */
+	private getCachedRegex(rule: ConvertRule): CachedRegex {
+		let cached = this.regexCache.get(rule.id);
+		if (cached) return cached;
+
+		const leftPattern = rule.match.isRegex
+			? rule.match.left
+			: escapeRegex(rule.match.left);
+		const rightPattern = rule.match.isRegex
+			? rule.match.right
+			: escapeRegex(rule.match.right);
+
+		cached = {
+			left: leftPattern ? new RegExp('(?:' + leftPattern + ')$') : null,
+			right: rightPattern ? new RegExp('^(?:' + rightPattern + ')') : null,
+		};
+		this.regexCache.set(rule.id, cached);
+		return cached;
 	}
 
 	// ===== Template Expansion =====
@@ -469,15 +511,10 @@ export class RuleEngine {
 		const leftDoc = ctx.docText.slice(0, from);
 		const rightDoc = ctx.docText.slice(to);
 
-		const leftPattern = rule.match.isRegex
-			? rule.match.left
-			: escapeRegex(rule.match.left);
-		const rightPattern = rule.match.isRegex
-			? rule.match.right
-			: escapeRegex(rule.match.right);
-
-		const leftRegex = leftPattern ? new RegExp('(?:' + leftPattern + ')$') : null;
-		const rightRegex = rightPattern ? new RegExp('^(?:' + rightPattern + ')') : null;
+		// Use cached regex patterns
+		const cached = this.getCachedRegex(rule);
+		const leftRegex = cached.left;
+		const rightRegex = cached.right;
 
 		const leftMatch = leftRegex ? leftDoc.match(leftRegex) : [''];
 		const rightMatch = rightRegex ? rightDoc.match(rightRegex) : [''];
