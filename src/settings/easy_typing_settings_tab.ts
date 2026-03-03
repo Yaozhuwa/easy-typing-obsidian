@@ -21,7 +21,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	// 记住当前激活的 Tab，避免 display() 刷新时重置
 	activeTab: string = "edit-enhance";
 	// 拖拽状态
-	private dragSourceIndex: number = -1;
+	private dragSourceIndex: number | null = null;
 
 	constructor(app: App, plugin: EasyTypingPlugin) {
 		super(app, plugin);
@@ -710,33 +710,38 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 			handle.draggable = true;
 
+			// 缓存 midY，避免 dragover 每帧调用 getBoundingClientRect
+			let cachedMidY = 0;
+
 			handle.addEventListener('dragstart', (e: DragEvent) => {
-				const idx = parseInt(el.dataset.ruleIndex!);
-				this.dragSourceIndex = idx;
+				this.dragSourceIndex = parseInt(el.dataset.ruleIndex!);
 				el.addClass('et-rule-dragging');
 				e.dataTransfer!.effectAllowed = 'move';
 			});
 
 			handle.addEventListener('dragend', () => {
-				this.dragSourceIndex = -1;
+				this.dragSourceIndex = null;
 				el.removeClass('et-rule-dragging');
 				el.parentElement?.querySelectorAll('.et-rule-drag-over-top, .et-rule-drag-over-bottom').forEach(
 					item => item.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom')
 				);
 			});
 
+			el.addEventListener('dragenter', () => {
+				const rect = el.getBoundingClientRect();
+				cachedMidY = rect.top + rect.height / 2;
+			});
+
 			el.addEventListener('dragover', (e: DragEvent) => {
-				if (this.dragSourceIndex === -1) return;
+				if (this.dragSourceIndex === null) return;
 				e.preventDefault();
 				e.dataTransfer!.dropEffect = 'move';
 
-				el.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom');
-				const rect = el.getBoundingClientRect();
-				const midY = rect.top + rect.height / 2;
-				if (e.clientY < midY) {
-					el.addClass('et-rule-drag-over-top');
-				} else {
-					el.addClass('et-rule-drag-over-bottom');
+				const isTop = e.clientY < cachedMidY;
+				const targetCls = isTop ? 'et-rule-drag-over-top' : 'et-rule-drag-over-bottom';
+				if (!el.hasClass(targetCls)) {
+					el.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom');
+					el.addClass(targetCls);
 				}
 			});
 
@@ -749,12 +754,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				el.removeClass('et-rule-drag-over-top', 'et-rule-drag-over-bottom');
 
 				const fromIndex = this.dragSourceIndex;
-				if (fromIndex === -1) return;
+				if (fromIndex === null) return;
 				const currentIndex = parseInt(el.dataset.ruleIndex!);
 
-				const rect = el.getBoundingClientRect();
-				const midY = rect.top + rect.height / 2;
-				const dropOnBottom = e.clientY >= midY;
+				const dropOnBottom = e.clientY >= cachedMidY;
 
 				// 计算目标位置（splice 后的索引）
 				let toIndex: number;
@@ -774,7 +777,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				const sourceEl = ruleItems[fromIndex];
 				if (!sourceEl) return;
 
-				// 在 DOM 中，toIndex 对应的是原数组位置
 				if (toIndex < fromIndex) {
 					parent.insertBefore(sourceEl, ruleItems[toIndex]);
 				} else {
@@ -786,9 +788,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					}
 				}
 
-				// 更新所有 data-rule-index
-				const updatedItems = Array.from(parent.querySelectorAll('.et-rule-item[data-rule-index]')) as HTMLElement[];
-				updatedItems.forEach((item, i) => item.dataset.ruleIndex = String(i));
+				// 复用已有数组更新 data-rule-index，无需二次 querySelectorAll
+				ruleItems.splice(fromIndex, 1);
+				ruleItems.splice(toIndex, 0, sourceEl);
+				ruleItems.forEach((item, i) => item.dataset.ruleIndex = String(i));
 			});
 		}
 	}
