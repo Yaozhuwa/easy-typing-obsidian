@@ -103,7 +103,7 @@ You can define custom script categories using Unicode character class patterns. 
 
 When you type a word character by character, the plugin might insert a space too early — for example, inserting a space after `n` when you're about to type `n8n`. The prefix dictionary prevents this by suppressing space insertion for known prefixes.
 
-Enter one entry per line. Two formats are supported:
+Entries can be separated by commas, spaces, or newlines. Two formats are supported:
 
 | Format | Syntax | Description | Example |
 |--------|--------|-------------|---------|

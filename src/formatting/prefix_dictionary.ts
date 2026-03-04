@@ -14,21 +14,23 @@ export class PrefixDictionary {
         this.regexEntries = [];
         if (!raw || raw.trim() === '') return;
 
-        const lines = raw.split('\n');
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
+        // Match regex entries /.../ first (may contain commas/spaces),
+        // then match non-delimiter tokens. Delimiters: comma, space, newline.
+        const tokenPattern = /\/(?:[^/\\]|\\.)+\/[gimsuy]*|[^\s,]+/g;
+        let match: RegExpExecArray | null;
+        while ((match = tokenPattern.exec(raw)) !== null) {
+            const token = match[0];
 
             // Regex entries: /pattern/ or /pattern/flags
-            const regexMatch = /^\/(.+)\/([gimsuy]*)$/.exec(trimmed);
+            const regexMatch = /^\/(.+)\/([gimsuy]*)$/.exec(token);
             if (regexMatch) {
                 try {
                     this.regexEntries.push(new RegExp(regexMatch[1], regexMatch[2]));
                 } catch (e) {
-                    console.warn('PrefixDictionary: invalid regex:', trimmed, e);
+                    console.warn('PrefixDictionary: invalid regex:', token, e);
                 }
             } else {
-                this.literalWords.push(trimmed);
+                this.literalWords.push(token);
             }
         }
     }
