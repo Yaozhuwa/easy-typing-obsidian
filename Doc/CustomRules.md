@@ -85,6 +85,8 @@ Note: `[[n]]` first looks in left-side groups; if not found, falls back to right
 | `$1`, `$2`... | Additional cursor positions (navigate with Tab) |
 | `${1:default text}` | Tabstop with default text (selected when Tab-navigating) |
 
+Note: The cursor jump order is $0, $1, $2, ...
+
 ### Special Variables (SelectKey rules)
 
 | Syntax | Meaning |
