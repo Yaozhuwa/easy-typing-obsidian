@@ -8,13 +8,28 @@
 
 Easy Typing is an enhancement plugin for [Obsidian](https://obsidian.md) that improves the writing experience through automatic text formatting, smart editing enhancements, and a powerful rule engine for custom text transformations.
 
+## ⚡ Quick Start
+
+After installing and enabling the plugin, these features work **out of the box** — no configuration needed:
+
+- **Auto-spacing** between Chinese and English, Chinese and digits — cleaner typography
+- **Auto full-width punctuation** after CJK characters — no need to switch punctuation mode
+- **Auto-pairing** CJK brackets and quotes — type `（` and `）` is inserted automatically
+- Type `··` (two middle dots) to **quickly create inline code** — no need to switch to English for backticks
+- **Tab to jump out** of paired symbols — press Tab to escape brackets/quotes
+- **Smart Backspace** — clear empty list items and quote lines with one keystroke
+
+> 💡 All auto-formatting actions can be undone immediately with `Ctrl/Cmd+Z`.
+
+Want to customize further? Adjust each feature's behavior in the plugin settings.
+
 ## Core Features
 
 ### 1. Text Auto-formatting
 
 Automatically formats text as you type:
-- **Auto-capitalize** the first letter of sentences
 - **Auto-spacing** between different script pairs (e.g. Chinese and English, Chinese and digits, etc.)
+- **Auto-capitalize** the first letter of sentences
 - **Inline element spacing** for code, formulas, and links — configurable as none, soft, or strict
 - **User-defined regex blocks** to protect special text patterns from formatting
 - **Prefix dictionary** to suppress premature space insertion while typing
@@ -31,6 +46,8 @@ Smart editing features that work as you type:
 - **Tabout**: Press Tab to jump out of paired symbols (`【】`, `（）`, `《》`, quotes, inline code, etc.)
 - **Enhanced Mod+A**: Progressive selection expansion (current line → current block → entire document)
 - **Smart Paste**: Auto-add indentation and list/quote prefixes when pasting inside lists or quotes
+- **Strict Line Break**: Enter creates double line break (Markdown paragraph break)
+- **Collapsed Heading Enter**: Enter on a collapsed heading adds a sibling heading without expanding
 
 [Detailed documentation →](./Doc/EditEnhancements.md)
 
@@ -39,12 +56,12 @@ Smart editing features that work as you type:
 A powerful, unified rule engine handles all text transformations with three rule types:
 
 | Type | Trigger | Example |
-|------|---------|---------|
+|------|---------|---------| 
 | **Input** | Triggered when you type a matching pattern | `··` → `` `$0` `` (inline code) |
 | **Delete** | Triggered on Backspace | Delete `$` → delete entire `$...$` pair |
 | **SelectKey** | Triggered when you type after selecting text | Select text + `￥` → `$text$` |
 
-Rules support:
+The plugin ships with rich **built-in rules** (auto-pairing, full-width/half-width conversion, symbol shortcuts, etc.) and supports fully **custom rules**:
 - **Regex matching** with capture group references (`[[1]]`, `[[R1]]`)
 - **Tabstop placeholders** (`$0`, `$1`, `${1:default}`) with Tab navigation
 - **Scope-aware execution** — restrict rules to text, formula, or code contexts
@@ -71,8 +88,6 @@ Rules support:
 
 ### 5. Other Settings
 
-- **Strict Line Break**: Enter creates double line break (Markdown paragraph break)
-- **Collapsed Heading Enter**: Enter on a collapsed heading adds a sibling heading without expanding
 - **IME fixes**: Compatibility options for Chinese IME, macOS context menu, and MS IME
 - **File exclusion**: Exclude specific files from auto-formatting by path pattern
 

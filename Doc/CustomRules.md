@@ -1,6 +1,118 @@
-# Custom Rules
+# Rule Engine
 
-Easy Typing uses a unified **Rule Engine** for all text transformations. Rules are defined in a simple JSON format (`SimpleRule`) and support regex matching, tabstop placeholders, scope restrictions, and JavaScript function replacements.
+Easy Typing uses a unified **Rule Engine** for all text transformations — from built-in full-width/half-width punctuation conversion to your own custom shortcut rules, all powered by the same engine.
+
+## Table of Contents
+
+- [Built-in Rules Overview](#built-in-rules-overview)
+- [Custom Rules Quick Start](#custom-rules-quick-start)
+- [Rule Types](#rule-types)
+- [Rule Fields](#rule-fields)
+- [Option Flags](#option-flags)
+- [Replacement Template Syntax](#replacement-template-syntax)
+- [Function Replacement (F flag)](#function-replacement-f-flag)
+- [Scope Restrictions](#scope-restrictions)
+- [Trigger Modes](#trigger-modes)
+- [Priority System](#priority-system)
+- [Managing Rules](#managing-rules)
+- [Examples](#examples)
+
+---
+
+## Built-in Rules Overview
+
+The plugin ships with a set of built-in rules covering common CJK editing patterns. These rules can be viewed and toggled in the **Builtin Rules** settings tab.
+
+### Auto-pairing (Priority 10)
+
+When you type a CJK opening bracket or quote, the matching closing symbol is automatically inserted:
+- `【` → `【|】`, `（` → `（|）`, `《` → `《|》`
+- `"` → `"|"`, `'` → `'|'`, `「` → `「|」`, `『` → `『|』`
+
+> 💡 `|` indicates cursor position. If the closing symbol already exists to the right of the cursor, typing it will jump over it instead of inserting a duplicate.
+
+Deleting a CJK opening bracket also deletes the paired closing bracket.
+
+### Full-width ↔ Half-width Conversion
+
+**Half-width to full-width** (Priority 15): After a CJK character, English punctuation is automatically converted to its full-width equivalent:
+- `,` → `，`, `.` → `。`, `?` → `？`, `!` → `！`
+- `:` → `：`, `;` → `；`, `(` → `（|）`
+
+**Full-width to half-width** (Priority 3): Typing the same full-width punctuation twice converts it to half-width:
+- `。。` → `.`, `！！` → `!`, `？？` → `?`
+- `，，` → `,`, `：：` → `:`, `；；` → `;`
+- `（（` → `()`, `《《` → `<`
+
+### Symbol Conversions (Priority 10)
+
+| Input | Output | Description |
+|-------|--------|-------------|
+| `··` (two middle dots) | `` `|` `` | Inline code |
+| `` `· `` | Fenced code block | Code block |
+| `￥￥` / `¥¥` / `$￥` / `$¥` | `$|$` | Inline formula |
+| `$$` at end of line | `$$\n|\n$$` | Block formula |
+| `》` at line start | `> ` | Blockquote |
+| `、` at line start | `/` | Quick input |
+
+### Delete Pairs (Priority 30)
+
+Quick deletion of paired constructs by pressing Backspace:
+
+| Action | Effect |
+|--------|--------|
+| Backspace in `$|$` | Delete both `$` |
+| Backspace in `==|==` | Delete both `==` |
+| Backspace in `$$\n|\n$$` | Delete entire block formula |
+| Backspace in empty code block | Delete entire block |
+| Backspace in `[[link]]` or `![[embed]]` | Delete entire wikilink |
+
+### Selection Wrapping (Priority 40)
+
+Select text, then type a trigger character to wrap it:
+
+| Trigger | Output |
+|---------|--------|
+| `【` | `[selected text]` |
+| `￥` / `¥` | `$selected text$` |
+| `"` / `"` | `"selected text"` / `"selected text"` |
+| `'` / `'` | `'selected text'` / `'selected text'` |
+| `《` | `《selected text》` |
+| `（` | `（selected text）` |
+
+### Quote Handling (Priority 50)
+
+- Typing `>` or `》` in a blockquote context adds another quote level with `> `
+- Auto-adds space after `>` prefix if missing
+
+---
+
+## Custom Rules Quick Start
+
+Create your first rule in just 3 steps:
+
+### Step 1: Open Settings
+
+Open plugin settings → **User Rules** tab → click the "Add Rule" button.
+
+### Step 2: Fill in the Rule
+
+For example, to turn `:)` into 😀:
+
+| Field | Value |
+|-------|-------|
+| Trigger (left match) | `:)` |
+| Replacement | `😀$0` |
+
+`$0` marks where the cursor will be placed after replacement.
+
+### Step 3: Test
+
+Type `:)` in the editor — it automatically becomes `😀` with the cursor after the emoji.
+
+> 💡 Want to learn more? Read the full rule reference below.
+
+---
 
 ## Rule Types
 
@@ -31,6 +143,8 @@ Triggered when you type a character while text is selected. The `trigger` field 
 { "trigger": "-", "replacement": "~~${SEL}~~", "options": "s" }
 ```
 
+---
+
 ## Rule Fields
 
 | Field | Type | Description |
@@ -43,6 +157,8 @@ Triggered when you type a character while text is selected. The `trigger` field 
 | `enabled` | boolean | Whether the rule is active (default: true) |
 | `description` | string | Human-readable description |
 | `scope_language` | string | Restrict to a specific code block language (e.g., `python`) |
+
+---
 
 ## Option Flags
 
@@ -62,6 +178,8 @@ Combine multiple flags in a single string, e.g., `dr` = Delete + Regex.
 
 If none of `d` or `s` is specified, the rule is an Input rule.
 
+---
+
 ## Replacement Template Syntax
 
 ### Capture Group References
@@ -75,7 +193,7 @@ Used in regex rules to reference matched groups:
 | `[[R0]]` | Entire match of `trigger_right` (right side) |
 | `[[R1]]`, `[[R2]]`... | Nth capture group of `trigger_right` |
 
-Note: `[[n]]` first looks in left-side groups; if not found, falls back to right-side. Use `[[Rn]]` to explicitly reference the right side.
+> 💡 `[[n]]` first looks in left-side groups; if not found, falls back to right-side. Use `[[Rn]]` to explicitly reference the right side.
 
 ### Tabstop Placeholders
 
@@ -85,7 +203,7 @@ Note: `[[n]]` first looks in left-side groups; if not found, falls back to right
 | `$1`, `$2`... | Additional cursor positions (navigate with Tab) |
 | `${1:default text}` | Tabstop with default text (selected when Tab-navigating) |
 
-Note: The cursor jump order is $0, $1, $2, ...
+Cursor jump order: $0 → $1 → $2 → ...
 
 ### Special Variables (SelectKey rules)
 
@@ -103,16 +221,20 @@ Note: The cursor jump order is $0, $1, $2, ...
 | `\r` | Carriage return |
 | `\\` | Literal backslash |
 
+---
+
 ## Function Replacement (F flag)
 
 When `options` includes `F`, the `replacement` field is treated as a JavaScript function body, compiled via `new Function()`.
 
 ### Parameters
 
-- **Input/Delete rules**: `leftMatches: string[]`, `rightMatches: string[]`
-  - `leftMatches[0]` = entire left match, `leftMatches[1]` = first capture group, etc.
-  - `rightMatches[0]` = entire right match, etc.
-- **SelectKey rules**: `selectionText: string`, `key: string`
+| Rule Type | Parameters | Description |
+|-----------|------------|-------------|
+| Input / Delete | `leftMatches: string[]` | `leftMatches[0]` = entire left match, `[1]` = first capture group... |
+| Input / Delete | `rightMatches: string[]` | `rightMatches[0]` = entire right match... |
+| SelectKey | `selectionText: string` | The selected text |
+| SelectKey | `key: string` | The trigger key |
 
 ### Return Value
 
@@ -130,7 +252,9 @@ Insert current date when typing `/date`:
 }
 ```
 
-The settings panel provides a code editor with JavaScript syntax highlighting for function rules.
+> 💡 The settings panel provides a code editor with JavaScript syntax highlighting for function rules.
+
+---
 
 ## Scope Restrictions
 
@@ -145,6 +269,8 @@ Rules can be restricted to specific editing contexts using scope flags:
 
 Additionally, you can set `scope_language` to restrict a rule to a specific programming language within code blocks (e.g., `python`, `javascript`).
 
+---
+
 ## Trigger Modes
 
 | Mode | When it fires |
@@ -154,9 +280,11 @@ Additionally, you can set `scope_language` to restrict a rule to a specific prog
 
 Tab-triggered rules are useful for snippets that you don't want to accidentally expand during normal typing.
 
+---
+
 ## Priority System
 
-Rules are evaluated in order of priority (lower number = higher priority):
+Rules are evaluated in order of priority (lower number = higher priority). **The first matching rule wins** — subsequent rules are not evaluated.
 
 | Priority Range | Usage |
 |----------------|-------|
@@ -168,7 +296,7 @@ Rules are evaluated in order of priority (lower number = higher priority):
 | 50 | Quote handling |
 | 100+ | User-defined rules (default: 100) |
 
-The first matching rule wins — subsequent rules are not evaluated.
+---
 
 ## Managing Rules
 
@@ -176,8 +304,10 @@ The first matching rule wins — subsequent rules are not evaluated.
 
 The settings panel has two rule tabs:
 
-- **Builtin Rules**: View and toggle built-in rules. Deleted built-in rules can be restored.
-- **User Rules**: Create, edit, delete, and reorder custom rules. Supports drag-and-drop reordering.
+| Tab | Function |
+|-----|----------|
+| **Builtin Rules** | View and toggle built-in rules. Deleted built-in rules can be restored. |
+| **User Rules** | Create, edit, delete, and reorder custom rules. Supports drag-and-drop reordering. |
 
 ### Import / Export
 
@@ -190,16 +320,18 @@ Rules are stored as JSON files in the plugin directory:
 - `builtin-rules.json` — built-in rules (auto-generated, can be customized)
 - `user-rules.json` — user-defined rules
 
+---
+
 ## Examples
 
-### Input Rules
+### 📝 Input Rules
 
-Convert `:)` to emoji:
+**Convert `:)` to emoji**:
 ```json
 { "trigger": ":)", "replacement": "😀$0" }
 ```
 
-Line-start `note-call` → Obsidian callout block (regex + tabstop):
+**Line-start `note-call` → Obsidian callout block** (regex + tabstop):
 ```json
 {
   "trigger": "(?<=^|\\n)([\\w-]+)-call",
@@ -208,9 +340,11 @@ Line-start `note-call` → Obsidian callout block (regex + tabstop):
 }
 ```
 
-### Delete Rules
+Note: When entering directly in the settings panel, the trigger for this rule should be written as `(?<=^|\n)([\w-]+)-call`, and the replacement as `> [![[1]]] $0\n> $1`.
 
-Regex delete: Task item degrades to list item:
+### 🗑️ Delete Rules
+
+**Task item degrades to list item** (regex delete):
 ```json
 {
   "trigger": "([-+*]) \\[.\\] ",
@@ -219,16 +353,16 @@ Regex delete: Task item degrades to list item:
 }
 ```
 
-### SelectKey Rules
+### ✂️ SelectKey Rules
 
-Select text, press `-` to add strikethrough:
+**Select text + `-` to add strikethrough**:
 ```json
 { "trigger": "-", "replacement": "~~${SEL}~~", "options": "s" }
 ```
 
-### Tab-triggered Rules
+### ⌨️ Tab-triggered Rules
 
-Expand `lorem` to placeholder text only on Tab:
+**Expand `lorem` to placeholder text only on Tab**:
 ```json
 {
   "trigger": "lorem",
@@ -237,9 +371,9 @@ Expand `lorem` to placeholder text only on Tab:
 }
 ```
 
-### Function Rules
+### 🔧 Function Rules
 
-Smart date insertion with format choice:
+**Smart date-time insertion**:
 ```json
 {
   "trigger": "/now",
@@ -248,9 +382,9 @@ Smart date insertion with format choice:
 }
 ```
 
-### Scope-restricted Rules
+### 🎯 Scope-restricted Rules
 
-A rule that only works inside formulas:
+**Formula-only rule**:
 ```json
 {
   "trigger": "oiint",
@@ -259,7 +393,7 @@ A rule that only works inside formulas:
 }
 ```
 
-A rule that only works in Python code blocks:
+**Python code block only**:
 ```json
 {
   "trigger": "ifmain",

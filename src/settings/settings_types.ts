@@ -54,14 +54,13 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	AutoFormat: true,
 	ExcludeFiles: "",
 
-
-	AutoCapital: true,
+	AutoCapital: false,
 	languagePairs: [
 		{ a: ScriptCategory.Chinese, b: ScriptCategory.English },
 		{ a: ScriptCategory.Chinese, b: ScriptCategory.Digit },
 		{ a: ScriptCategory.Digit, b: ScriptCategory.English },
 	],
-	PrefixDictionary: '',
+	PrefixDictionary: 'n8n\npython3\nPython3',
 	SoftSpaceLeftSymbols: '',
 	SoftSpaceRightSymbols: '',
 	customScriptCategories: [],
