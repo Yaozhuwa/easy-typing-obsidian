@@ -289,7 +289,7 @@ function tryProcessInput(
 	changeFrom: number, cursorPos: number,
 	isCompose: boolean
 ): boolean {
-	const lineType = getPosLineType(update.view.state, changeFrom);
+	const lineType = getPosLineType(update.view.state, cursorPos);
 	if (lineType === LineType.table) return false;
 	if (triggerCvtRule(ctx, update.view, cursorPos)) return true;
 	if (!ctx.settings.AutoFormat || isCurrentFileExclude(ctx)) return false;
@@ -324,6 +324,9 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 				removeAllTabstops(update.view);
 			}
 		}
+
+		const inTable = getPosLineType(update.view.state, update.view.state.selection.asSingle().main.anchor) === LineType.table;
+		if (inTable) return;
 
 		// --- Compose 状态跟踪 ---
 		if (update.view.composing) {
