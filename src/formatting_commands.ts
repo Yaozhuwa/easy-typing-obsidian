@@ -30,7 +30,7 @@ export function isCurrentFileExclude(ctx: PluginContext): boolean {
 export function formatArticle(ctx: PluginContext, editor: Editor, view: MarkdownView): void {
 	const editorView = editor.cm as EditorView;
 	const tree = ensureSyntaxTree(editorView.state, editorView.state.doc.length);
-	if (!tree){
+	if (!tree) {
 		new Notice('EasyTyping: Syntax tree is not ready yet, please wait a moment and try again later!', 5000);
 		return;
 	}
@@ -134,19 +134,23 @@ export function formatOneLine(ctx: PluginContext, editor: Editor, lineNumber: nu
 export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 	if (ctx.settings?.debug) {
 		console.log('config.strictLineBreaks', ctx.app.vault.getConfig("strictLineBreaks"));
-		// return;
 	}
 	let strictLineBreaks = ctx.app.vault.config.strictLineBreaks || false;
 
 	const editorView = editor.cm as EditorView;
 	let state = editorView.state;
-	let doc = state.doc
+	let doc = state.doc;
 
-	const tree = ensureSyntaxTree(state, doc.length);
-	if (!tree){
-		new Notice('EasyTyping: Syntax tree is not ready yet, please wait a moment and try again later!', 5000);
-		return;
-	}
+	// Text-based line classification regexes (no syntax tree needed)
+	const RE_BLANK = /^\s*$/;
+	const RE_LIST = /^\s*(?:[-*+]|\d+[.)]) /;
+	const RE_QUOTE = /^\s*>/;
+	const RE_BLOCKID = /\s\^[\w-]+\s*$/;
+	const RE_HR = /^\s*(?:---+|\*\*\*+|___+)\s*$/;
+
+	/** Check whether a line needs a blank line preserved after it. */
+	const needsTrailingBlank = (text: string): boolean =>
+		RE_LIST.test(text) || RE_QUOTE.test(text) || RE_BLOCKID.test(text);
 
 	let start_line = 1;
 	let end_line = doc.lines;
@@ -162,49 +166,70 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 			end = temp;
 		}
 		start_line = begin;
-		end_line = end
+		end_line = end;
 	}
 
 	let delete_index: number[] = [];
-	let blank_reg = /^\s*$/;
 	let remain_next_blank = false;
+	let consecutiveBlanks = 0; // track consecutive blank lines for strict mode
 
 	if (start_line != 1) {
-		let node = tree.resolve(doc.line(start_line - 1).from, 1);
-		if (node.name.contains('list') || node.name.contains('quote') || node.name.contains('blockid')) {
+		const prevText = doc.line(start_line - 1).text;
+		if (needsTrailingBlank(prevText)) {
 			remain_next_blank = true;
 		}
 	}
-	if (end_line != line_num && !blank_reg.test(doc.line(end_line + 1).text)) {
+	if (end_line != line_num && !RE_BLANK.test(doc.line(end_line + 1).text)) {
 		end_line += 1;
 	}
 
 	for (let i = start_line; i <= end_line; i++) {
 		let line = doc.line(i);
-		let pos = line.from;
-		let node = tree.resolve(pos, 1);
+		let text = line.text;
 
 		// 对于空白行
-		if (blank_reg.test(line.text) && !remain_next_blank) {
+		if (RE_BLANK.test(text)) {
+			consecutiveBlanks++;
+			if (remain_next_blank) {
+				// 前瞻：如果下一个非空行也是列表/引用/blockid，则删除空行（同类块之间不需要空行）
+				let nextNonBlankIsBlock = false;
+				for (let j = i + 1; j <= end_line; j++) {
+					const jText = doc.line(j).text;
+					if (!RE_BLANK.test(jText)) {
+						nextNonBlankIsBlock = needsTrailingBlank(jText);
+						break;
+					}
+				}
+				if (nextNonBlankIsBlock) {
+					// 同类块之间：删除空行
+					delete_index.push(i);
+				}
+				// 不同类型：保留空行
+				remain_next_blank = false;
+				continue;
+			}
+			if (strictLineBreaks && consecutiveBlanks === 1) {
+				// 严格换行模式：保留第一行空行
+				continue;
+			}
 			delete_index.push(i);
 			continue;
 		}
-		else if (blank_reg.test(line.text) && remain_next_blank) {
-			remain_next_blank = false;
-			continue;
-		}
 
-		if (node.name.contains('hr') && delete_index[delete_index.length - 1] == i - 1) {
-			delete_index.pop()
+		// 非空白行：重置计数器
+		consecutiveBlanks = 0;
+
+		if (RE_HR.test(text) && delete_index[delete_index.length - 1] == i - 1) {
+			delete_index.pop();
 		}
-		else if (node.name.contains('list') || node.name.contains('quote') || node.name.contains('blockid')) {
+		else if (needsTrailingBlank(text)) {
 			remain_next_blank = true;
 		}
 		else {
 			remain_next_blank = false;
 		}
 	}
-	// console.log("delete_index",delete_index)
+
 	let newContent = "";
 	for (let i = 1; i < line_num; i++) {
 		if (!delete_index.contains(i)) {
@@ -212,7 +237,7 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 		}
 	}
 	if (!delete_index.contains(line_num)) {
-		newContent += doc.line(line_num).text
+		newContent += doc.line(line_num).text;
 	}
 
 	editor.setValue(newContent);
