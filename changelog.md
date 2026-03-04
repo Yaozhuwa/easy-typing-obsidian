@@ -1,4 +1,67 @@
 ## 更新日志 Changelog
+- V6.0.0 2026-03-05
+  - ⚠️ **破坏性更新**：本版本对规则引擎进行了完全重构，**不兼容之前版本的规则配置数据**。建议先删除插件（删除插件文件夹）后重新安装，以避免旧配置数据导致的异常。
+  - ⚠️ **Breaking Change**: This version completely refactors the rule engine and is **NOT compatible with previous rule configuration data**. It is recommended to delete the plugin (remove the plugin folder) and reinstall to avoid issues caused by legacy configuration data.
+  - 重大更新：规则引擎重构
+    - 全新的 RuleEngine 架构，统一管理选中替换、删除、输入三种规则类型
+    - 三种规则类型均支持正则表达式匹配、Tabstops 多光标跳转、函数式替换（F 标志）
+    - 规则支持自动触发或 Tab 触发两种模式
+    - 内置规则与用户规则分离，内置规则支持多语言描述
+    - 规则支持作用域检测（scopeLanguage），可限制规则仅在特定代码块语言中生效
+    - 正则规则添加错误处理，保存时校验并阻止无效正则
+  - 移除功能
+    - 移除「文本与标点间空格」功能，该功能引入的问题多于它解决的问题
+  - 代码架构重构：将 main.ts 和 settings.ts 拆分为模块化结构，提升可维护性
+  - 设置面板优化
+    - 用户规则面板支持拖拽排序
+    - 自定义规则面板添加导出/导入功能
+    - 规则编辑弹窗添加 CM6 代码编辑器（支持 JS 语法高亮）
+    - 分离规则标签页，优化面板布局
+  - 国际化增强
+    - 新增日语（ja-JP）和韩语（ko-KR）支持
+    - 统一 locale 检测方式，插件命令支持多语言
+  - 性能优化
+    - RuleEngine 正则表达式编译缓存
+    - 本地变量缓存优化
+  - 自动格式化改进
+    - 内置常见全角标点为软空格并精简设置项
+    - 前缀词典支持逗号、空格、换行符分隔
+  - 其他改进
+    - 优化空白行删除命令，不依赖语法树，支持严格换行模式
+    - 修复表格内自动格式化失效的问题
+    - 修复加粗后斜体内无法 Tabout 的问题
+    - 支持 ~~~ 围栏代码块的作用域检测
+  - 文档重写：全部文档重新撰写，结构更清晰
+  - Major Update: Rule Engine Refactor
+    - New RuleEngine architecture unifying selection, delete, and input — 3 rule types
+    - All 3 rule types support regex matching, Tabstops multi-cursor navigation, and function replacement (F flag)
+    - Rules support auto-trigger or Tab-trigger modes
+    - Built-in rules separated from user rules, with multilingual descriptions
+    - Scope detection (scopeLanguage) — restrict rules to specific code block languages
+    - Regex validation on save with error handling
+  - Removed Features
+    - Removed "space between text and punctuation" feature — it caused more issues than it solved
+  - Code Architecture Refactor: Split main.ts and settings.ts into modular structure for better maintainability
+  - Settings Panel Improvements
+    - Drag-and-drop reordering for user rules
+    - Export/import functionality for custom rules
+    - CM6 code editor with JS syntax highlighting in rule edit modal
+    - Split rule tabs with improved layout
+  - i18n Enhancements
+    - Added Japanese (ja-JP) and Korean (ko-KR) support
+    - Unified locale detection, multilingual plugin commands
+  - Performance
+    - Regex compilation cache for RuleEngine
+    - Local variable caching optimization
+  - Auto-formatting Improvements
+    - Built-in common full-width punctuation as soft spaces, simplified settings
+    - Prefix dictionary now supports comma, space, and newline delimiters
+  - Other Improvements
+    - Improved blank line deletion command (no syntax tree dependency, strict line break support)
+    - Fixed auto-formatting not working inside tables
+    - Fixed Tabout not working inside italic within bold
+    - Support ~~~ fenced code blocks in scope detection
+  - Documentation: Complete rewrite with clearer structure
 - V5.5.15 2025-08-22
   - 优化自定义规则多光标情况 Tabstops 的显示效果
   - 尝试解决特殊情况下可能遇到的 TypeError 导致的卡死问题
