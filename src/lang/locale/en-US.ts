@@ -28,7 +28,7 @@ const locale: Locale = {
         },
         prefixDictionary: {
             name: "Prefix Dictionary",
-            desc: "One word or /regex/ per line. Matching tokens won't have spaces inserted; prefixes being typed are also suppressed"
+            desc: "Separate entries by commas, spaces, or newlines. Supports words and /regex/. Matching tokens won't have spaces inserted; prefixes being typed are also suppressed"
         },
         softSpaceSymbols: {
             leftName: "Custom Extra Left Soft Space Symbols",

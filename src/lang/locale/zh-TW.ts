@@ -28,7 +28,7 @@ const locale: Locale = {
         },
         prefixDictionary: {
             name: "前綴詞典",
-            desc: "每行一個詞或 /正則/，匹配的 token 不會被插入空格，正在輸入的前綴也會暫不插入空格"
+            desc: "用逗號、空格或換行分隔，支援詞或 /正則/。匹配的 token 不會被插入空格，正在輸入的前綴也會暫不插入空格"
         },
         softSpaceSymbols: {
             leftName: "自定義左側軟空格額外符號",
