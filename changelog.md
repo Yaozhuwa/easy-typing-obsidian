@@ -1,4 +1,13 @@
 ## 更新日志 Changelog
+- V6.0.1 2026-03-05
+  - 新增「粘贴时自动格式化」开关，可在自动格式化面板中独立控制粘贴时是否触发格式化
+  - 删除插件自带的「无格式化粘贴」命令，改为依赖系统原生 CMD/CTRL+SHIFT+V
+  - 新增内置规则：选中文字后输入 `·` 包裹为行内代码
+  - 粘贴时格式化/格式化当前行/选中文本命令不再触发句首大写 #323
+  - Added "Auto formatting on paste" toggle in the Auto Format settings panel
+  - Removed the plugin's built-in "Paste without format" command; rely on system native CMD/CTRL+SHIFT+V instead
+  - Added built-in rule: wrap selection with backticks using `·`
+  - Fixed format current line/selection command incorrectly triggering auto-capitalization #323
 - V6.0.0 2026-03-05
   - ⚠️ **破坏性更新**：本版本对规则引擎进行了完全重构，**不兼容之前版本的规则配置数据**。建议先删除插件（删除插件文件夹）后重新安装，以避免旧配置数据导致的异常。
   - ⚠️ **Breaking Change**: This version completely refactors the rule engine and is **NOT compatible with previous rule configuration data**. It is recommended to delete the plugin (remove the plugin folder) and reinstall to avoid issues caused by legacy configuration data.

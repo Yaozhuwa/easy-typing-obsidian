@@ -79,7 +79,6 @@ When pasting text inside lists or blockquotes, the plugin automatically prepends
 | In a list | Each pasted line gets the list indentation |
 | In a blockquote | Each pasted line gets `> ` prefix |
 
-To paste without this behavior, use **Paste Without Format** (`Mod+Shift+V`).
 
 ---
 
@@ -107,4 +106,3 @@ Configure in the **Other** settings tab.
 | Toggle Comment | `Mod+/` | Toggle line comments (language-aware in code blocks) |
 | Select Block | — | Expand selection to the current code/quote block |
 | Enhanced Mod+A | `Mod+A` | Progressive selection: line → block → all (enable in settings) |
-| Paste Without Format | `Mod+Shift+V` | Plain paste (bypass Smart Paste) |

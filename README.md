@@ -82,7 +82,6 @@ The plugin ships with rich **built-in rules** (auto-pairing, full-width/half-wid
 | New Line After Current | `Mod+Enter` | Create new line below and jump to it |
 | Insert Code Block | `Mod+Shift+N` | Convert selection to code block |
 | Toggle Auto-format | `Ctrl+Tab` | Enable/disable auto-formatting |
-| Paste Without Format | `Mod+Shift+V` | Plain paste (bypass Smart Paste) |
 | Toggle Comment | `Mod+/` | Toggle comments (supports code block languages) |
 | Select Block | — | Expand selection to current block |
 
