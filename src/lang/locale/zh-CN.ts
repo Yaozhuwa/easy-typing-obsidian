@@ -283,6 +283,7 @@ const locale: Locale = {
         'builtin-del-codeblock': '快速删除空代码块',
         'builtin-del-wikilink': '快速删除双链及嵌入（![[]]）',
         'builtin-sel-wrap-symbols': '选中文字后输入 【/¥/￥ 包裹为 []/$$',
+        'builtin-sel-wrap-backtick': '选中文字后输入 · 包裹为行内代码',
         'builtin-sel-wrap-quotes': '选中文字后输入全角引号，配对引号包裹',
         'builtin-sel-wrap-cjk-brackets': '选中文字后输入《（，配对括号包裹',
         'builtin-quote-convert': '输入 > 或 》 转为 Markdown 引用标记',

@@ -282,6 +282,7 @@ const locale: Locale = {
         'builtin-del-block-formula': '블록 수식 $$...$$ 쌍 삭제',
         'builtin-del-codeblock': '빈 코드 블록 빠른 삭제',
         'builtin-del-wikilink': '위키링크 및 임베드(![[]])  빠른 삭제',
+        'builtin-sel-wrap-backtick': '· 로 선택 텍스트를 백틱으로 감싸기',
         'builtin-sel-wrap-symbols': '선택한 텍스트를 【/¥/￥로 []/$$로 감싸기',
         'builtin-sel-wrap-quotes': '선택한 텍스트를 전각 따옴표로 감싸기',
         'builtin-sel-wrap-cjk-brackets': '선택한 텍스트를 《》 또는 （） 괄호로 감싸기',
