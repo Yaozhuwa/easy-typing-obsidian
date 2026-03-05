@@ -1,12 +1,12 @@
-import {Editor, MarkdownView, Menu, Notice, Platform, Plugin, WorkspaceLeaf} from 'obsidian';
-import {Prec} from '@codemirror/state';
-import {DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString} from "./settings"
-import {EditorView, keymap} from '@codemirror/view';
+import { Editor, MarkdownView, Menu, Notice, Platform, Plugin, WorkspaceLeaf } from 'obsidian';
+import { Prec } from '@codemirror/state';
+import { DEFAULT_SETTINGS, EasyTypingSettings, EasyTypingSettingTab, PairString } from "./settings"
+import { EditorView, keymap } from '@codemirror/view';
 import {
 	setDebug,
 	string2pairstring,
 } from './utils'
-import {LineFormater} from './core'
+import { LineFormater } from './core'
 import { tabstopsStateField } from './tabstops_state_field';
 import { RuleEngine } from './rule_engine';
 import { RuleManager } from './rule_manager';
@@ -39,9 +39,9 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 		await this.ruleManager.initRuleEngine();
 
 		let TaboutPairStrs = ["【|】", "（|）", "《|》", "\u201C|\u201D", "\u2018|\u2019",
-						   "「|」", "『|』", "'|'", "\"|\"", "$$|$$", '$|$', '__|__', '_|_',
-							"==|==", "~~|~~", "**|**", '*|*', "[[|]]", '[|]',"{|}", "(|)", "<|>"];
-		this.TaboutPairStrs = TaboutPairStrs.map((s:string)=>string2pairstring(s));
+			"「|」", "『|』", "'|'", "\"|\"", "$$|$$", '$|$', '__|__', '_|_',
+			"==|==", "~~|~~", "**|**", '*|*', "[[|]]", '[|]', "{|}", "(|)", "<|>"];
+		this.TaboutPairStrs = TaboutPairStrs.map((s: string) => string2pairstring(s));
 
 		this.CurActiveMarkdown = "";
 
@@ -56,7 +56,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 			console.error('EasyTyping: Settings not loaded properly, using defaults');
 			this.settings = Object.assign({}, DEFAULT_SETTINGS);
 		}
-		
+
 		setDebug(this.settings.debug);
 
 		this.registerEditorExtension([
@@ -80,12 +80,12 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 				run: (v: EditorView): boolean => handleModA(this, v)
 			},
 			{
-                key: "Backspace",
-                run: (v: EditorView): boolean => {
+				key: "Backspace",
+				run: (v: EditorView): boolean => {
 					if (!this.settings.BetterBackspace) return false;
-                    return handleBackspace(v);
-                }
-            },
+					return handleBackspace(v);
+				}
+			},
 			{
 				key: "Shift-Enter",
 				run: (v: EditorView): boolean => handleShiftEnter(this, v)
@@ -169,17 +169,17 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 			}],
 		});
 
-		this.addCommand({
-			id: "easy-typing-paste-without-format",
-			name: locale.commands.pasteWithoutFormat,
-			editorCallback: (editor) => normalPaste(editor, this.settings?.debug),
-			hotkeys: [
-				{
-					modifiers: ["Mod", "Shift"],
-					key: "v",
-				},
-			],
-		});
+		// this.addCommand({
+		// 	id: "easy-typing-paste-without-format",
+		// 	name: locale.commands.pasteWithoutFormat,
+		// 	editorCallback: (editor) => normalPaste(editor, this.settings?.debug),
+		// 	hotkeys: [
+		// 		{
+		// 			modifiers: ["Mod", "Shift"],
+		// 			key: "v",
+		// 		},
+		// 	],
+		// });
 
 
 		this.addCommand({
@@ -213,8 +213,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 				let selected = editor.getSelection();
 				// console.log('selected', selected, selected=='\n');
 				// console.log('selection', selection);
-				if (selected=='\n')
-				{
+				if (selected == '\n') {
 					editor.setSelection(selection.anchor, selection.anchor);
 				}
 			}));
