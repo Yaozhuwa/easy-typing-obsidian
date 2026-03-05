@@ -114,6 +114,14 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 
 	// ===== 选中替换 (priority 40) =====
 	{
+		id: 'builtin-sel-wrap-backtick',
+		trigger: '·',
+		replacement: '`${0:${SEL}}`',
+		options: 's',
+		priority: 40,
+		description: '选中文字后输入 · 包裹为行内代码',
+	},
+	{
 		id: 'builtin-sel-wrap-symbols',
 		trigger: `【¥￥`,
 		replacement: "const m={'¥': ['$', '$'], '￥': ['$', '$'], '【': ['[', ']']}; \nreturn m[key][0] + '${0:${SEL}}' + m[key][1];",
