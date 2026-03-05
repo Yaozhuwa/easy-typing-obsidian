@@ -167,6 +167,16 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+		new Setting(el)
+			.setName(locale.settings.autoFormatPaste.name)
+			.setDesc(locale.settings.autoFormatPaste.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.AutoFormatPaste)
+					.onChange(async (value) => {
+						this.plugin.settings.AutoFormatPaste = value;
+						await this.plugin.saveSettings();
+					});
+			});
 		// masterSwitch.settingEl.style.borderBottom = '2px solid var(--color-accent)';
 		// masterSwitch.settingEl.style.paddingBottom = '1em';
 		// masterSwitch.settingEl.style.marginBottom = '1.5em';

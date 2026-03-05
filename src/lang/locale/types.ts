@@ -5,6 +5,7 @@ export interface Locale {
         backspaceEdit: { name: string; desc: string };
         tabOut: { name: string; desc: string };
         autoFormatting: { name: string; desc: string };
+        autoFormatPaste: { name: string; desc: string };
         languagePairSpacing: { name: string; desc: string };
         prefixDictionary: { name: string; desc: string };
         softSpaceSymbols: { leftName: string; leftDesc: string; rightName: string; rightDesc: string };

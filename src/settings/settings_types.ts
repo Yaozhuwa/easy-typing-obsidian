@@ -19,6 +19,7 @@ export interface EasyTypingSettings {
 	BetterCodeEdit: boolean;
 	BetterBackspace: boolean;
 	AutoFormat: boolean;
+	AutoFormatPaste: boolean;
 	ExcludeFiles: string;
 	AutoCapital: boolean;
 
@@ -52,6 +53,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	BetterCodeEdit: true,
 	BetterBackspace: true,
 	AutoFormat: true,
+	AutoFormatPaste: true,
 	ExcludeFiles: "",
 
 	AutoCapital: false,

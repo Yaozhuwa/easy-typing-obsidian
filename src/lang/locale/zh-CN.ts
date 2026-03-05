@@ -22,6 +22,10 @@ const locale: Locale = {
             name: "输入时自动格式化",
             desc: "是否在编辑文档时自动格式化文本，自动格式化的总开关"
         },
+        autoFormatPaste: {
+            name: "粘贴时自动格式化",
+            desc: "粘贴时是否自动格式化，CMD/CTRL+SHIFT+V 无格式粘贴时不触发。"
+        },
         languagePairSpacing: {
             name: "语言间空格策略",
             desc: "定义不同语言/符号类型之间是否自动添加空格"

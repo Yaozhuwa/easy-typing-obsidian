@@ -105,7 +105,7 @@ export function preFormatOneLine(ctx: PluginContext, editor: Editor, lineNumber:
 	}
 	const lineType = getPosLineType(state, line.from);
 	if (lineType == LineType.text || lineType == LineType.table) {
-		let newLineData = ctx.Formater.formatLine(state, lineNumber, ctx.settings, curCh, 0);
+		let newLineData = ctx.Formater.formatLine(state, lineNumber, { ...ctx.settings, AutoCapital: false }, curCh, 0);
 		newLine = newLineData[0];
 		newCh = newLineData[1];
 	}

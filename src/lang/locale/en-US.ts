@@ -22,6 +22,10 @@ const locale: Locale = {
             name: "Auto formatting when typing",
             desc: "Toggle auto-formatting of text while editing the document."
         },
+        autoFormatPaste: {
+            name: "Auto formatting on paste",
+            desc: "Toggle auto-formatting when pasting. CMD/CTRL+SHIFT+V (paste without formatting) will not trigger this."
+        },
         languagePairSpacing: {
             name: "Language Pair Spacing",
             desc: "Define which language/symbol pairs should have automatic spacing"
@@ -282,8 +286,8 @@ const locale: Locale = {
         'builtin-del-block-formula': 'Delete block formula $$...$$ pair',
         'builtin-del-codeblock': 'Quickly delete empty code block',
         'builtin-del-wikilink': 'Quickly delete wikilink and embed (![[]])',
-                'builtin-sel-wrap-backtick': 'Wrap selection with backticks using ·',
-'builtin-sel-wrap-symbols': 'Wrap selection with []/$ using 【/¥/￥',
+        'builtin-sel-wrap-backtick': 'Wrap selection with backticks using ·',
+        'builtin-sel-wrap-symbols': 'Wrap selection with []/$ using 【/¥/￥',
         'builtin-sel-wrap-quotes': 'Wrap selection with paired full-width quotes',
         'builtin-sel-wrap-cjk-brackets': 'Wrap selection with 《》 or （） brackets',
         'builtin-quote-convert': 'Convert > or 》 to Markdown blockquote marker',

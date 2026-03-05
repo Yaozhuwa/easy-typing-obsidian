@@ -23,10 +23,10 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 			let changedStr = tr.startState.sliceDoc(fromA, toA);
 			let changestr_ = changedStr.replace(/\s/g, '0')
 			let insertedStr = inserted.sliceString(0);
-			// if (ctx.settings?.debug) {
-			// 	console.log("[TransactionFilter] type, fromA, toA, changed, fromB, toB, inserted");
-			// 	console.log(changeTypeStr, fromA, toA, changedStr, fromB, toB, insertedStr);
-			// }
+			if (ctx.settings?.debug) {
+				console.log("[TransactionFilter] type, fromA, toA, changed, fromB, toB, inserted");
+				console.log(changeTypeStr, fromA, toA, changedStr, fromB, toB, insertedStr);
+			}
 
 			// 表格编辑时直接返回，解决表格内容编辑有时候会跳出聚焦状态的 Bug
 			if (getPosLineType(tr.startState, fromA) == LineType.table) return tr;
@@ -287,13 +287,14 @@ export function createTransactionFilter(ctx: PluginContext): Extension {
 function tryProcessInput(
 	ctx: PluginContext, update: ViewUpdate,
 	changeFrom: number, cursorPos: number,
-	isCompose: boolean
+	changeType: string = "input.type"
 ): boolean {
 	const lineType = getPosLineType(update.view.state, cursorPos);
 	if (lineType === LineType.table) return false;
 	if (triggerCvtRule(ctx, update.view, cursorPos)) return true;
 	if (!ctx.settings.AutoFormat || isCurrentFileExclude(ctx)) return false;
 	if (lineType !== LineType.text) return false;
+	if (changeType.contains('paste')) return false;
 	const insertedStr = update.view.state.doc.sliceString(changeFrom, cursorPos);
 	const changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, changeFrom, cursorPos, insertedStr);
 	if (changes) {
@@ -348,7 +349,7 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 			ctx.compose_need_handle = false;
 			const cursor = update.view.state.selection.asSingle().main;
 			if (cursor.head === cursor.anchor) {
-				if (tryProcessInput(ctx, update, ctx.compose_begin_pos, cursor.anchor, true)) return;
+				if (tryProcessInput(ctx, update, ctx.compose_begin_pos, cursor.anchor)) return;
 			}
 		}
 
@@ -378,16 +379,16 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 
 		// --- 正常输入结束 → 触发规则 + 自动格式化 ---
 		if (notSelected && changedStr.length < 1 && !changeType.includes('delete')) {
-			if (tryProcessInput(ctx, update, fromB, cursor.anchor, false)) return;
+			if (tryProcessInput(ctx, update, fromB, cursor.anchor, changeType)) return;
 		}
 
 		// --- 粘贴时自动格式化 ---
 		const isExcludeFile = isCurrentFileExclude(ctx);
-		if (ctx.settings.AutoFormat && !isExcludeFile && changeType === "input.paste" && !Platform.isIosApp) {
+		if (ctx.settings.AutoFormat && ctx.settings.AutoFormatPaste && !isExcludeFile && changeType === "paste" && !Platform.isIosApp) {
 			let updateLineStart = update.state.doc.lineAt(fromB).number;
 			let updateLineEnd = update.state.doc.lineAt(toB).number;
 			if (updateLineStart === updateLineEnd && getPosLineType(update.view.state, toB) === LineType.text) {
-				let changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, fromB, toB, insertedStr);
+				let changes = ctx.Formater.formatLineOfDoc(update.state, { ...ctx.settings, AutoCapital: false }, fromB, toB, insertedStr);
 				if (changes) {
 					update.view.dispatch(...changes[0]);
 					return;
@@ -399,7 +400,7 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 				let update_start = fromB;
 				for (let i = updateLineStart; i <= updateLineEnd; i++) {
 					let real_inserted = inserted_array[i - updateLineStart];
-					let changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, update_start, update_start + real_inserted.length, real_inserted);
+					let changes = ctx.Formater.formatLineOfDoc(update.state, { ...ctx.settings, AutoCapital: false }, update_start, update_start + real_inserted.length, real_inserted);
 					if (changes) {
 						all_changes.push(...changes[0]);
 					}
