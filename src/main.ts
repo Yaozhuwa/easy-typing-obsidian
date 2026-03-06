@@ -28,6 +28,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 	compose_need_handle: boolean;
 
 	onFormatArticle: boolean;
+	plainPasteInProgress: boolean;
 	TaboutPairStrs: PairString[];
 	ruleManager: RuleManager;
 	get ruleEngine(): RuleEngine { return this.ruleManager.ruleEngine; }
@@ -50,6 +51,18 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 		this.Formater = new LineFormater();
 
 		this.onFormatArticle = false;
+		this.plainPasteInProgress = false;
+
+		// 检测无格式粘贴（Cmd/Ctrl+Shift+V），设置标记以跳过自动格式化
+		const plainPasteHandler = (evt: KeyboardEvent) => {
+			const mod = Platform.isMacOS ? evt.metaKey : evt.ctrlKey;
+			if (mod && evt.shiftKey && evt.key.toLowerCase() === 'v') {
+				this.plainPasteInProgress = true;
+				setTimeout(() => { this.plainPasteInProgress = false; }, 500);
+			}
+		};
+		document.addEventListener('keydown', plainPasteHandler, true);
+		this.register(() => document.removeEventListener('keydown', plainPasteHandler, true));
 
 		// 确保 settings 已正确加载
 		if (!this.settings) {

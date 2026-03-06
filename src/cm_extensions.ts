@@ -383,8 +383,11 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 		}
 
 		// --- 粘贴时自动格式化 ---
+		const isFormattedPaste = changeType.contains("paste") && !ctx.plainPasteInProgress;
+		const isPlainPaste = changeType.contains("paste") && ctx.plainPasteInProgress;
+		if (isPlainPaste) ctx.plainPasteInProgress = false;
 		const isExcludeFile = isCurrentFileExclude(ctx);
-		if (ctx.settings.AutoFormat && ctx.settings.AutoFormatPaste && !isExcludeFile && changeType === "paste" && !Platform.isIosApp) {
+		if (ctx.settings.AutoFormat && ctx.settings.AutoFormatPaste && !isExcludeFile && isFormattedPaste && !Platform.isIosApp) {
 			let updateLineStart = update.state.doc.lineAt(fromB).number;
 			let updateLineEnd = update.state.doc.lineAt(toB).number;
 			if (updateLineStart === updateLineEnd && getPosLineType(update.view.state, toB) === LineType.text) {

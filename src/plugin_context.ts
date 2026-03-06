@@ -14,6 +14,7 @@ export interface PluginContext {
 	compose_need_handle: boolean;
 	CurActiveMarkdown: string;
 	onFormatArticle: boolean;
+	plainPasteInProgress: boolean;
 	getDefaultIndentChar(): string;
 	isCurrentFileExclude(): boolean;
 	saveSettings(): Promise<void>;
