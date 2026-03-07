@@ -6,16 +6,13 @@ Easy Typing uses a unified **Rule Engine** for all text transformations — from
 
 - [Built-in Rules Overview](#built-in-rules-overview)
 - [Custom Rules Quick Start](#custom-rules-quick-start)
-- [Rule Types](#rule-types)
-- [Rule Fields](#rule-fields)
-- [Option Flags](#option-flags)
+- [Rule Edit Panel](#rule-edit-panel)
 - [Replacement Template Syntax](#replacement-template-syntax)
-- [Function Replacement (F flag)](#function-replacement-f-flag)
-- [Scope Restrictions](#scope-restrictions)
-- [Trigger Modes](#trigger-modes)
+- [Function Replacement](#function-replacement)
 - [Priority System](#priority-system)
 - [Managing Rules](#managing-rules)
 - [Examples](#examples)
+- [Appendix: JSON Format & Option Flags](#appendix-json-format--option-flags)
 
 ---
 
@@ -29,7 +26,7 @@ When you type a CJK opening bracket or quote, the matching closing symbol is aut
 - `【` → `【|】`, `（` → `（|）`, `《` → `《|》`
 - `"` → `"|"`, `'` → `'|'`, `「` → `「|」`, `『` → `『|』`
 
-> 💡 `|` indicates cursor position. If the closing symbol already exists to the right of the cursor, typing it will jump over it instead of inserting a duplicate.
+> `|` indicates cursor position. If the closing symbol already exists to the right of the cursor, typing it will jump over it instead of inserting a duplicate.
 
 Deleting a CJK opening bracket also deletes the paired closing bracket.
 
@@ -93,107 +90,97 @@ Create your first rule in just 3 steps:
 
 ### Step 1: Open Settings
 
-Open plugin settings → **User Rules** tab → click the "Add Rule" button.
+Open plugin settings → **User Rules** tab → click the `+` button.
 
 ### Step 2: Fill in the Rule
 
-For example, to turn `:)` into 😀:
+For example, to turn `->` into `→`:
 
-| Field | Value |
-|-------|-------|
-| Trigger (left match) | `:)` |
-| Replacement | `😀$0` |
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| **Match Before Cursor** | `->` |
+| **Replacement** | `→$0` |
 
-`$0` marks where the cursor will be placed after replacement.
+`$0` marks where the cursor will be placed after replacement. Leave all other fields at their defaults.
 
 ### Step 3: Test
 
-Type `:)` in the editor — it automatically becomes `😀` with the cursor after the emoji.
+Type `->` in the editor — it automatically becomes `→` with the cursor after the arrow.
 
-> 💡 Want to learn more? Read the full rule reference below.
-
----
-
-## Rule Types
-
-### Input Rules
-
-Triggered automatically as you type. When the text before (and optionally after) the cursor matches the rule's pattern, the matched text is replaced.
-
-**Example**: Type `:)` and it becomes `😀`
-```json
-{ "trigger": ":)", "replacement": "😀$0" }
-```
-
-### Delete Rules
-
-Triggered when pressing Backspace. The rule matches the text immediately before and after the cursor.
-
-**Example**: Deleting `$` between `$...$` removes the entire pair
-```json
-{ "trigger": "$", "trigger_right": "$", "replacement": "", "options": "d" }
-```
-
-### SelectKey Rules
-
-Triggered when you type a character while text is selected. The `trigger` field lists the trigger characters.
-
-**Example**: Select text, press `-`, and it wraps with `~~`
-```json
-{ "trigger": "-", "replacement": "~~${SEL}~~", "options": "s" }
-```
+> Want to learn more? Read the full reference below.
 
 ---
 
-## Rule Fields
+## Rule Edit Panel
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `trigger` | string | Left-side match pattern (or trigger characters for SelectKey) |
-| `trigger_right` | string | Right-side match pattern (text after cursor) |
-| `replacement` | string | Replacement template |
-| `options` | string | Option flags (see below) |
-| `priority` | number | Priority — lower numbers match first (default: 100) |
-| `enabled` | boolean | Whether the rule is active (default: true) |
-| `description` | string | Human-readable description |
-| `scope_language` | string | Restrict to a specific code block language (e.g., `python`) |
+Click `+` (add) or the gear icon (edit) to open the rule edit panel. The panel is organized into the following sections:
 
----
+### Basic Settings
 
-## Option Flags
+| Field | Description |
+|-------|-------------|
+| **Type** | Three rule types that determine when the rule fires (see below) |
+| **Trigger Mode** | Auto or Tab trigger (only visible for Input rules) |
 
-Combine multiple flags in a single string, e.g., `dr` = Delete + Regex.
+**Three rule types**:
 
-| Flag | Meaning |
-|------|---------|
-| `d` | Delete rule type |
-| `s` | SelectKey rule type |
-| `r` | `trigger` (and `trigger_right`) are regular expressions |
-| `T` | Tab-triggered (only fires on Tab press, not automatically) |
-| `t` | Scope: text only |
-| `f` | Scope: formula only |
-| `c` | Scope: code only |
-| `a` | Scope: all (default, no need to specify) |
-| `F` | `replacement` is a JavaScript function body |
+| Type | When it fires | Typical use |
+|------|---------------|-------------|
+| **Input** | Automatically as you type | Text replacement, symbol conversion, snippets |
+| **Delete** | When pressing Backspace | Delete paired symbols |
+| **SelectKey** | When typing a character while text is selected | Wrap selected text with symbols |
 
-If none of `d` or `s` is specified, the rule is an Input rule.
+**Two trigger modes** (Input rules only):
+
+| Mode | Description |
+|------|-------------|
+| **Auto** | Fires immediately when the pattern matches (default) |
+| **Tab** | Only fires when you press Tab after typing the pattern, preventing accidental expansion |
+
+### Match
+
+| Field | Description |
+|-------|-------------|
+| **Match Before Cursor** | Text to the **left** of the cursor that must match. For SelectKey rules, this is the "Trigger Key" field |
+| **Match After Cursor** | Text to the **right** of the cursor that must match (optional, not available for SelectKey) |
+| **Use Regex Matching** | When enabled, the match fields are parsed as regular expressions |
+
+**About matching**:
+- By default, matching is **plain text** — what you type is matched exactly
+- When "Use Regex Matching" is enabled, you can use full regex syntax (e.g., `\d+`, `[a-z]+`, `(.*?)`)
+- For SelectKey rules, each character in the "Trigger Key" field is an independent trigger key (e.g., `【￥` means both `【` and `￥` can trigger the rule)
+
+### Replacement
+
+| Field | Description |
+|-------|-------------|
+| **Use Function Replacement** | When enabled, the replacement field becomes a JavaScript code editor |
+| **Replacement** | The text used to replace the match (supports template syntax, see below) |
+
+### Other
+
+| Field | Description |
+|-------|-------------|
+| **Scope** | Restrict which editing context the rule applies to |
+| **Language** | Restrict to a specific code block language, e.g., `python` (only visible when scope is "Code") |
+| **Priority** | Lower number = higher priority, default 100 |
+| **Description** | A note to help you identify the rule |
+
+**Scope options**:
+
+| Option | Meaning |
+|--------|---------|
+| **All** | Active in any context (default) |
+| **Text** | Only in normal Markdown text |
+| **Formula** | Only inside `$...$` or `$$...$$` |
+| **Code** | Only inside fenced code blocks |
 
 ---
 
 ## Replacement Template Syntax
 
-### Capture Group References
-
-Used in regex rules to reference matched groups:
-
-| Syntax | Meaning |
-|--------|---------|
-| `[[0]]` | Entire match of `trigger` (left side) |
-| `[[1]]`, `[[2]]`... | Nth capture group of `trigger` |
-| `[[R0]]` | Entire match of `trigger_right` (right side) |
-| `[[R1]]`, `[[R2]]`... | Nth capture group of `trigger_right` |
-
-> 💡 `[[n]]` first looks in left-side groups; if not found, falls back to right-side. Use `[[Rn]]` to explicitly reference the right side.
+The replacement field supports the following special syntax:
 
 ### Tabstop Placeholders
 
@@ -204,6 +191,17 @@ Used in regex rules to reference matched groups:
 | `${1:default text}` | Tabstop with default text (selected when Tab-navigating) |
 
 Cursor jump order: $0 → $1 → $2 → ...
+
+### Capture Group References (requires Regex Matching)
+
+| Syntax | Meaning |
+|--------|---------|
+| `[[0]]` | Entire match of "Match Before Cursor" |
+| `[[1]]`, `[[2]]`... | Nth capture group of "Match Before Cursor" |
+| `[[R0]]` | Entire match of "Match After Cursor" |
+| `[[R1]]`, `[[R2]]`... | Nth capture group of "Match After Cursor" |
+
+> `[[n]]` first looks in the left-side groups; if not found, falls back to the right side. Use `[[Rn]]` to explicitly reference the right side.
 
 ### Special Variables (SelectKey rules)
 
@@ -221,11 +219,13 @@ Cursor jump order: $0 → $1 → $2 → ...
 | `\r` | Carriage return |
 | `\\` | Literal backslash |
 
+> **Note**: In the settings panel, typing `\n` directly represents a newline. In JSON files, due to JSON's own escaping rules, you need to write `\\n` instead.
+
 ---
 
-## Function Replacement (F flag)
+## Function Replacement
 
-When `options` includes `F`, the `replacement` field is treated as a JavaScript function body, compiled via `new Function()`.
+When "Use Function Replacement" is enabled, the replacement field becomes a code editor with JavaScript syntax highlighting. The code you write is executed as a function body.
 
 ### Parameters
 
@@ -244,41 +244,19 @@ When `options` includes `F`, the `replacement` field is treated as a JavaScript 
 ### Example
 
 Insert current date when typing `/date`:
-```json
-{
-  "trigger": "/date",
-  "replacement": "const d = new Date(); return d.toISOString().slice(0, 10) + '$0';",
-  "options": "F"
-}
+
+Panel fields:
+
+| Field | Value |
+|-------|-------|
+| Match Before Cursor | `/date` |
+| Use Function Replacement | Enabled |
+| Replacement | See code below |
+
+```javascript
+const d = new Date();
+return d.toISOString().slice(0, 10) + '$0';
 ```
-
-> 💡 The settings panel provides a code editor with JavaScript syntax highlighting for function rules.
-
----
-
-## Scope Restrictions
-
-Rules can be restricted to specific editing contexts using scope flags:
-
-| Flag | Scope | Example Context |
-|------|-------|----------------|
-| `t` | Text | Normal Markdown text |
-| `f` | Formula | Inside `$...$` or `$$...$$` |
-| `c` | Code | Inside fenced code blocks |
-| `a` | All | Any context (default) |
-
-Additionally, you can set `scope_language` to restrict a rule to a specific programming language within code blocks (e.g., `python`, `javascript`).
-
----
-
-## Trigger Modes
-
-| Mode | When it fires |
-|------|---------------|
-| **Auto** (default) | Fires immediately when the pattern matches during typing |
-| **Tab** (`T` flag) | Only fires when you press Tab after typing the pattern |
-
-Tab-triggered rules are useful for snippets that you don't want to accidentally expand during normal typing.
 
 ---
 
@@ -288,7 +266,7 @@ Rules are evaluated in order of priority (lower number = higher priority). **The
 
 | Priority Range | Usage |
 |----------------|-------|
-| 1–10 | Core built-in rules (auto-pairing, basic conversions) |
+| 1-10 | Core built-in rules (auto-pairing, basic conversions) |
 | 15 | Half-width to full-width conversion |
 | 20 | Full-width to half-width conversion |
 | 30 | Delete pair rules |
@@ -324,81 +302,155 @@ Rules are stored as JSON files in the plugin directory:
 
 ## Examples
 
-### 📝 Input Rules
+### Simple Text Replacement (Input Rule)
+
+**Convert `->` to `→`**:
+
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Match Before Cursor | `->` |
+| Replacement | `→$0` |
 
 **Convert `:)` to emoji**:
-```json
-{ "trigger": ":)", "replacement": "😀$0" }
-```
 
-**Line-start `note-call` → Obsidian callout block** (regex + tabstop):
-```json
-{
-  "trigger": "(?<=^|\\n)([\\w-]+)-call",
-  "replacement": "> [![[1]]] $0\\n> $1",
-  "options": "r"
-}
-```
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Match Before Cursor | `:)` |
+| Replacement | `😀$0` |
 
-Note: When entering directly in the settings panel, the trigger for this rule should be written as `(?<=^|\n)([\w-]+)-call`, and the replacement as `> [![[1]]] $0\n> $1`.
+### Regex Rule (Input)
 
-### 🗑️ Delete Rules
+**Line-start `note-call` → Obsidian callout block**:
 
-**Task item degrades to list item** (regex delete):
-```json
-{
-  "trigger": "([-+*]) \\[.\\] ",
-  "replacement": "[[1]] ",
-  "options": "dr"
-}
-```
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Match Before Cursor | `(?<=^\|\n)([\w-]+)-call` |
+| Use Regex Matching | Enabled |
+| Replacement | `> [![[1]]] $0\n> $1` |
 
-### ✂️ SelectKey Rules
+### Delete Rule
+
+**Task item degrades to list item**:
+
+| Panel Field | Value |
+|-------------|-------|
+| Type | Delete |
+| Match Before Cursor | `([-+*]) \[.\] ` |
+| Use Regex Matching | Enabled |
+| Replacement | `[[1]] ` |
+
+### SelectKey Rule
 
 **Select text + `-` to add strikethrough**:
-```json
-{ "trigger": "-", "replacement": "~~${SEL}~~", "options": "s" }
-```
 
-### ⌨️ Tab-triggered Rules
+| Panel Field | Value |
+|-------------|-------|
+| Type | SelectKey |
+| Trigger Key | `-` |
+| Replacement | `~~${SEL}~~` |
+
+### Tab-triggered Rule
 
 **Expand `lorem` to placeholder text only on Tab**:
-```json
-{
-  "trigger": "lorem",
-  "replacement": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.$0",
-  "options": "T"
-}
-```
 
-### 🔧 Function Rules
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Trigger Mode | Tab |
+| Match Before Cursor | `lorem` |
+| Replacement | `Lorem ipsum dolor sit amet, consectetur adipiscing elit.$0` |
+
+### Function Rule
 
 **Smart date-time insertion**:
-```json
-{
-  "trigger": "/now",
-  "replacement": "const d = new Date(); const pad = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}$0`;",
-  "options": "F"
-}
+
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Match Before Cursor | `/now` |
+| Use Function Replacement | Enabled |
+| Replacement | See code below |
+
+```javascript
+const d = new Date();
+const pad = n => String(n).padStart(2, '0');
+return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}$0`;
 ```
 
-### 🎯 Scope-restricted Rules
+### Scope-restricted Rules
 
 **Formula-only rule**:
+
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Match Before Cursor | `oiint` |
+| Replacement | `\oiint$0` |
+| Scope | Formula |
+
+**Python code block only**:
+
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Trigger Mode | Tab |
+| Match Before Cursor | `ifmain` |
+| Replacement | `if __name__ == '__main__':\n    $0` |
+| Scope | Code |
+| Language | `python` |
+
+---
+
+## Appendix: JSON Format & Option Flags
+
+When using import/export, rules are saved in JSON format. Understanding the mapping between JSON fields and panel settings helps with batch editing.
+
+### JSON Field Reference
+
+| JSON Field | Panel Equivalent | Description |
+|------------|-----------------|-------------|
+| `trigger` | Match Before Cursor / Trigger Key | Match pattern or trigger characters |
+| `trigger_right` | Match After Cursor | Right-side match (optional) |
+| `replacement` | Replacement | Template text or function body |
+| `options` | Encoded from multiple settings | See option flags table below |
+| `priority` | Priority | Lower = higher priority (default: 100) |
+| `enabled` | Toggle switch | Whether the rule is active (default: true) |
+| `description` | Description | Human-readable note |
+| `scope_language` | Language | Restrict to specific code block language |
+
+### Option Flags (`options` field)
+
+The `options` string encodes multiple panel settings as single-letter flags:
+
+| Flag | Panel Equivalent | Meaning |
+|------|-----------------|---------|
+| `d` | Type = Delete | Delete rule |
+| `s` | Type = SelectKey | SelectKey rule |
+| _(no d/s)_ | Type = Input | Input rule (default) |
+| `r` | Use Regex Matching = Enabled | trigger and trigger_right are regular expressions |
+| `F` | Use Function Replacement = Enabled | replacement is a JavaScript function body |
+| `T` | Trigger Mode = Tab | Only fires on Tab press |
+| `t` | Scope = Text | Text context only |
+| `f` | Scope = Formula | Formula context only |
+| `c` | Scope = Code | Code context only |
+| `a` | Scope = All | Any context (default, no need to specify) |
+
+Multiple flags can be combined, e.g., `dr` = Delete + Regex, `cT` = Code scope + Tab trigger.
+
+### JSON Example
+
 ```json
 {
-  "trigger": "oiint",
-  "replacement": "\\oiint$0",
-  "options": "f"
+  "trigger": "->",
+  "replacement": "→$0",
+  "priority": 100,
+  "description": "Arrow replacement"
 }
 ```
 
-**Python code block only**:
-```json
-{
-  "trigger": "ifmain",
-  "replacement": "if __name__ == '__main__':\\n    $0",
-  "options": "cT",
-  "scope_language": "python"
-}
-```
+This corresponds to: Type=Input, Match Before Cursor=`->`, Replacement=`→$0`, Priority=100.
+
+> **Panel input vs JSON**: In the panel, typing `\n` directly represents a newline; in JSON, due to JSON's own escaping, you need to write `\\n` for newline and `\\t` for tab.
