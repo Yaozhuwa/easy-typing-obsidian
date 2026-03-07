@@ -56,6 +56,9 @@ export interface Locale {
             functionHintInputDelete: string;
             functionHintSelectKey: string;
             functionPlaceholder: string;
+            groupMatch: string;
+            groupReplacement: string;
+            groupOther: string;
         };
         ruleType: {
             input: string;

@@ -22,6 +22,10 @@ const locale: Locale = {
             name: "입력 시 자동 서식",
             desc: "문서 편집 중 텍스트 자동 서식 지정을 켜거나 끕니다."
         },
+        autoFormatPaste: {
+            name: "붙여넣기 시 자동 서식",
+            desc: "붙여넣기 시 자동 서식을 켜거나 끕니다. CMD/CTRL+SHIFT+V(서식 없이 붙여넣기)에서는 작동하지 않습니다."
+        },
         languagePairSpacing: {
             name: "언어 쌍 간격",
             desc: "서로 다른 언어/기호 쌍 사이의 자동 간격 규칙을 정의합니다."
@@ -134,7 +138,7 @@ const locale: Locale = {
             fieldReplacement: "대체 내용",
             fieldReplacementDescSelectKey: "${SEL}: 선택된 텍스트, ${0:${SEL}}: 텍스트를 선택합니다.",
             fieldReplacementDescInputDelete: "[[0]]: 왼쪽 0번째 캡처 그룹, [[R1]]: 오른쪽 1번째 캡처 그룹.",
-            fieldIsRegex: "정규식 사용",
+            fieldIsRegex: "정규식으로 매칭",
             fieldTriggerMode: "트리거 방식",
             fieldScope: "범위",
             fieldScopeLanguage: "언어 (선택사항)",
@@ -143,10 +147,13 @@ const locale: Locale = {
             fieldDescription: "설명",
             buttonSave: "저장",
             invalidRegex: "유효하지 않은 정규식",
-            fieldIsFunction: "함수 대체",
+            fieldIsFunction: "함수로 대체",
             functionHintInputDelete: "인수: leftMatches (string[]), rightMatches (string[]). 문자열 또는 undefined를 반환하여 건너뜁니다.",
             functionHintSelectKey: "인수: selectionText (string), key (string). 문자열 또는 undefined를 반환하여 건너뜁니다.",
             functionPlaceholder: "// 예시:\nconst d = new Date();\nreturn d.toISOString().slice(0,10) + '$0';",
+            groupMatch: "매칭 조건",
+            groupReplacement: "대체",
+            groupOther: "기타",
         },
         ruleType: {
             input: "입력",

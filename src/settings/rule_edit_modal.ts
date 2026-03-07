@@ -190,6 +190,8 @@ export class RuleEditModal extends Modal {
 			: locale.settings.ruleEditModal.editTitle;
 		contentEl.createEl('h2', { text: title });
 
+		// ===== Basic: Type & Trigger Mode =====
+
 		// Type dropdown
 		new Setting(contentEl)
 			.setName(locale.settings.ruleEditModal.fieldType)
@@ -215,8 +217,12 @@ export class RuleEditModal extends Modal {
 			});
 		triggerModeSetting.settingEl.dataset.field = 'triggerMode';
 
+		// ===== Group: Match =====
+		const matchGroup = contentEl.createDiv({ cls: 'et-modal-group' });
+		matchGroup.createEl('div', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupMatch });
+
 		// Trigger
-		const triggerSetting = new Setting(contentEl)
+		const triggerSetting = new Setting(matchGroup)
 			.setName(locale.settings.ruleEditModal.fieldTrigger)
 			.addText(text => {
 				text.setValue(this.trigger);
@@ -225,7 +231,7 @@ export class RuleEditModal extends Modal {
 		triggerSetting.settingEl.dataset.field = 'trigger';
 
 		// Trigger Right (hidden for SelectKey)
-		const triggerRightSetting = new Setting(contentEl)
+		const triggerRightSetting = new Setting(matchGroup)
 			.setName(locale.settings.ruleEditModal.fieldTriggerRight)
 			.addText(text => {
 				text.setValue(this.triggerRight);
@@ -233,8 +239,35 @@ export class RuleEditModal extends Modal {
 			});
 		triggerRightSetting.settingEl.dataset.field = 'triggerRight';
 
+		// Is Regex
+		const isRegexSetting = new Setting(matchGroup)
+			.setClass('et-modal-option-row')
+			.setName(locale.settings.ruleEditModal.fieldIsRegex)
+			.addToggle(toggle => {
+				toggle.setValue(this.isRegex);
+				toggle.onChange(v => this.isRegex = v);
+			});
+		isRegexSetting.settingEl.dataset.field = 'isRegex';
+
+		// ===== Group: Replacement =====
+		const replacementGroup = contentEl.createDiv({ cls: 'et-modal-group' });
+		replacementGroup.createEl('div', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupReplacement });
+
+		// Is Function
+		const fnSetting = new Setting(replacementGroup)
+			.setClass('et-modal-option-row')
+			.setName(locale.settings.ruleEditModal.fieldIsFunction)
+			.addToggle(toggle => {
+				toggle.setValue(this.isFunction);
+				toggle.onChange(v => {
+					this.isFunction = v;
+					this.refreshVisibility(contentEl);
+				});
+			});
+		fnSetting.settingEl.dataset.field = 'isFunction';
+
 		// Replacement (textarea for string mode)
-		const replacementSetting = new Setting(contentEl)
+		const replacementSetting = new Setting(replacementGroup)
 			.setName(locale.settings.ruleEditModal.fieldReplacement)
 			.setDesc('');
 		replacementSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
@@ -245,7 +278,7 @@ export class RuleEditModal extends Modal {
 		replacementArea.onChange(v => this.replacement = v);
 
 		// CM6 editor for function mode (syntax highlighted)
-		const editorWrapper = contentEl.createDiv();
+		const editorWrapper = replacementGroup.createDiv();
 		editorWrapper.dataset.field = 'fnEditor';
 		editorWrapper.createEl('label', {
 			text: locale.settings.ruleEditModal.fieldReplacement,
@@ -257,7 +290,7 @@ export class RuleEditModal extends Modal {
 		});
 
 		// Function hint (visible only in function mode)
-		const fnHint = contentEl.createEl('div', {
+		const fnHint = replacementGroup.createEl('div', {
 			cls: 'setting-item-description',
 			text: '',
 		});
@@ -267,29 +300,12 @@ export class RuleEditModal extends Modal {
 		fnHint.style.fontSize = '12px';
 		fnHint.style.fontFamily = 'var(--font-monospace)';
 
-		// Is Regex
-		const isRegexSetting = new Setting(contentEl)
-			.setName(locale.settings.ruleEditModal.fieldIsRegex)
-			.addToggle(toggle => {
-				toggle.setValue(this.isRegex);
-				toggle.onChange(v => this.isRegex = v);
-			});
-		isRegexSetting.settingEl.dataset.field = 'isRegex';
-
-		// Is Function
-		const fnSetting = new Setting(contentEl)
-			.setName(locale.settings.ruleEditModal.fieldIsFunction)
-			.addToggle(toggle => {
-				toggle.setValue(this.isFunction);
-				toggle.onChange(v => {
-					this.isFunction = v;
-					this.refreshVisibility(contentEl);
-				});
-			});
-		fnSetting.settingEl.dataset.field = 'isFunction';
+		// ===== Group: Other =====
+		const otherGroup = contentEl.createDiv({ cls: 'et-modal-group' });
+		otherGroup.createEl('div', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupOther });
 
 		// Scope
-		new Setting(contentEl)
+		new Setting(otherGroup)
 			.setName(locale.settings.ruleEditModal.fieldScope)
 			.addDropdown(dropdown => {
 				dropdown.addOption(RuleScope.All, locale.dropdownOptions.scopeAll);
@@ -304,7 +320,7 @@ export class RuleEditModal extends Modal {
 			});
 
 		// Scope Language (only visible when scope is Code)
-		const scopeLangSetting = new Setting(contentEl)
+		const scopeLangSetting = new Setting(otherGroup)
 			.setName(locale.settings.ruleEditModal.fieldScopeLanguage)
 			.addText(text => {
 				text.setPlaceholder('e.g. python, javascript');
@@ -314,7 +330,7 @@ export class RuleEditModal extends Modal {
 		scopeLangSetting.settingEl.dataset.field = 'scopeLanguage';
 
 		// Priority
-		new Setting(contentEl)
+		new Setting(otherGroup)
 			.setName(locale.settings.ruleEditModal.fieldPriority)
 			.setDesc(locale.settings.ruleEditModal.fieldPriorityDesc)
 			.addText(text => {
@@ -327,7 +343,7 @@ export class RuleEditModal extends Modal {
 			});
 
 		// Description
-		new Setting(contentEl)
+		new Setting(otherGroup)
 			.setName(locale.settings.ruleEditModal.fieldDescription)
 			.addText(text => {
 				text.setValue(this.description);

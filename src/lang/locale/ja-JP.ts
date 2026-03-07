@@ -22,6 +22,10 @@ const locale: Locale = {
             name: "入力時の自動書式設定",
             desc: "ドキュメント編集中のテキスト自動書式設定を切り替えます。"
         },
+        autoFormatPaste: {
+            name: "貼り付け時の自動書式設定",
+            desc: "貼り付け時の自動書式設定を切り替えます。CMD/CTRL+SHIFT+V（書式なし貼り付け）ではトリガーされません。"
+        },
         languagePairSpacing: {
             name: "言語ペアスペーシング",
             desc: "異なる言語/記号ペア間の自動スペーシングルールを定義します。"
@@ -134,7 +138,7 @@ const locale: Locale = {
             fieldReplacement: "置換内容",
             fieldReplacementDescSelectKey: "${SEL}: 選択されたテキスト、${0:${SEL}}: テキストを選択します。",
             fieldReplacementDescInputDelete: "[[0]]: 左側第0キャプチャグループ、[[R1]]: 右側第1キャプチャグループ。",
-            fieldIsRegex: "正規表現",
+            fieldIsRegex: "正規表現でマッチ",
             fieldTriggerMode: "トリガー方式",
             fieldScope: "スコープ",
             fieldScopeLanguage: "言語（任意）",
@@ -143,10 +147,13 @@ const locale: Locale = {
             fieldDescription: "説明",
             buttonSave: "保存",
             invalidRegex: "無効な正規表現",
-            fieldIsFunction: "関数置換",
+            fieldIsFunction: "関数で置換",
             functionHintInputDelete: "引数: leftMatches (string[])、rightMatches (string[])。文字列または undefined を返してスキップ。",
             functionHintSelectKey: "引数: selectionText (string)、key (string)。文字列または undefined を返してスキップ。",
             functionPlaceholder: "// 例:\nconst d = new Date();\nreturn d.toISOString().slice(0,10) + '$0';",
+            groupMatch: "マッチ条件",
+            groupReplacement: "置換",
+            groupOther: "その他",
         },
         ruleType: {
             input: "入力",

@@ -193,6 +193,35 @@ span[class="easy-typing-cursor-widget"] {
     font-weight: var(--font-semibold);
 }
 
+/* Rule edit modal groups */
+.et-modal-group {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 4px 16px 12px;
+    margin-bottom: 16px;
+}
+
+.et-modal-group-title {
+    font-size: var(--font-ui-small);
+    font-weight: var(--font-semibold);
+    color: var(--text-muted);
+    padding: 8px 0 2px;
+}
+
+.et-modal-group .setting-item:last-child {
+    border-bottom: none;
+}
+
+.et-modal-group .et-modal-option-row {
+    padding: 8px 0;
+    min-height: unset;
+}
+
+.et-modal-group .et-modal-option-row .setting-item-name {
+    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+}
+
 .et-fn-editor-container {
     width: 100%;
 }
