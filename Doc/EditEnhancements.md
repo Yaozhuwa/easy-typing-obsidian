@@ -84,9 +84,17 @@ When pasting text inside lists or blockquotes, the plugin automatically prepends
 
 ## Strict Line Break
 
-When enabled, pressing Enter inserts two newlines, creating a Markdown paragraph break. Ideal for users who prefer "one Enter = one paragraph".
+When Obsidian's "Strict line breaks" is enabled, the plugin can enhance Enter key behavior to produce visible line breaks in preview mode. Configure in the **Other** settings tab.
 
-Configure in the **Other** settings tab.
+### Three Modes
+
+| Mode | Normal text | Lists | Blockquotes |
+|------|-------------|-------|-------------|
+| **Two Space** | Append `  ` before newline | No extra handling | Append `  ` before newline |
+| **Enter Twice** | Insert `\n\n` (paragraph break) | No extra handling | Insert `\n` + prefix + `\n` + prefix |
+| **Mix** | Insert `\n\n` (paragraph break) | No extra handling | Append `  ` before newline |
+
+> This enhancement also applies to the **New Line After Current** command (`Mod+Enter`). It does **not** apply inside code blocks or formula blocks.
 
 ---
 
@@ -102,7 +110,7 @@ Configure in the **Other** settings tab.
 
 | Command | Hotkey | Description |
 |---------|--------|-------------|
-| New Line After Current | `Mod+Enter` | Insert a new line below and move cursor there |
+| New Line After Current | `Mod+Enter` | Insert a new line below and move cursor there. Respects strict line break mode. On an empty line, simply inserts one newline. In lists/quotes, continues the prefix on the new line. |
 | Toggle Comment | `Mod+/` | Toggle line comments (language-aware in code blocks) |
 | Select Block | — | Expand selection to the current code/quote block |
 | Enhanced Mod+A | `Mod+A` | Progressive selection: line → block → all (enable in settings) |

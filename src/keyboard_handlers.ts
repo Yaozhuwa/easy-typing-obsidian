@@ -743,7 +743,10 @@ export function goNewLineAfterCurLine(ctx: PluginContext, view: EditorView): boo
 	} else {
 		const mode = ctx.settings.StrictLineMode;
 		const spaceStr = lineContent.endsWith('  ') ? '' : '  ';
-		if (mode === StrictLineMode.TwoSpace) {
+		if (listMatch) {
+			// 所有模式下列表都不额外处理
+			insertStr = '\n' + prefix;
+		} else if (mode === StrictLineMode.TwoSpace) {
 			insertStr = spaceStr + '\n' + prefix;
 		} else if (quoteMatch) {
 			if (mode === StrictLineMode.EnterTwice) {
@@ -752,8 +755,6 @@ export function goNewLineAfterCurLine(ctx: PluginContext, view: EditorView): boo
 				// Mix 模式下引用块用两空格
 				insertStr = spaceStr + '\n' + prefix;
 			}
-		} else if (listMatch) {
-			insertStr = '\n' + prefix;
 		} else {
 			// EnterTwice / Mix 模式下普通文本用两回车
 			insertStr = '\n\n' + prefix;
