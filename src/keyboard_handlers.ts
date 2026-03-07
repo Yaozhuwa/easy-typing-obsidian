@@ -688,6 +688,17 @@ export function goNewLineAfterCurLine(ctx: PluginContext, view: EditorView): boo
 	const line = doc.lineAt(selection.head);
 	const lineContent = line.text;
 
+	// 当前行为空行时，只做一次回车
+	if (/^\s*$/.test(lineContent)) {
+		const insertStr = '\n';
+		view.dispatch({
+			changes: { from: line.to, insert: insertStr },
+			selection: { anchor: line.to + insertStr.length },
+			userEvent: "EasyTyping.goNewLineAfterCurLine"
+		});
+		return true;
+	}
+
 	// 检查是否在列表或引用块中
 	const listMatch = lineContent.match(/^(\s*)([-*+] \[.\]|[-*+]|\d+\.)\s/);
 	const quoteMatch = lineContent.match(/^(\s*)(>+ ?)/);
@@ -714,8 +725,43 @@ export function goNewLineAfterCurLine(ctx: PluginContext, view: EditorView): boo
 		prefix = quoteMatch[1] + quoteMatch[2];
 	}
 
-	changes = [{ from: line.to, insert: '\n' + prefix }];
-	newCursorPos = line.to + 1 + prefix.length;
+	// 严格换行模式下需要额外处理才能产生真正的换行
+	// 但在代码块和公式块中不应用严格换行
+	const strictLineBreaks = ctx.app.vault.config.strictLineBreaks || false;
+	let useStrictBreak = ctx.settings.StrictModeEnter && strictLineBreaks;
+	if (useStrictBreak) {
+		const lineType = getPosLineType2(state, line.from);
+		if (lineType === LineType.codeblock || lineType === LineType.formula
+			|| lineType === LineType.code_start || lineType === LineType.code_end) {
+			useStrictBreak = false;
+		}
+	}
+
+	let insertStr: string;
+	if (!useStrictBreak) {
+		insertStr = '\n' + prefix;
+	} else {
+		const mode = ctx.settings.StrictLineMode;
+		const spaceStr = lineContent.endsWith('  ') ? '' : '  ';
+		if (mode === StrictLineMode.TwoSpace) {
+			insertStr = spaceStr + '\n' + prefix;
+		} else if (quoteMatch) {
+			if (mode === StrictLineMode.EnterTwice) {
+				insertStr = '\n' + prefix + '\n' + prefix;
+			} else {
+				// Mix 模式下引用块用两空格
+				insertStr = spaceStr + '\n' + prefix;
+			}
+		} else if (listMatch) {
+			insertStr = '\n' + prefix;
+		} else {
+			// EnterTwice / Mix 模式下普通文本用两回车
+			insertStr = '\n\n' + prefix;
+		}
+	}
+
+	changes = [{ from: line.to, insert: insertStr }];
+	newCursorPos = line.to + insertStr.length;
 
 	// 创建一个新的事务
 	const tr = state.update({
