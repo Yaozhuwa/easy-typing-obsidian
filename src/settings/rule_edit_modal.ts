@@ -285,22 +285,19 @@ export class RuleEditModal extends Modal {
 		// Replacement (textarea for string mode)
 		const replacementSetting = new Setting(replacementGroup)
 			.setName(locale.settings.ruleEditModal.fieldReplacement);
-		replacementSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
+		replacementSetting.settingEl.addClass('et-replacement-setting');
 		replacementSetting.settingEl.dataset.field = 'replacementTextarea';
 		const replacementArea = new TextAreaComponent(replacementSetting.controlEl);
-		replacementArea.inputEl.setAttribute('style', 'width: 100%; min-height: 60px;');
+		replacementArea.inputEl.addClass('et-replacement-textarea');
 		replacementArea.setValue(this.replacement);
 		replacementArea.onChange(v => this.replacement = v);
 
 		// Replacement hint (below textarea, outside the Setting)
 		const replacementHint = replacementGroup.createEl('div', {
-			cls: 'setting-item-description',
+			cls: 'setting-item-description et-replacement-hint',
 			text: '',
 		});
 		replacementHint.dataset.field = 'replacementHint';
-		replacementHint.style.marginTop = '-8px';
-		replacementHint.style.marginBottom = '10px';
-		replacementHint.style.whiteSpace = 'pre-line';
 
 		// CM6 editor for function mode (syntax highlighted)
 		const editorWrapper = replacementGroup.createDiv();
@@ -316,15 +313,10 @@ export class RuleEditModal extends Modal {
 
 		// Function hint (visible only in function mode)
 		const fnHint = replacementGroup.createEl('div', {
-			cls: 'setting-item-description',
+			cls: 'setting-item-description et-fn-hint',
 			text: '',
 		});
 		fnHint.dataset.field = 'fnHint';
-		fnHint.style.marginTop = '6px';
-		fnHint.style.marginBottom = '10px';
-		fnHint.style.fontSize = '12px';
-		fnHint.style.fontFamily = 'var(--font-monospace)';
-		fnHint.style.whiteSpace = 'pre-line';
 
 		// ===== Group: Other =====
 		const otherGroup = contentEl.createDiv({ cls: 'et-modal-group' });
@@ -400,7 +392,7 @@ export class RuleEditModal extends Modal {
 		const locale = getLocale();
 		const triggerRightEl = contentEl.querySelector('[data-field="triggerRight"]') as HTMLElement;
 		if (triggerRightEl) {
-			triggerRightEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
+			triggerRightEl.classList.toggle('et-hidden', this.ruleType === EngineRuleType.SelectKey);
 		}
 
 		// Trigger Label & Desc
@@ -425,10 +417,10 @@ export class RuleEditModal extends Modal {
 
 		// Trigger mode label + pills visible only for Input type
 		const triggerModeLabel = contentEl.querySelector('[data-field="triggerModeLabel"]') as HTMLElement;
-		if (triggerModeLabel) triggerModeLabel.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
+		if (triggerModeLabel) triggerModeLabel.classList.toggle('et-hidden', this.ruleType !== EngineRuleType.Input);
 		contentEl.querySelectorAll('[data-pill-group="triggerMode"]').forEach((el: Element) => {
 			const htmlEl = el as HTMLElement;
-			htmlEl.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
+			htmlEl.classList.toggle('et-hidden', this.ruleType !== EngineRuleType.Input);
 			htmlEl.classList.toggle('et-pill-active', htmlEl.dataset.pillValue === this.triggerMode);
 		});
 
@@ -436,7 +428,7 @@ export class RuleEditModal extends Modal {
 		const regexChip = contentEl.querySelector('[data-field="isRegexChip"]') as HTMLElement;
 		if (regexChip) {
 			regexChip.classList.toggle('et-pill-chip-active', this.isRegex);
-			regexChip.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
+			regexChip.classList.toggle('et-hidden', this.ruleType === EngineRuleType.SelectKey);
 		}
 
 		// Function chip state
@@ -454,13 +446,13 @@ export class RuleEditModal extends Modal {
 			}
 			parts.push(locale.settings.ruleEditModal.hintTabstop);
 			replacementHintEl.textContent = parts.join('\n');
-			replacementHintEl.style.display = this.isFunction ? 'none' : '';
+			replacementHintEl.classList.toggle('et-hidden', this.isFunction);
 		}
 
 		// Function hint
 		const fnHint = contentEl.querySelector('[data-field="fnHint"]') as HTMLElement;
 		if (fnHint) {
-			fnHint.style.display = this.isFunction ? '' : 'none';
+			fnHint.classList.toggle('et-hidden', !this.isFunction);
 			const parts: string[] = [];
 			if (this.ruleType === EngineRuleType.SelectKey) {
 				parts.push(locale.settings.ruleEditModal.functionHintSelectKey);
@@ -478,9 +470,9 @@ export class RuleEditModal extends Modal {
 		const textareaSetting = contentEl.querySelector('[data-field="replacementTextarea"]') as HTMLElement;
 		const editorSetting = contentEl.querySelector('[data-field="fnEditor"]') as HTMLElement;
 		if (textareaSetting && editorSetting) {
+			textareaSetting.classList.toggle('et-hidden', this.isFunction);
+			editorSetting.classList.toggle('et-hidden', !this.isFunction);
 			if (this.isFunction) {
-				textareaSetting.style.display = 'none';
-				editorSetting.style.display = '';
 				// Sync value to CM6 editor
 				if (this.cmEditor) {
 					const current = this.cmEditor.state.doc.toString();
@@ -491,8 +483,6 @@ export class RuleEditModal extends Modal {
 					}
 				}
 			} else {
-				textareaSetting.style.display = '';
-				editorSetting.style.display = 'none';
 				// Sync value to textarea
 				const textarea = textareaSetting.querySelector('textarea') as HTMLTextAreaElement;
 				if (textarea && textarea.value !== this.replacement) {
@@ -504,7 +494,7 @@ export class RuleEditModal extends Modal {
 		// Scope Language only visible when scope is Code
 		const scopeLangEl = contentEl.querySelector('[data-field="scopeLanguage"]') as HTMLElement;
 		if (scopeLangEl) {
-			scopeLangEl.style.display = this.ruleScope === RuleScope.Code ? '' : 'none';
+			scopeLangEl.classList.toggle('et-hidden', this.ruleScope !== RuleScope.Code);
 		}
 	}
 

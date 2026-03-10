@@ -430,6 +430,34 @@ span[class="easy-typing-cursor-widget"] {
 }
 
 /* ========== Rule Edit Modal: Compact Spacing ========== */
+.et-hidden {
+    display: none !important;
+}
+
+.et-replacement-setting {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.et-replacement-textarea {
+    width: 100%;
+    min-height: 60px;
+}
+
+.et-replacement-hint {
+    margin-top: -8px;
+    margin-bottom: 10px;
+    white-space: pre-line;
+}
+
+.et-fn-hint {
+    margin-top: 6px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-family: var(--font-monospace);
+    white-space: pre-line;
+}
+
 .et-rule-edit-modal .setting-item {
     padding-top: 10px;
     padding-bottom: 10px;
