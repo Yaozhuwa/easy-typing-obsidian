@@ -1,4 +1,7 @@
 ## 更新日志 Changelog
+- V6.0.3 2026-03-11
+  - 修复某些系统上粘贴时 Transaction userEvent 标注丢失，导致即使关闭「粘贴时自动格式化」仍触发首字母大写的问题 (#328)
+  - Fixed paste auto-capitalization ignoring "Auto formatting on paste" toggle on systems where Transaction userEvent annotation is missing (#328)
 - V6.0.2 2026-03-11
   - Bug 修复
     - 修复 `escapeText` 未转义反斜杠导致规则编辑面板 trigger 字段丢失反斜杠显示
