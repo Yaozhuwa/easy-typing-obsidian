@@ -194,6 +194,11 @@ export class RuleEditModal extends Modal {
 		// ===== Pill Bar: Type & Trigger Mode =====
 		const pillBar = contentEl.createDiv({ cls: 'et-pill-bar' });
 
+		pillBar.createEl('span', {
+			cls: 'et-pill-group-label',
+			text: locale.settings.ruleEditModal.fieldType,
+		});
+
 		const typePills: { value: EngineRuleType; label: string }[] = [
 			{ value: EngineRuleType.Input, label: locale.dropdownOptions.ruleTypeInput },
 			{ value: EngineRuleType.Delete, label: locale.dropdownOptions.ruleTypeDelete },
