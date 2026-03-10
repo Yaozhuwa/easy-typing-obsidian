@@ -224,6 +224,7 @@ export class RuleEditModal extends Modal {
 		// Trigger
 		const triggerSetting = new Setting(matchGroup)
 			.setName(locale.settings.ruleEditModal.fieldTrigger)
+			.setDesc('')
 			.addText(text => {
 				text.setValue(this.trigger);
 				text.onChange(v => this.trigger = v);
@@ -245,7 +246,10 @@ export class RuleEditModal extends Modal {
 			.setName(locale.settings.ruleEditModal.fieldIsRegex)
 			.addToggle(toggle => {
 				toggle.setValue(this.isRegex);
-				toggle.onChange(v => this.isRegex = v);
+				toggle.onChange(v => {
+					this.isRegex = v;
+					this.refreshVisibility(contentEl);
+				});
 			});
 		isRegexSetting.settingEl.dataset.field = 'isRegex';
 
@@ -268,14 +272,23 @@ export class RuleEditModal extends Modal {
 
 		// Replacement (textarea for string mode)
 		const replacementSetting = new Setting(replacementGroup)
-			.setName(locale.settings.ruleEditModal.fieldReplacement)
-			.setDesc('');
+			.setName(locale.settings.ruleEditModal.fieldReplacement);
 		replacementSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
 		replacementSetting.settingEl.dataset.field = 'replacementTextarea';
 		const replacementArea = new TextAreaComponent(replacementSetting.controlEl);
 		replacementArea.inputEl.setAttribute('style', 'width: 100%; min-height: 60px;');
 		replacementArea.setValue(this.replacement);
 		replacementArea.onChange(v => this.replacement = v);
+
+		// Replacement hint (below textarea, outside the Setting)
+		const replacementHint = replacementGroup.createEl('div', {
+			cls: 'setting-item-description',
+			text: '',
+		});
+		replacementHint.dataset.field = 'replacementHint';
+		replacementHint.style.marginTop = '-8px';
+		replacementHint.style.marginBottom = '10px';
+		replacementHint.style.whiteSpace = 'pre-line';
 
 		// CM6 editor for function mode (syntax highlighted)
 		const editorWrapper = replacementGroup.createDiv();
@@ -299,6 +312,7 @@ export class RuleEditModal extends Modal {
 		fnHint.style.marginBottom = '10px';
 		fnHint.style.fontSize = '12px';
 		fnHint.style.fontFamily = 'var(--font-monospace)';
+		fnHint.style.whiteSpace = 'pre-line';
 
 		// ===== Group: Other =====
 		const otherGroup = contentEl.createDiv({ cls: 'et-modal-group' });
@@ -377,7 +391,7 @@ export class RuleEditModal extends Modal {
 			triggerRightEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
 		}
 
-		// Trigger Label
+		// Trigger Label & Desc
 		const triggerEl = contentEl.querySelector('[data-field="trigger"]') as HTMLElement;
 		if (triggerEl) {
 			const nameEl = triggerEl.querySelector('.setting-item-name');
@@ -385,6 +399,10 @@ export class RuleEditModal extends Modal {
 				nameEl.textContent = this.ruleType === EngineRuleType.SelectKey
 					? locale.settings.ruleEditModal.fieldTriggerSelectKey
 					: locale.settings.ruleEditModal.fieldTrigger;
+			}
+			const descEl = triggerEl.querySelector('.setting-item-description');
+			if (descEl) {
+				descEl.textContent = this.isRegex ? '' : locale.settings.ruleEditModal.hintTriggerEscape;
 			}
 		}
 
@@ -400,24 +418,35 @@ export class RuleEditModal extends Modal {
 			triggerModeEl.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
 		}
 
-		// Replacement Desc
-		const replacementSettingEl = contentEl.querySelector('[data-field="replacementTextarea"]') as HTMLElement;
-		if (replacementSettingEl) {
-			const descEl = replacementSettingEl.querySelector('.setting-item-description');
-			if (descEl) {
-				descEl.textContent = this.ruleType === EngineRuleType.SelectKey
-					? locale.settings.ruleEditModal.fieldReplacementDescSelectKey
-					: locale.settings.ruleEditModal.fieldReplacementDescInputDelete;
+		// Replacement Hint (separate element below textarea)
+		const replacementHintEl = contentEl.querySelector('[data-field="replacementHint"]') as HTMLElement;
+		if (replacementHintEl) {
+			const parts: string[] = [];
+			if (this.ruleType === EngineRuleType.SelectKey) {
+				parts.push(locale.settings.ruleEditModal.fieldReplacementDescSelectKey);
+			} else if (this.isRegex) {
+				parts.push(locale.settings.ruleEditModal.fieldReplacementDescInputDelete);
 			}
+			parts.push(locale.settings.ruleEditModal.hintTabstop);
+			replacementHintEl.textContent = parts.join('\n');
+			replacementHintEl.style.display = this.isFunction ? 'none' : '';
 		}
 
 		// Function hint
 		const fnHint = contentEl.querySelector('[data-field="fnHint"]') as HTMLElement;
 		if (fnHint) {
 			fnHint.style.display = this.isFunction ? '' : 'none';
-			fnHint.textContent = this.ruleType === EngineRuleType.SelectKey
-				? locale.settings.ruleEditModal.functionHintSelectKey
-				: locale.settings.ruleEditModal.functionHintInputDelete;
+			const parts: string[] = [];
+			if (this.ruleType === EngineRuleType.SelectKey) {
+				parts.push(locale.settings.ruleEditModal.functionHintSelectKey);
+			} else {
+				parts.push(locale.settings.ruleEditModal.functionHintInputDelete);
+				if (this.isRegex) {
+					parts.push(locale.settings.ruleEditModal.fieldReplacementDescInputDelete);
+				}
+			}
+			parts.push(locale.settings.ruleEditModal.hintTabstop);
+			fnHint.textContent = parts.join('\n');
 		}
 
 		// Toggle between textarea and CM6 editor

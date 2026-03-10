@@ -40,6 +40,7 @@ export interface Locale {
             fieldTrigger: string;
             fieldTriggerSelectKey: string;
             fieldTriggerRight: string;
+            hintTriggerEscape: string;
             fieldReplacement: string;
             fieldReplacementDescSelectKey: string;
             fieldReplacementDescInputDelete: string;
@@ -55,6 +56,7 @@ export interface Locale {
             fieldIsFunction: string;
             functionHintInputDelete: string;
             functionHintSelectKey: string;
+            hintTabstop: string;
             functionPlaceholder: string;
             groupMatch: string;
             groupReplacement: string;
