@@ -174,6 +174,7 @@ export class RuleEngine {
 	 */
 	static escapeText(text: string): string {
 		return text
+			.replace(/\\/g, '\\\\')
 			.replace(/\n/g, '\\n')
 			.replace(/\t/g, '\\t')
 			.replace(/\r/g, '\\r');
