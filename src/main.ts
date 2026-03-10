@@ -29,6 +29,8 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 	onFormatArticle: boolean;
 	plainPasteInProgress: boolean;
+	pasteDetected: boolean;
+	private pasteTimerId: ReturnType<typeof setTimeout> | null = null;
 	TaboutPairStrs: PairString[];
 	ruleManager: RuleManager;
 	get ruleEngine(): RuleEngine { return this.ruleManager.ruleEngine; }
@@ -52,17 +54,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.onFormatArticle = false;
 		this.plainPasteInProgress = false;
-
-		// 检测无格式粘贴（Cmd/Ctrl+Shift+V），设置标记以跳过自动格式化
-		const plainPasteHandler = (evt: KeyboardEvent) => {
-			const mod = Platform.isMacOS ? evt.metaKey : evt.ctrlKey;
-			if (mod && evt.shiftKey && evt.key.toLowerCase() === 'v') {
-				this.plainPasteInProgress = true;
-				setTimeout(() => { this.plainPasteInProgress = false; }, 500);
-			}
-		};
-		document.addEventListener('keydown', plainPasteHandler, true);
-		this.register(() => document.removeEventListener('keydown', plainPasteHandler, true));
+		this.pasteDetected = false;
 
 		// 确保 settings 已正确加载
 		if (!this.settings) {
@@ -80,6 +72,14 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 
 		this.registerEditorExtension(Prec.highest(keymap.of([
+			{
+				key: "Mod-v",
+				run: (): boolean => { this.markPaste(false); return false; }
+			},
+			{
+				key: "Mod-Shift-v",
+				run: (): boolean => { this.markPaste(true); return false; }
+			},
 			{
 				key: "Tab",
 				run: (v: EditorView): boolean => handleTabDown(this, v)
@@ -236,7 +236,19 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 	}
 
 	onunload() {
+		if (this.pasteTimerId) clearTimeout(this.pasteTimerId);
 		console.log("Easy Typing Plugin unloaded.")
+	}
+
+	private markPaste(plain: boolean) {
+		this.pasteDetected = true;
+		if (plain) this.plainPasteInProgress = true;
+		if (this.pasteTimerId) clearTimeout(this.pasteTimerId);
+		this.pasteTimerId = setTimeout(() => {
+			this.pasteDetected = false;
+			this.plainPasteInProgress = false;
+			this.pasteTimerId = null;
+		}, 500);
 	}
 
 	getDefaultIndentChar = () => {

@@ -294,7 +294,7 @@ function tryProcessInput(
 	if (triggerCvtRule(ctx, update.view, cursorPos)) return true;
 	if (!ctx.settings.AutoFormat || isCurrentFileExclude(ctx)) return false;
 	if (lineType !== LineType.text) return false;
-	if (changeType.contains('paste')) return false;
+	if (changeType.contains('paste') || ctx.pasteDetected) return false;
 	const insertedStr = update.view.state.doc.sliceString(changeFrom, cursorPos);
 	const changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, changeFrom, cursorPos, insertedStr);
 	if (changes) {
@@ -383,8 +383,9 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 		}
 
 		// --- 粘贴时自动格式化 ---
-		const isFormattedPaste = changeType.contains("paste") && !ctx.plainPasteInProgress;
-		const isPlainPaste = changeType.contains("paste") && ctx.plainPasteInProgress;
+		const isPaste = changeType.contains("paste") || ctx.pasteDetected;
+		const isFormattedPaste = isPaste && !ctx.plainPasteInProgress;
+		const isPlainPaste = isPaste && ctx.plainPasteInProgress;
 		if (isPlainPaste) ctx.plainPasteInProgress = false;
 		const isExcludeFile = isCurrentFileExclude(ctx);
 		if (ctx.settings.AutoFormat && ctx.settings.AutoFormatPaste && !isExcludeFile && isFormattedPaste && !Platform.isIosApp) {

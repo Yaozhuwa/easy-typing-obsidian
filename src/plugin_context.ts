@@ -15,6 +15,7 @@ export interface PluginContext {
 	CurActiveMarkdown: string;
 	onFormatArticle: boolean;
 	plainPasteInProgress: boolean;
+	pasteDetected: boolean;
 	getDefaultIndentChar(): string;
 	isCurrentFileExclude(): boolean;
 	saveSettings(): Promise<void>;
