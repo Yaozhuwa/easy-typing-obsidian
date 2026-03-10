@@ -1,4 +1,33 @@
 ## 更新日志 Changelog
+- V6.0.2 2026-03-11
+  - Bug 修复
+    - 修复 `escapeText` 未转义反斜杠导致规则编辑面板 trigger 字段丢失反斜杠显示
+    - 修复严格换行模式下 `goNewLineAfterCurLine` 命令未正确产生双换行 (#290)
+    - 修复 Obsidian 1.12.5 中无格式粘贴判断失效的问题
+  - 规则编辑面板优化
+    - 分组布局：匹配条件、替换、其他三个分组，字段重命名更清晰
+    - 替换内容提示文本根据规则类型和选项动态更新 (#327)
+    - 类型/触发方式选择从下拉框改为紧凑分段按钮，附带标签文字提示
+    - 「使用正则表达式匹配」和「使用函数式替换」从独立行移到分组标题栏右侧，以带圆点指示器的 pill chip 呈现
+    - 缩小面板内各元素间距，整体更紧凑；匹配输入框加宽并使用等宽字体
+    - 移除所有硬编码内联样式，改用 CSS 类，符合 Obsidian 插件规范
+  - 文档
+    - 重写规则文档：以设置面板为主线，JSON 格式降级为附录
+    - 补充严格换行文档，修正列表在所有模式下均不额外处理
+  - Bug Fixes
+    - Fixed `escapeText` not escaping backslashes, causing rule trigger field to lose backslash display
+    - Fixed `goNewLineAfterCurLine` not producing double line breaks in strict line break mode (#290)
+    - Fixed paste-without-format detection broken in Obsidian 1.12.5
+  - Rule Edit Modal Improvements
+    - Grouped layout: Match, Replacement, Other sections with clearer field names
+    - Dynamic replacement hint text based on rule type and options (#327)
+    - Type / trigger mode selectors changed from dropdowns to compact segmented pill buttons with labels
+    - "Use Regex Matching" and "Use Function Replacement" toggles moved into group headers as pill chips with dot indicators
+    - Reduced padding and margins for a more compact layout; trigger inputs widened with monospace font
+    - Removed all hardcoded inline styles; replaced with CSS classes per Obsidian plugin guidelines
+  - Documentation
+    - Rewrote rule documentation: settings panel as primary guide, JSON format demoted to appendix
+    - Added strict line break documentation; clarified lists are not extra-processed in any mode
 - V6.0.1 2026-03-05
   - 新增「粘贴时自动格式化」开关，可在自动格式化面板中独立控制粘贴时是否触发格式化
   - 删除插件自带的「无格式化粘贴」命令，改为依赖系统原生 CMD/CTRL+SHIFT+V
