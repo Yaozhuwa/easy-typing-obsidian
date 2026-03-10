@@ -1,4 +1,11 @@
 ## 更新日志 Changelog
+- V6.0.4 2026-03-11
+  - 支持自定义规则文件存储路径，可将规则文件存储到库目录下的任意文件夹，便于 Obsidian Sync 同步
+  - 设置面板提供文件夹选择器（基于 AbstractInputSuggest）和迁移按钮
+  - 切换路径后自动重新加载规则引擎，设置面板即时刷新
+  - Support custom rules storage path, allowing rule files to be stored in any vault folder for Obsidian Sync compatibility
+  - Settings panel provides a folder selector (based on AbstractInputSuggest) and a migrate button
+  - Switching paths automatically reloads the rule engine and refreshes the settings panel
 - V6.0.3 2026-03-11
   - 修复某些系统上粘贴时 Transaction userEvent 标注丢失，导致即使关闭「粘贴时自动格式化」仍触发首字母大写的问题 (#328)
   - Fixed paste auto-capitalization ignoring "Auto formatting on paste" toggle on systems where Transaction userEvent annotation is missing (#328)
