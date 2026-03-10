@@ -7,6 +7,8 @@ export class RuleManager {
 	ruleEngine: RuleEngine;
 	cachedBuiltinRules: SimpleRule[] = [];
 	cachedUserRules: SimpleRule[] = [];
+	/** The storage path that was active when rules were last loaded. */
+	previousStoragePath: string = '';
 	private readonly BUILTIN_RULES_FILE = 'builtin-rules.json';
 	private readonly USER_RULES_FILE = 'user-rules.json';
 
@@ -15,10 +17,15 @@ export class RuleManager {
 		private manifest: PluginManifest,
 		private settings: EasyTypingSettings,
 		private savePluginSettings: () => Promise<void>,
-	) {}
+	) {
+		this.previousStoragePath = settings.rulesStoragePath;
+	}
 
 	private pluginPath(filename: string): string {
-		return `${this.manifest.dir}/${filename}`;
+		const base = this.settings.rulesStoragePath
+			? this.settings.rulesStoragePath
+			: this.manifest.dir!;
+		return `${base}/${filename}`;
 	}
 
 	async loadRulesFile(filename: string): Promise<SimpleRule[]> {
@@ -51,6 +58,11 @@ export class RuleManager {
 
 	async initRuleEngine(): Promise<void> {
 		this.ruleEngine = new RuleEngine();
+
+		// Ensure storage directory exists when using custom path
+		if (this.settings.rulesStoragePath) {
+			await this.app.vault.adapter.mkdir(this.settings.rulesStoragePath);
+		}
 
 		const builtinPath = this.pluginPath(this.BUILTIN_RULES_FILE);
 		const userPath = this.pluginPath(this.USER_RULES_FILE);
@@ -200,5 +212,28 @@ export class RuleManager {
 		rule.options = opts || undefined;
 		await this.saveRulesFile(file, cache);
 		this.ruleEngine.updateRule(id, { triggerMode: tabMode ? RuleTriggerMode.Tab : RuleTriggerMode.Auto });
+	}
+
+	async migrateRulesFiles(oldPath: string, newPath: string): Promise<void> {
+		const oldBase = oldPath || this.manifest.dir!;
+		const newBase = newPath || this.manifest.dir!;
+		if (oldBase === newBase) return;
+
+		// Ensure target directory exists
+		if (newPath) {
+			await this.app.vault.adapter.mkdir(newPath);
+		}
+
+		for (const filename of [this.BUILTIN_RULES_FILE, this.USER_RULES_FILE]) {
+			const src = `${oldBase}/${filename}`;
+			try {
+				const content = await this.app.vault.adapter.read(src);
+				await this.app.vault.adapter.write(`${newBase}/${filename}`, content);
+			} catch {
+				// Source file doesn't exist, skip
+			}
+		}
+
+		this.previousStoragePath = newPath;
 	}
 }

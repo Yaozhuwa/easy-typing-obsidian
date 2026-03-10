@@ -45,6 +45,7 @@ export interface EasyTypingSettings {
 	TryFixMSIME: boolean;
 	CollapsePersistentEnter: boolean;
 	deletedBuiltinRuleIds: string[];
+	rulesStoragePath: string;
 }
 
 export const DEFAULT_SETTINGS: EasyTypingSettings = {
@@ -87,4 +88,5 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 	TryFixMSIME: false,
 	CollapsePersistentEnter: false,
 	deletedBuiltinRuleIds: [],
+	rulesStoragePath: "",
 }

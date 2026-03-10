@@ -104,6 +104,14 @@ const locale: Locale = {
             name: "在控制台輸出調試資訊",
             desc: "在控制台輸出調試資訊"
         },
+        rulesStoragePath: {
+            name: "規則檔案儲存路徑",
+            desc: "設定規則檔案的儲存路徑（相對於庫根目錄），選擇預設則儲存在外掛目錄內",
+            defaultOption: "預設（外掛目錄）",
+            migrateButton: "遷移",
+            migrateDesc: "將規則檔案從上次載入的路徑遷移到當前設定的路徑",
+            migrateSuccess: "規則檔案遷移成功"
+        },
         selectionReplaceRule: {
             name: "選中替換規則",
             desc: "用戶定義的選中替換規則"

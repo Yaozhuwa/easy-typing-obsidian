@@ -101,6 +101,14 @@ const locale: Locale = {
             name: "Print debug info in console",
             desc: "Print debug information in the console."
         },
+        rulesStoragePath: {
+            name: "Rules Storage Path",
+            desc: "Set the storage path for rule files (relative to vault root). Select default to store in the plugin directory",
+            defaultOption: "Default (plugin directory)",
+            migrateButton: "Migrate",
+            migrateDesc: "Migrate rule files from the previously loaded path to the current path",
+            migrateSuccess: "Rule files migrated successfully"
+        },
         selectionReplaceRule: {
             name: "Selection Replace Rule",
             desc: "User defined Selection Replace Rule"

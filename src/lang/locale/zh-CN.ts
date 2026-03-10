@@ -101,6 +101,14 @@ const locale: Locale = {
             name: "在控制台输出调试信息",
             desc: "在控制台输出调试信息"
         },
+        rulesStoragePath: {
+            name: "规则文件存储路径",
+            desc: "设置规则文件的存储路径（相对于库根目录），选择默认则存储在插件目录内",
+            defaultOption: "默认（插件目录）",
+            migrateButton: "迁移",
+            migrateDesc: "将规则文件从上次加载的路径迁移到当前设置的路径",
+            migrateSuccess: "规则文件迁移成功"
+        },
         selectionReplaceRule: {
             name: "选中替换规则",
             desc: "用户定义的选择替换规则"

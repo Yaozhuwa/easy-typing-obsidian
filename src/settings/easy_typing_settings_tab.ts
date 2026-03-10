@@ -1,6 +1,6 @@
 import { SpaceState, string2SpaceState } from 'src/core';
 import { ScriptCategory } from '../formatting/script_category';
-import { App, Notice, PluginSettingTab, Setting, TextAreaComponent, setIcon } from 'obsidian';
+import { AbstractInputSuggest, App, Notice, PluginSettingTab, Setting, TextAreaComponent, setIcon } from 'obsidian';
 import EasyTypingPlugin from '../main';
 import { getLocale } from '../lang/locale';
 import { setDebug } from '../utils';
@@ -9,6 +9,38 @@ import { DEFAULT_BUILTIN_RULES } from '../default_rules';
 import { StrictLineMode } from './settings_types';
 import { RuleEditModal } from './rule_edit_modal';
 import { sprintf } from 'sprintf-js';
+
+/** Empty string = default (plugin directory). */
+const DEFAULT_PATH_VALUE = '';
+
+class FolderSuggest extends AbstractInputSuggest<string> {
+	private defaultLabel: string;
+	private onSelectCb: (path: string) => void;
+
+	constructor(app: App, inputEl: HTMLInputElement, defaultLabel: string, onSelect: (path: string) => void) {
+		super(app, inputEl);
+		this.defaultLabel = defaultLabel;
+		this.onSelectCb = onSelect;
+	}
+
+	getSuggestions(query: string): string[] {
+		const lowerQuery = query.toLowerCase();
+		const folders = this.app.vault.getAllFolders()
+			.map(f => f.path)
+			.filter(p => p.toLowerCase().includes(lowerQuery));
+		return [DEFAULT_PATH_VALUE, ...folders];
+	}
+
+	renderSuggestion(path: string, el: HTMLElement): void {
+		el.setText(path || this.defaultLabel);
+	}
+
+	selectSuggestion(path: string, _evt: MouseEvent | KeyboardEvent): void {
+		this.setValue(path);
+		this.close();
+		this.onSelectCb(path);
+	}
+}
 
 function setAttributes(element: any, attributes: any) {
 	for (let key in attributes) {
@@ -876,6 +908,37 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					this.plugin.settings.FixMacOSContextMenu = value;
 					await this.plugin.saveSettings();
 				});
+			});
+
+		new Setting(el)
+			.setName(locale.settings.rulesStoragePath.name)
+			.setDesc(locale.settings.rulesStoragePath.desc)
+			.addText((text) => {
+				text.setPlaceholder(locale.settings.rulesStoragePath.defaultOption)
+					.setValue(this.plugin.settings.rulesStoragePath);
+				new FolderSuggest(
+					this.app,
+					text.inputEl,
+					locale.settings.rulesStoragePath.defaultOption,
+					async (path) => {
+						this.plugin.settings.rulesStoragePath = path;
+						await this.plugin.saveSettings();
+						await this.plugin.ruleManager.initRuleEngine();
+						this.display();
+					},
+				);
+			})
+			.addButton((btn) => {
+				btn.setButtonText(locale.settings.rulesStoragePath.migrateButton)
+					.setTooltip(locale.settings.rulesStoragePath.migrateDesc)
+					.onClick(async () => {
+						const oldPath = this.plugin.ruleManager.previousStoragePath;
+						const newPath = this.plugin.settings.rulesStoragePath;
+						await this.plugin.ruleManager.migrateRulesFiles(oldPath, newPath);
+						await this.plugin.ruleManager.initRuleEngine();
+						new Notice(locale.settings.rulesStoragePath.migrateSuccess);
+						this.display();
+					});
 			});
 
 		new Setting(el)

@@ -101,6 +101,14 @@ const locale: Locale = {
             name: "콘솔에 디버그 정보 출력",
             desc: "콘솔에 디버그 정보를 출력합니다."
         },
+        rulesStoragePath: {
+            name: "규칙 파일 저장 경로",
+            desc: "규칙 파일의 저장 경로를 설정합니다 (볼트 루트 기준 상대 경로). 기본값을 선택하면 플러그인 디렉터리에 저장됩니다",
+            defaultOption: "기본값 (플러그인 디렉터리)",
+            migrateButton: "마이그레이션",
+            migrateDesc: "이전에 로드한 경로에서 현재 경로로 규칙 파일을 마이그레이션합니다",
+            migrateSuccess: "규칙 파일이 성공적으로 마이그레이션되었습니다"
+        },
         selectionReplaceRule: {
             name: "선택 대체 규칙",
             desc: "사용자 정의 선택 대체 규칙"

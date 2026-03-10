@@ -25,6 +25,7 @@ export interface Locale {
         enhanceModA: { name: string; desc: string };
         collapsePersistentEnter: { name: string; desc: string };
         printDebugInfo: { name: string; desc: string };
+        rulesStoragePath: { name: string; desc: string; defaultOption: string; migrateButton: string; migrateDesc: string; migrateSuccess: string };
         selectionReplaceRule: { name: string; desc: string };
         deleteRule: { name: string; desc: string };
         convertRule: { name: string; desc: string };

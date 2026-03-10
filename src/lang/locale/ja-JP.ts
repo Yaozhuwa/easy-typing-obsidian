@@ -101,6 +101,14 @@ const locale: Locale = {
             name: "コンソールにデバッグ情報を出力",
             desc: "コンソールにデバッグ情報を出力します。"
         },
+        rulesStoragePath: {
+            name: "ルールファイルの保存パス",
+            desc: "ルールファイルの保存パスを設定します（ボルトルートからの相対パス）。デフォルトを選択するとプラグインディレクトリに保存されます",
+            defaultOption: "デフォルト（プラグインディレクトリ）",
+            migrateButton: "移行",
+            migrateDesc: "前回読み込んだパスから現在のパスにルールファイルを移行します",
+            migrateSuccess: "ルールファイルの移行が完了しました"
+        },
         selectionReplaceRule: {
             name: "選択置換ルール",
             desc: "ユーザー定義の選択置換ルール"
