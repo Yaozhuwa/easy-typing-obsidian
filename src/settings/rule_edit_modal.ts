@@ -184,42 +184,70 @@ export class RuleEditModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
+		this.modalEl.addClass('et-rule-edit-modal');
 		const locale = getLocale();
 		const title = this.mode === 'create'
 			? locale.settings.ruleEditModal.addTitle
 			: locale.settings.ruleEditModal.editTitle;
 		contentEl.createEl('h2', { text: title });
 
-		// ===== Basic: Type & Trigger Mode =====
+		// ===== Pill Bar: Type & Trigger Mode =====
+		const pillBar = contentEl.createDiv({ cls: 'et-pill-bar' });
 
-		// Type dropdown
-		new Setting(contentEl)
-			.setName(locale.settings.ruleEditModal.fieldType)
-			.addDropdown(dropdown => {
-				dropdown.addOption(EngineRuleType.Input, locale.dropdownOptions.ruleTypeInput);
-				dropdown.addOption(EngineRuleType.Delete, locale.dropdownOptions.ruleTypeDelete);
-				dropdown.addOption(EngineRuleType.SelectKey, locale.dropdownOptions.ruleTypeSelectKey);
-				dropdown.setValue(this.ruleType);
-				dropdown.onChange((v: string) => {
-					this.ruleType = v as EngineRuleType;
-					this.refreshVisibility(contentEl);
-				});
+		const typePills: { value: EngineRuleType; label: string }[] = [
+			{ value: EngineRuleType.Input, label: locale.dropdownOptions.ruleTypeInput },
+			{ value: EngineRuleType.Delete, label: locale.dropdownOptions.ruleTypeDelete },
+			{ value: EngineRuleType.SelectKey, label: locale.dropdownOptions.ruleTypeSelectKey },
+		];
+		for (const { value, label } of typePills) {
+			const pill = pillBar.createEl('button', {
+				cls: `et-pill${this.ruleType === value ? ' et-pill-active' : ''}`,
+				text: label,
 			});
+			pill.dataset.pillGroup = 'ruleType';
+			pill.dataset.pillValue = value;
+			pill.addEventListener('click', () => {
+				this.ruleType = value;
+				this.refreshVisibility(contentEl);
+			});
+		}
 
-		// Trigger Mode (only meaningful for Input rules)
-		const triggerModeSetting = new Setting(contentEl)
-			.setName(locale.settings.ruleEditModal.fieldTriggerMode)
-			.addDropdown(dropdown => {
-				dropdown.addOption(RuleTriggerMode.Auto, locale.dropdownOptions.triggerModeAuto);
-				dropdown.addOption(RuleTriggerMode.Tab, locale.dropdownOptions.triggerModeTab);
-				dropdown.setValue(this.triggerMode);
-				dropdown.onChange((v: string) => this.triggerMode = v as RuleTriggerMode);
+		const triggerModeLabel = pillBar.createEl('span', {
+			cls: 'et-pill-group-label',
+			text: locale.settings.ruleEditModal.fieldTriggerMode,
+		});
+		triggerModeLabel.dataset.field = 'triggerModeLabel';
+
+		const triggerModePills: { value: RuleTriggerMode; label: string }[] = [
+			{ value: RuleTriggerMode.Auto, label: locale.dropdownOptions.triggerModeAuto },
+			{ value: RuleTriggerMode.Tab, label: locale.dropdownOptions.triggerModeTab },
+		];
+		for (const { value, label } of triggerModePills) {
+			const pill = pillBar.createEl('button', {
+				cls: `et-pill${this.triggerMode === value ? ' et-pill-active' : ''}`,
+				text: label,
 			});
-		triggerModeSetting.settingEl.dataset.field = 'triggerMode';
+			pill.dataset.pillGroup = 'triggerMode';
+			pill.dataset.pillValue = value;
+			pill.addEventListener('click', () => {
+				this.triggerMode = value;
+				this.refreshVisibility(contentEl);
+			});
+		}
 
 		// ===== Group: Match =====
 		const matchGroup = contentEl.createDiv({ cls: 'et-modal-group' });
-		matchGroup.createEl('div', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupMatch });
+		const matchHeader = matchGroup.createDiv({ cls: 'et-modal-group-header' });
+		matchHeader.createEl('span', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupMatch });
+		const regexChip = matchHeader.createEl('button', {
+			cls: `et-pill-chip${this.isRegex ? ' et-pill-chip-active' : ''}`,
+			text: locale.settings.ruleEditModal.fieldIsRegex,
+		});
+		regexChip.dataset.field = 'isRegexChip';
+		regexChip.addEventListener('click', () => {
+			this.isRegex = !this.isRegex;
+			this.refreshVisibility(contentEl);
+		});
 
 		// Trigger
 		const triggerSetting = new Setting(matchGroup)
@@ -240,35 +268,19 @@ export class RuleEditModal extends Modal {
 			});
 		triggerRightSetting.settingEl.dataset.field = 'triggerRight';
 
-		// Is Regex
-		const isRegexSetting = new Setting(matchGroup)
-			.setClass('et-modal-option-row')
-			.setName(locale.settings.ruleEditModal.fieldIsRegex)
-			.addToggle(toggle => {
-				toggle.setValue(this.isRegex);
-				toggle.onChange(v => {
-					this.isRegex = v;
-					this.refreshVisibility(contentEl);
-				});
-			});
-		isRegexSetting.settingEl.dataset.field = 'isRegex';
-
 		// ===== Group: Replacement =====
 		const replacementGroup = contentEl.createDiv({ cls: 'et-modal-group' });
-		replacementGroup.createEl('div', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupReplacement });
-
-		// Is Function
-		const fnSetting = new Setting(replacementGroup)
-			.setClass('et-modal-option-row')
-			.setName(locale.settings.ruleEditModal.fieldIsFunction)
-			.addToggle(toggle => {
-				toggle.setValue(this.isFunction);
-				toggle.onChange(v => {
-					this.isFunction = v;
-					this.refreshVisibility(contentEl);
-				});
-			});
-		fnSetting.settingEl.dataset.field = 'isFunction';
+		const replHeader = replacementGroup.createDiv({ cls: 'et-modal-group-header' });
+		replHeader.createEl('span', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupReplacement });
+		const fnChip = replHeader.createEl('button', {
+			cls: `et-pill-chip${this.isFunction ? ' et-pill-chip-active' : ''}`,
+			text: locale.settings.ruleEditModal.fieldIsFunction,
+		});
+		fnChip.dataset.field = 'isFunctionChip';
+		fnChip.addEventListener('click', () => {
+			this.isFunction = !this.isFunction;
+			this.refreshVisibility(contentEl);
+		});
 
 		// Replacement (textarea for string mode)
 		const replacementSetting = new Setting(replacementGroup)
@@ -406,17 +418,30 @@ export class RuleEditModal extends Modal {
 			}
 		}
 
-		// Is Regex only applies to Input/Delete rules
-		const isRegexEl = contentEl.querySelector('[data-field="isRegex"]') as HTMLElement;
-		if (isRegexEl) {
-			isRegexEl.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
+		// Update pill active states
+		contentEl.querySelectorAll('[data-pill-group="ruleType"]').forEach((el: Element) => {
+			el.classList.toggle('et-pill-active', (el as HTMLElement).dataset.pillValue === this.ruleType);
+		});
+
+		// Trigger mode label + pills visible only for Input type
+		const triggerModeLabel = contentEl.querySelector('[data-field="triggerModeLabel"]') as HTMLElement;
+		if (triggerModeLabel) triggerModeLabel.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
+		contentEl.querySelectorAll('[data-pill-group="triggerMode"]').forEach((el: Element) => {
+			const htmlEl = el as HTMLElement;
+			htmlEl.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
+			htmlEl.classList.toggle('et-pill-active', htmlEl.dataset.pillValue === this.triggerMode);
+		});
+
+		// Regex chip state
+		const regexChip = contentEl.querySelector('[data-field="isRegexChip"]') as HTMLElement;
+		if (regexChip) {
+			regexChip.classList.toggle('et-pill-chip-active', this.isRegex);
+			regexChip.style.display = this.ruleType === EngineRuleType.SelectKey ? 'none' : '';
 		}
 
-		// Trigger Mode only applies to Input rules
-		const triggerModeEl = contentEl.querySelector('[data-field="triggerMode"]') as HTMLElement;
-		if (triggerModeEl) {
-			triggerModeEl.style.display = this.ruleType === EngineRuleType.Input ? '' : 'none';
-		}
+		// Function chip state
+		const fnChip = contentEl.querySelector('[data-field="isFunctionChip"]') as HTMLElement;
+		if (fnChip) fnChip.classList.toggle('et-pill-chip-active', this.isFunction);
 
 		// Replacement Hint (separate element below textarea)
 		const replacementHintEl = contentEl.querySelector('[data-field="replacementHint"]') as HTMLElement;

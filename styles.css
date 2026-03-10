@@ -332,3 +332,120 @@ span[class="easy-typing-cursor-widget"] {
     transform: scale(0.95);
     background-color: rgba(220, 53, 69, 0.15);
 }
+
+/* ========== Rule Edit Modal: Pill Bar ========== */
+.et-pill-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 0 10px;
+}
+
+.et-pill {
+    padding: 2px 10px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    font-weight: 500;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.et-pill:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.et-pill.et-pill-active {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+    font-weight: 600;
+}
+
+.et-pill-group-label {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-left: 10px;
+    margin-right: 2px;
+    user-select: none;
+}
+
+/* ========== Rule Edit Modal: Group Header + Pill Chip ========== */
+.et-modal-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 2px;
+}
+
+.et-modal-group-header .et-modal-group-title {
+    padding: 0;
+}
+
+.et-pill-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px 2px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--background-modifier-border);
+    background: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-muted);
+    user-select: none;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.et-pill-chip::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-faint);
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.et-pill-chip:hover {
+    border-color: var(--text-muted);
+}
+
+.et-pill-chip:hover::after {
+    border-color: var(--text-muted);
+}
+
+.et-pill-chip.et-pill-chip-active {
+    color: var(--text-normal);
+    border-color: var(--text-muted);
+}
+
+.et-pill-chip.et-pill-chip-active::after {
+    background-color: var(--text-muted);
+    border-color: var(--text-muted);
+}
+
+/* ========== Rule Edit Modal: Compact Spacing ========== */
+.et-rule-edit-modal .setting-item {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.et-rule-edit-modal .et-modal-group {
+    padding: 2px 16px 8px;
+    margin-bottom: 10px;
+}
+
+/* ========== Rule Edit Modal: Input Optimizations ========== */
+.et-rule-edit-modal .et-modal-group .setting-item-control {
+    flex-grow: 2;
+}
+
+.et-rule-edit-modal [data-field="trigger"] input,
+.et-rule-edit-modal [data-field="triggerRight"] input {
+    font-family: var(--font-monospace);
+}
