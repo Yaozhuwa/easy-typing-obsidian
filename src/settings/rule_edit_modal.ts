@@ -185,16 +185,18 @@ export class RuleEditModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		this.modalEl.addClass('et-rule-edit-modal');
+		contentEl.addClass('et-rule-edit-modal-content');
 		const locale = getLocale();
 		const title = this.mode === 'create'
 			? locale.settings.ruleEditModal.addTitle
 			: locale.settings.ruleEditModal.editTitle;
-		contentEl.createEl('h2', { text: title });
+		const headerEl = contentEl.createDiv({ cls: 'et-rule-edit-header' });
+		headerEl.createEl('h2', { text: title, cls: 'et-rule-edit-title' });
 
 		// ===== Pill Bar: Type & Trigger Mode =====
 		const pillBar = contentEl.createDiv({ cls: 'et-pill-bar' });
-
-		pillBar.createEl('span', {
+		const typeSection = pillBar.createDiv({ cls: 'et-pill-section' });
+		typeSection.createEl('span', {
 			cls: 'et-pill-group-label',
 			text: locale.settings.ruleEditModal.fieldType,
 		});
@@ -205,7 +207,7 @@ export class RuleEditModal extends Modal {
 			{ value: EngineRuleType.SelectKey, label: locale.dropdownOptions.ruleTypeSelectKey },
 		];
 		for (const { value, label } of typePills) {
-			const pill = pillBar.createEl('button', {
+			const pill = typeSection.createEl('button', {
 				cls: `et-pill${this.ruleType === value ? ' et-pill-active' : ''}`,
 				text: label,
 			});
@@ -217,7 +219,9 @@ export class RuleEditModal extends Modal {
 			});
 		}
 
-		const triggerModeLabel = pillBar.createEl('span', {
+		const triggerModeSection = pillBar.createDiv({ cls: 'et-pill-section' });
+		triggerModeSection.dataset.field = 'triggerModeSection';
+		const triggerModeLabel = triggerModeSection.createEl('span', {
 			cls: 'et-pill-group-label',
 			text: locale.settings.ruleEditModal.fieldTriggerMode,
 		});
@@ -228,7 +232,7 @@ export class RuleEditModal extends Modal {
 			{ value: RuleTriggerMode.Tab, label: locale.dropdownOptions.triggerModeTab },
 		];
 		for (const { value, label } of triggerModePills) {
-			const pill = pillBar.createEl('button', {
+			const pill = triggerModeSection.createEl('button', {
 				cls: `et-pill${this.triggerMode === value ? ' et-pill-active' : ''}`,
 				text: label,
 			});
@@ -325,7 +329,8 @@ export class RuleEditModal extends Modal {
 
 		// ===== Group: Other =====
 		const otherGroup = contentEl.createDiv({ cls: 'et-modal-group' });
-		otherGroup.createEl('div', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupOther });
+		const otherHeader = otherGroup.createDiv({ cls: 'et-modal-group-header' });
+		otherHeader.createEl('span', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupOther });
 
 		// Scope
 		new Setting(otherGroup)
@@ -374,21 +379,21 @@ export class RuleEditModal extends Modal {
 			});
 
 		// Save button
-		new Setting(contentEl)
-			.addButton(btn => {
-				btn.setButtonText(locale.settings.ruleEditModal.buttonSave)
-					.setCta()
-					.onClick(() => {
-						const rule = this.buildSimpleRule();
-						const regexError = RuleEngine.validateRegex(rule);
-						if (regexError) {
-							new Notice(`[EasyTyping] ${locale.settings.ruleEditModal.invalidRegex}: ${regexError}`);
-							return;
-						}
-						this.close();
-						this.onSubmit(rule);
-					});
-			});
+		const footerEl = contentEl.createDiv({ cls: 'et-rule-edit-footer' });
+		const saveButton = footerEl.createEl('button', {
+			cls: 'mod-cta et-rule-edit-save',
+			text: locale.settings.ruleEditModal.buttonSave,
+		});
+		saveButton.addEventListener('click', () => {
+			const rule = this.buildSimpleRule();
+			const regexError = RuleEngine.validateRegex(rule);
+			if (regexError) {
+				new Notice(`[EasyTyping] ${locale.settings.ruleEditModal.invalidRegex}: ${regexError}`);
+				return;
+			}
+			this.close();
+			this.onSubmit(rule);
+		});
 
 		this.refreshVisibility(contentEl);
 	}
@@ -421,8 +426,8 @@ export class RuleEditModal extends Modal {
 		});
 
 		// Trigger mode label + pills visible only for Input type
-		const triggerModeLabel = contentEl.querySelector('[data-field="triggerModeLabel"]') as HTMLElement;
-		if (triggerModeLabel) triggerModeLabel.classList.toggle('et-hidden', this.ruleType !== EngineRuleType.Input);
+		const triggerModeSection = contentEl.querySelector('[data-field="triggerModeSection"]') as HTMLElement;
+		if (triggerModeSection) triggerModeSection.classList.toggle('et-hidden', this.ruleType !== EngineRuleType.Input);
 		contentEl.querySelectorAll('[data-pill-group="triggerMode"]').forEach((el: Element) => {
 			const htmlEl = el as HTMLElement;
 			htmlEl.classList.toggle('et-hidden', this.ruleType !== EngineRuleType.Input);
