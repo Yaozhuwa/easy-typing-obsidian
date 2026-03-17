@@ -370,18 +370,34 @@ span[class="easy-typing-cursor-widget"] {
 .et-pill-section {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px;
-    border-radius: 12px;
-    background: var(--background-secondary);
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--background-secondary) 92%, var(--background-primary));
     border: 1px solid var(--background-modifier-border);
     flex-wrap: wrap;
 }
 
+.et-pill-options {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 0;
+    padding: 3px;
+    border-radius: 11px;
+    background: var(--background-primary);
+    border: 1px solid color-mix(in srgb, var(--background-modifier-border) 88%, transparent);
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
 .et-pill {
-    padding: 6px 12px;
+    position: relative;
+    z-index: 1;
+    padding: 7px 14px;
     border-radius: 8px;
-    border: 1px solid transparent;
+    border: 0;
     background: transparent;
     appearance: none;
     -webkit-appearance: none;
@@ -389,24 +405,63 @@ span[class="easy-typing-cursor-widget"] {
     background-image: none !important;
     cursor: pointer;
     font-size: 12px;
-    color: var(--text-muted);
+    color: color-mix(in srgb, var(--text-muted) 82%, var(--background-modifier-border));
     line-height: 1.5;
     font-weight: 500;
-    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    white-space: nowrap;
+}
+
+.et-pill + .et-pill::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 22%;
+    width: 1px;
+    height: 56%;
+    background: color-mix(in srgb, var(--background-modifier-border) 82%, transparent);
+    transition: opacity 0.18s ease;
 }
 
 .et-pill:hover {
     background-color: var(--background-modifier-hover);
     color: var(--text-normal);
-    transform: translateY(-1px);
+}
+
+.et-pill:focus {
+    outline: none;
+}
+
+.et-pill:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--interactive-accent) 72%, white);
+    outline-offset: 1px;
 }
 
 .et-pill.et-pill-active {
-    background: color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary));
-    color: var(--text-normal);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--interactive-accent) 32%, var(--background-primary)),
+        color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary))
+    );
+    color: color-mix(in srgb, var(--text-normal) 88%, black);
     font-weight: 600;
-    border-color: color-mix(in srgb, var(--interactive-accent) 30%, var(--background-modifier-border));
     box-shadow: none !important;
+}
+
+.et-pill.et-pill-active::before,
+.et-pill.et-pill-active + .et-pill::before {
+    opacity: 0;
+}
+
+.et-pill.et-pill-active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 0 0 1px color-mix(in srgb, var(--background-modifier-border) 72%, white),
+        0 1px 2px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
 }
 
 .et-pill-group-label {
@@ -417,6 +472,7 @@ span[class="easy-typing-cursor-widget"] {
     user-select: none;
     font-weight: 600;
     letter-spacing: 0.02em;
+    white-space: nowrap;
 }
 
 /* ========== Rule Edit Modal: Group Header + Pill Chip ========== */

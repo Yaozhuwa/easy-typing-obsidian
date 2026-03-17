@@ -200,6 +200,7 @@ export class RuleEditModal extends Modal {
 			cls: 'et-pill-group-label',
 			text: locale.settings.ruleEditModal.fieldType,
 		});
+		const typeOptions = typeSection.createDiv({ cls: 'et-pill-options' });
 
 		const typePills: { value: EngineRuleType; label: string }[] = [
 			{ value: EngineRuleType.Input, label: locale.dropdownOptions.ruleTypeInput },
@@ -207,7 +208,7 @@ export class RuleEditModal extends Modal {
 			{ value: EngineRuleType.SelectKey, label: locale.dropdownOptions.ruleTypeSelectKey },
 		];
 		for (const { value, label } of typePills) {
-			const pill = typeSection.createEl('button', {
+			const pill = typeOptions.createEl('button', {
 				cls: `et-pill${this.ruleType === value ? ' et-pill-active' : ''}`,
 				text: label,
 			});
@@ -226,13 +227,14 @@ export class RuleEditModal extends Modal {
 			text: locale.settings.ruleEditModal.fieldTriggerMode,
 		});
 		triggerModeLabel.dataset.field = 'triggerModeLabel';
+		const triggerModeOptions = triggerModeSection.createDiv({ cls: 'et-pill-options' });
 
 		const triggerModePills: { value: RuleTriggerMode; label: string }[] = [
 			{ value: RuleTriggerMode.Auto, label: locale.dropdownOptions.triggerModeAuto },
 			{ value: RuleTriggerMode.Tab, label: locale.dropdownOptions.triggerModeTab },
 		];
 		for (const { value, label } of triggerModePills) {
-			const pill = triggerModeSection.createEl('button', {
+			const pill = triggerModeOptions.createEl('button', {
 				cls: `et-pill${this.triggerMode === value ? ' et-pill-active' : ''}`,
 				text: label,
 			});
