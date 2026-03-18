@@ -553,6 +553,11 @@ span[class="easy-typing-cursor-widget"] {
     letter-spacing: -0.01em;
 }
 
+.et-rule-edit-title:focus,
+.et-rule-edit-title:focus-visible {
+    outline: none;
+}
+
 .et-pill-bar {
     display: flex;
     align-items: stretch;

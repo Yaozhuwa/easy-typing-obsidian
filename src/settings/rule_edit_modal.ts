@@ -191,7 +191,7 @@ export class RuleEditModal extends Modal {
 			? locale.settings.ruleEditModal.addTitle
 			: locale.settings.ruleEditModal.editTitle;
 		const headerEl = contentEl.createDiv({ cls: 'et-rule-edit-header' });
-		headerEl.createEl('h2', { text: title, cls: 'et-rule-edit-title' });
+		const titleEl = headerEl.createEl('h2', { text: title, cls: 'et-rule-edit-title' });
 
 		// ===== Pill Bar: Type & Trigger Mode =====
 		const pillBar = contentEl.createDiv({ cls: 'et-pill-bar' });
@@ -398,6 +398,22 @@ export class RuleEditModal extends Modal {
 		});
 
 		this.refreshVisibility(contentEl);
+		this.setInitialFocus(contentEl, titleEl);
+	}
+
+	private setInitialFocus(contentEl: HTMLElement, titleEl: HTMLElement): void {
+		window.requestAnimationFrame(() => {
+			if (this.mode === 'create') {
+				const triggerInput = contentEl.querySelector('[data-field="trigger"] input') as HTMLInputElement | null;
+				if (!triggerInput) return;
+				triggerInput.focus();
+				triggerInput.setSelectionRange(triggerInput.value.length, triggerInput.value.length);
+				return;
+			}
+
+			titleEl.tabIndex = -1;
+			titleEl.focus();
+		});
 	}
 
 	refreshVisibility(contentEl: HTMLElement) {
