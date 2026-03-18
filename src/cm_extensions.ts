@@ -294,7 +294,7 @@ function tryProcessInput(
 	if (triggerCvtRule(ctx, update.view, cursorPos)) return true;
 	if (!ctx.settings.AutoFormat || isCurrentFileExclude(ctx)) return false;
 	if (lineType !== LineType.text) return false;
-	if (changeType.contains('paste') || ctx.pasteDetected) return false;
+	if (changeType.includes('paste') || changeType === 'unknown' || ctx.pasteDetected) return false;
 	const insertedStr = update.view.state.doc.sliceString(changeFrom, cursorPos);
 	const changes = ctx.Formater.formatLineOfDoc(update.state, ctx.settings, changeFrom, cursorPos, insertedStr);
 	if (changes) {
