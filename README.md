@@ -63,8 +63,10 @@ A powerful, unified rule engine handles all text transformations with three rule
 
 The plugin ships with rich **built-in rules** (auto-pairing, full-width/half-width conversion, symbol shortcuts, etc.) and supports fully **custom rules**:
 - **Regex matching** with capture group references (`[[1]]`, `[[R1]]`)
+- **Regex flags** `i` / `m` / `u` for case-insensitive, multiline, and Unicode matching
 - **Tabstop placeholders** (`$0`, `$1`, `${1:default}`) with Tab navigation
-- **Scope-aware execution** — restrict rules to text, formula, or code contexts
+- **Scope-aware execution** — restrict rules to one or more text, formula, or code contexts
+- **Code-language filtering** — optionally limit code-scope matches to a language like `python`
 - **Function replacements** — write JavaScript logic in the replacement field
 - **Priority-based ordering** and drag-and-drop reordering
 - **Tab-triggered** or **auto-triggered**

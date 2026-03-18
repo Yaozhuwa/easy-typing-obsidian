@@ -145,10 +145,18 @@ Click `+` (add) or the gear icon (edit) to open the rule edit panel. The panel i
 | **Match Before Cursor** | Text to the **left** of the cursor that must match. For SelectKey rules, this is the "Trigger Key" field |
 | **Match After Cursor** | Text to the **right** of the cursor that must match (optional, not available for SelectKey) |
 | **Use Regex Matching** | When enabled, the match fields are parsed as regular expressions |
+| **Regex Flags** | Only visible when regex matching is enabled. Currently supports `i` / `m` / `u` |
 
 **About matching**:
 - By default, matching is **plain text** — what you type is matched exactly
 - When "Use Regex Matching" is enabled, you can use full regex syntax (e.g., `\d+`, `[a-z]+`, `(.*?)`)
+- Supported regex flags:
+  - `i`: case-insensitive matching
+  - `m`: multiline mode (`^` / `$` match line boundaries)
+  - `u`: Unicode mode (supports broader Unicode characters and `\p{...}` property escapes)
+- The rule engine still requires matches to be **adjacent to the cursor**:
+  - left-side matches must end immediately before the cursor
+  - right-side matches must start immediately after the cursor
 - For SelectKey rules, each character in the "Trigger Key" field is an independent trigger key (e.g., `【￥` means both `【` and `￥` can trigger the rule)
 
 ### Replacement
@@ -162,8 +170,8 @@ Click `+` (add) or the gear icon (edit) to open the rule edit panel. The panel i
 
 | Field | Description |
 |-------|-------------|
-| **Scope** | Restrict which editing context the rule applies to |
-| **Language** | Restrict to a specific code block language, e.g., `python` (only visible when scope is "Code") |
+| **Scope** | Multi-select. Restrict which editing contexts the rule applies to |
+| **Language** | Restrict to a specific code block language, e.g., `python` (visible whenever scope includes "Code") |
 | **Priority** | Lower number = higher priority, default 100 |
 | **Description** | A note to help you identify the rule |
 
@@ -175,6 +183,9 @@ Click `+` (add) or the gear icon (edit) to open the rule edit panel. The panel i
 | **Text** | Only in normal Markdown text |
 | **Formula** | Only inside `$...$` or `$$...$$` |
 | **Code** | Only inside fenced code blocks |
+
+> You can combine multiple scopes, such as "Text + Code".  
+> If a code language is set, that language restriction only applies while matching in code scope; it does not affect text or formula scope.
 
 ---
 
@@ -327,9 +338,22 @@ Rules are stored as JSON files in the plugin directory:
 | Panel Field | Value |
 |-------------|-------|
 | Type | Input |
-| Match Before Cursor | `(?<=^\|\n)([\w-]+)-call` |
+| Match Before Cursor | `^([\w-]+)-call` |
 | Use Regex Matching | Enabled |
+| Regex Flags | `m` |
 | Replacement | `> [![[1]]] $0\n> $1` |
+
+**Capitalize standalone `i` to `I` automatically**:
+
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Match Before Cursor | `(^|[ \t])i([ \t.,!?;:])` |
+| Use Regex Matching | Enabled |
+| Regex Flags | `m` |
+| Replacement | `[[1]]I[[2]]$0` |
+
+> This rule triggers at line start, or after a space / Tab / common punctuation, converts a standalone `i` to `I`, and preserves the surrounding separators.
 
 ### Delete Rule
 
@@ -402,6 +426,18 @@ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.ge
 | Scope | Code |
 | Language | `python` |
 
+**Shared by text and Python code blocks**:
+
+| Panel Field | Value |
+|-------------|-------|
+| Type | Input |
+| Match Before Cursor | `todo` |
+| Replacement | `TODO: $0` |
+| Scope | Text + Code |
+| Language | `python` |
+
+> This rule works in normal text and also in Python code blocks; it does not run in other code languages.
+
 ---
 
 ## Appendix: JSON Format & Option Flags
@@ -420,6 +456,7 @@ When using import/export, rules are saved in JSON format. Understanding the mapp
 | `enabled` | Toggle switch | Whether the rule is active (default: true) |
 | `description` | Description | Human-readable note |
 | `scope_language` | Language | Restrict to specific code block language |
+| `regex_flags` | Regex Flags | Used by regex rules only, supports `i` / `m` / `u` |
 
 ### Option Flags (`options` field)
 
@@ -440,17 +477,30 @@ The `options` string encodes multiple panel settings as single-letter flags:
 
 Multiple flags can be combined, e.g., `dr` = Delete + Regex, `cT` = Code scope + Tab trigger.
 
+### Regex Flags (`regex_flags` field)
+
+`regex_flags` is stored separately and is not encoded into `options`. Currently supported:
+
+| Value | Meaning |
+|------|---------|
+| `i` | Case-insensitive matching |
+| `m` | Multiline mode |
+| `u` | Unicode mode |
+| Combination | For example `im`, `iu` |
+
 ### JSON Example
 
 ```json
 {
-  "trigger": "->",
-  "replacement": "→$0",
+  "trigger": "(?<=^|\\n)([\\w-]+)-call",
+  "replacement": "> [![[1]]] $0\\n> $1",
+  "options": "r",
+  "regex_flags": "m",
   "priority": 100,
-  "description": "Arrow replacement"
+  "description": "Line-start callout shortcut"
 }
 ```
 
-This corresponds to: Type=Input, Match Before Cursor=`->`, Replacement=`→$0`, Priority=100.
+This corresponds to: Type=Input, Match Before Cursor is a regex, Regex Flags=`m`, Replacement is a callout template, Priority=100.
 
 > **Panel input vs JSON**: In the panel, typing `\n` directly represents a newline; in JSON, due to JSON's own escaping, you need to write `\\n` for newline and `\\t` for tab.
