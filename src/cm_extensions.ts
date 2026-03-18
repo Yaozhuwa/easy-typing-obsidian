@@ -418,17 +418,3 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 		}
 	});
 }
-
-export async function normalPaste(editor: Editor, debug?: boolean): Promise<void> {
-	let clipboardText = await navigator.clipboard.readText();
-	if (clipboardText === null || clipboardText === "") return;
-
-	if (debug) console.log("Normal Paste!!")
-	const editorView = editor.cm as EditorView;
-	let mainSelection = editorView.state.selection.asSingle().main;
-	editorView.dispatch({
-		changes: { from: mainSelection.from, to: mainSelection.to, insert: clipboardText },
-		selection: { anchor: mainSelection.from + clipboardText.length },
-		userEvent: "EasyTyping.paste"
-	});
-}

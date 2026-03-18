@@ -14,7 +14,7 @@ import { toggleComment } from './comment_toggle';
 import { isCurrentFileExclude as isCurrentFileExcludeFn, formatArticle, formatSelectionOrCurLine, deleteBlankLines, convert2CodeBlock, switchAutoFormatting } from './formatting_commands';
 import { PluginContext } from './plugin_context';
 import { handleTabDown, handleEnter, handleBackspace, handleShiftEnter, handleModA, goNewLineAfterCurLine, selectBlockInCursor } from './keyboard_handlers';
-import { createTransactionFilter, createViewUpdatePlugin, normalPaste } from './cm_extensions';
+import { createTransactionFilter, createViewUpdatePlugin } from './cm_extensions';
 import { getLocale } from './lang/locale';
 
 
@@ -182,19 +182,6 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 			}],
 		});
 
-		// this.addCommand({
-		// 	id: "easy-typing-paste-without-format",
-		// 	name: locale.commands.pasteWithoutFormat,
-		// 	editorCallback: (editor) => normalPaste(editor, this.settings?.debug),
-		// 	hotkeys: [
-		// 		{
-		// 			modifiers: ["Mod", "Shift"],
-		// 			key: "v",
-		// 		},
-		// 	],
-		// });
-
-
 		this.addCommand({
 			id: "easy-typing-toggle-comment",
 			name: locale.commands.toggleComment,
@@ -215,6 +202,21 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 				}
 			}
 		}));
+
+		// this.registerEvent(this.app.workspace.on('editor-paste', (evt: ClipboardEvent, editor: Editor, info) => {
+		// 	const types = evt.clipboardData ? Array.from(evt.clipboardData.types) : [];
+		// 	const hasHtml = types.includes('text/html');
+		// 	const hasPlainText = types.includes('text/plain');
+		// 	const likelyPlainPaste = hasPlainText && !hasHtml;
+
+		// 	console.log('[EasyTyping] editor-paste', {
+		// 		likelyPlainPaste,
+		// 		defaultPrevented: evt.defaultPrevented,
+		// 		types,
+		// 		selectionCount: editor.listSelections().length,
+		// 		file: 'file' in info ? info.file?.path : undefined,
+		// 	});
+		// }));
 
 		//判断当前是否为MAC系统
 		if (Platform.isMacOS && this.settings.FixMacOSContextMenu) {
