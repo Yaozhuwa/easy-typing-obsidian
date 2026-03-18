@@ -13,6 +13,11 @@ import { sprintf } from 'sprintf-js';
 /** Empty string = default (plugin directory). */
 const DEFAULT_PATH_VALUE = '';
 
+type SettingsSection = {
+	sectionEl: HTMLElement;
+	bodyEl: HTMLElement;
+};
+
 class FolderSuggest extends AbstractInputSuggest<string> {
 	private defaultLabel: string;
 	private onSelectCb: (path: string) => void;
@@ -67,16 +72,24 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		// ========== 顶部标题 ==========
-		containerEl.createEl("h1", { text: locale.headers.main });
-		containerEl.createEl("p", { text: locale.headers.githubDetail }).createEl("a", {
+		const shellEl = containerEl.createDiv({ cls: "et-settings-shell" });
+
+		const heroEl = shellEl.createDiv({ cls: "et-settings-hero" });
+		const heroMainEl = heroEl.createDiv({ cls: "et-settings-hero-main" });
+		heroMainEl.createEl("h1", { text: locale.headers.main });
+		const heroMetaEl = heroMainEl.createDiv({ cls: "et-settings-hero-meta" });
+		heroMetaEl.createSpan({ text: locale.headers.githubDetail, cls: "et-settings-hero-label" });
+		heroMetaEl.createEl("a", {
 			text: "easy-typing-obsidian",
 			href: "https://github.com/Yaozhuwa/easy-typing-obsidian",
+			cls: "et-settings-hero-link",
 		});
 
-		// ========== Tab 导航栏 ==========
-		const navEl = containerEl.createEl("nav", { cls: "et-settings-nav" });
-		const contentEl = containerEl.createEl("div", { cls: "et-settings-content" });
+		const navEl = shellEl.createEl("nav", {
+			cls: "et-settings-nav",
+			attr: { role: "tablist", "aria-orientation": "horizontal" },
+		});
+		const contentEl = shellEl.createEl("div", { cls: "et-settings-content" });
 
 		// 定义 4 个 Tab 页
 		const tabs = [
@@ -88,33 +101,87 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		];
 
 		const tabPanels: Record<string, HTMLElement> = {};
-		const tabButtons: HTMLElement[] = [];
+		const tabButtons: HTMLButtonElement[] = [];
+		const activateTab = (tabId: string, focusButton: boolean = false) => {
+			this.activeTab = tabId;
+			tabs.forEach((tab, index) => {
+				const button = tabButtons[index];
+				const panel = tabPanels[tab.id];
+				const isActive = tab.id === tabId;
+				button.toggleClass("et-settings-tab-active", isActive);
+				button.setAttribute("aria-selected", isActive ? "true" : "false");
+				button.tabIndex = isActive ? 0 : -1;
+				panel.toggleClass("et-settings-tab-hidden", !isActive);
+				panel.setAttribute("aria-hidden", isActive ? "false" : "true");
+				if (focusButton && isActive) {
+					button.focus();
+				}
+			});
+		};
 
 		tabs.forEach((tab) => {
 			// 创建导航按钮
 			const isActive = tab.id === this.activeTab;
+			const buttonId = `easy-typing-settings-tab-${tab.id}`;
+			const panelId = `easy-typing-settings-panel-${tab.id}`;
 			const btn = navEl.createEl("button", {
-				text: tab.label,
 				cls: `et-settings-tab-btn ${isActive ? "et-settings-tab-active" : ""}`,
-			});
+				attr: {
+					id: buttonId,
+					role: "tab",
+					type: "button",
+					"aria-selected": isActive ? "true" : "false",
+					"aria-controls": panelId,
+				},
+			}) as HTMLButtonElement;
+			btn.tabIndex = isActive ? 0 : -1;
+			btn.setText(tab.label);
 			tabButtons.push(btn);
 
 			// 创建内容面板
-			const panel = contentEl.createEl("div", {
+			const panel = contentEl.createEl("section", {
 				cls: `et-settings-tab-panel ${isActive ? "" : "et-settings-tab-hidden"}`,
+				attr: {
+					id: panelId,
+					role: "tabpanel",
+					"data-tab-id": tab.id,
+					"aria-labelledby": buttonId,
+					"aria-hidden": isActive ? "false" : "true",
+				},
 			});
 			tabPanels[tab.id] = panel;
 
 			// 点击切换 Tab
 			btn.addEventListener("click", () => {
-				this.activeTab = tab.id;
-				// 取消所有按钮的激活状态
-				tabButtons.forEach(b => b.removeClass("et-settings-tab-active"));
-				// 隐藏所有面板
-				Object.values(tabPanels).forEach(p => p.addClass("et-settings-tab-hidden"));
-				// 激活当前 Tab
-				btn.addClass("et-settings-tab-active");
-				panel.removeClass("et-settings-tab-hidden");
+				activateTab(tab.id);
+			});
+
+			btn.addEventListener("keydown", (evt: KeyboardEvent) => {
+				const currentIndex = tabs.findIndex((item) => item.id === tab.id);
+				if (currentIndex === -1) return;
+
+				let targetIndex: number | null = null;
+				switch (evt.key) {
+					case "ArrowRight":
+					case "ArrowDown":
+						targetIndex = (currentIndex + 1) % tabs.length;
+						break;
+					case "ArrowLeft":
+					case "ArrowUp":
+						targetIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+						break;
+					case "Home":
+						targetIndex = 0;
+						break;
+					case "End":
+						targetIndex = tabs.length - 1;
+						break;
+				}
+
+				if (targetIndex !== null) {
+					evt.preventDefault();
+					activateTab(tabs[targetIndex].id, true);
+				}
 			});
 		});
 
@@ -126,11 +193,47 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		this.buildOtherTab(tabPanels["other"]);
 	}
 
+	private createSection(
+		container: HTMLElement,
+		title?: string,
+		description?: string,
+		actionsBuilder?: (actionsEl: HTMLElement) => void,
+		extraCls: string = "",
+	): SettingsSection {
+		const sectionEl = container.createDiv({ cls: `et-settings-section ${extraCls}`.trim() });
+		if (title || description || actionsBuilder) {
+			const headerEl = sectionEl.createDiv({ cls: "et-settings-section-header" });
+			const headingEl = headerEl.createDiv({ cls: "et-settings-section-heading" });
+			if (title) {
+				headingEl.createEl("h3", { text: title });
+			}
+			if (description) {
+				headingEl.createDiv({ text: description, cls: "et-settings-section-desc setting-item-description" });
+			}
+			if (actionsBuilder) {
+				const actionsEl = headerEl.createDiv({ cls: "et-settings-section-actions" });
+				actionsBuilder(actionsEl);
+			}
+		}
+
+		const bodyEl = sectionEl.createDiv({ cls: "et-settings-section-body" });
+		return { sectionEl, bodyEl };
+	}
+
+	private setInteractiveDisabled(element: HTMLElement, disabled: boolean): void {
+		element.toggleClass("et-settings-disabled", disabled);
+		element.setAttribute("aria-disabled", disabled ? "true" : "false");
+		element.querySelectorAll("button, input, textarea, select").forEach((node) => {
+			(node as HTMLButtonElement | HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).disabled = disabled;
+		});
+	}
+
 	// ==================== Tab 1: 编辑增强 ====================
 	buildEditEnhanceTab(el: HTMLElement): void {
 		const locale = getLocale();
+		const section = this.createSection(el, locale.headers.enhancedEditing);
 
-		new Setting(el)
+		new Setting(section.bodyEl)
 			.setName(locale.settings.codeblockEdit.name)
 			.setDesc(locale.settings.codeblockEdit.desc)
 			.addToggle((toggle) => {
@@ -141,7 +244,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(el)
+		new Setting(section.bodyEl)
 			.setName(locale.settings.backspaceEdit.name)
 			.setDesc(locale.settings.backspaceEdit.desc)
 			.addToggle((toggle) => {
@@ -152,7 +255,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(el)
+		new Setting(section.bodyEl)
 			.setName(locale.settings.tabOut.name)
 			.setDesc(locale.settings.tabOut.desc)
 			.addToggle((toggle) => {
@@ -163,7 +266,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(el)
+		new Setting(section.bodyEl)
 			.setName(locale.settings.enhanceModA.name)
 			.setDesc(locale.settings.enhanceModA.desc)
 			.addToggle((toggle) => {
@@ -173,7 +276,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(el)
+		new Setting(section.bodyEl)
 			.setName(locale.settings.smartPaste.name)
 			.setDesc(locale.settings.smartPaste.desc)
 			.addToggle((toggle) => {
@@ -188,8 +291,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	// ==================== Tab 2: 自动格式化 ====================
 	buildAutoFormatTab(el: HTMLElement): void {
 		const locale = getLocale();
+		const overviewSection = this.createSection(el, locale.headers.autoformatSetting);
+
 		// 主开关
-		const masterSwitch = new Setting(el)
+		new Setting(overviewSection.bodyEl)
 			.setName(locale.settings.autoFormatting.name)
 			.setDesc(locale.settings.autoFormatting.desc)
 			.addToggle((toggle) => {
@@ -197,9 +302,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.AutoFormat = value;
 						await this.plugin.saveSettings();
+						syncAutoFormatState(value);
 					});
 			});
-		new Setting(el)
+		const pasteSetting = new Setting(overviewSection.bodyEl)
 			.setName(locale.settings.autoFormatPaste.name)
 			.setDesc(locale.settings.autoFormatPaste.desc)
 			.addToggle((toggle) => {
@@ -216,7 +322,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		// masterSwitch.nameEl.style.fontSize = '1.2em';
 		// masterSwitch.nameEl.style.color = 'var(--text-accent)';
 
-		new Setting(el)
+		const autoCapitalSetting = new Setting(overviewSection.bodyEl)
 			.setName(locale.settings.capitalizeFirstLetter.name)
 			.setDesc(locale.settings.capitalizeFirstLetter.desc)
 			.addToggle((toggle) => {
@@ -227,15 +333,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		// ── 自定义语言/符号集 与 语言间空格策略 ──
-		el.createEl('h3', { text: locale.headers.languagePairSection });
-		el.createEl('p', { text: locale.settings.languagePairSpacing.desc, cls: 'setting-item-description' });
+		const languageSection = this.createSection(
+			el,
+			locale.headers.languagePairSection,
+			locale.settings.languagePairSpacing.desc,
+		);
 
 		// 首先是 自定义语言/符号集
-		const scriptListContainer = el.createDiv({ cls: 'et-custom-scripts', attr: { style: 'margin-bottom: 15px;' } });
+		const scriptListContainer = languageSection.bodyEl.createDiv({ cls: 'et-custom-scripts' });
 
 		// Then Language Pair spacing capsules
-		const capsuleContainer = el.createDiv({ cls: 'et-lang-pair-capsules' });
+		const capsuleContainer = languageSection.bodyEl.createDiv({ cls: 'et-lang-pair-capsules' });
 
 		const renderCapsules = () => {
 			capsuleContainer.empty();
@@ -245,7 +353,14 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				const labelA = locale.scriptCategoryLabels[pair.a] || pair.a;
 				const labelB = locale.scriptCategoryLabels[pair.b] || pair.b;
 				capsule.createSpan({ text: `${labelA} ↔ ${labelB}` });
-				const removeBtn = capsule.createSpan({ cls: 'et-capsule-remove', text: '×' });
+				const removeBtn = capsule.createEl('button', {
+					cls: 'et-capsule-remove',
+					text: '×',
+					attr: {
+						type: 'button',
+						'aria-label': locale.toolTip.removeRule,
+					}
+				});
 				removeBtn.addEventListener('click', async () => {
 					this.plugin.settings.languagePairs.splice(idx, 1);
 					await this.plugin.saveSettings();
@@ -279,7 +394,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		renderCapsules();
 
 		// Add new custom script
-		const addScriptRow = new Setting(el);
+		const addScriptRow = new Setting(languageSection.bodyEl);
+		addScriptRow.settingEl.addClass('et-inline-form-setting');
 		let newScriptName = '';
 		let newScriptPattern = '';
 		addScriptRow
@@ -309,12 +425,13 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 
 		// Add pair row: two dropdowns + add button
-		const addRow = el.createDiv({ cls: 'et-pair-selector-row' });
+		const addRow = languageSection.bodyEl.createDiv({ cls: 'et-pair-selector-row' });
 		const allCategories = this.getAllScriptCategories();
 		let selectedA = allCategories[0] || '';
 		let selectedB = allCategories[1] || '';
 
 		const selectorSetting = new Setting(addRow);
+		selectorSetting.settingEl.addClass('et-inline-form-setting');
 		selectorSetting
 			.setName(locale.headers.addLanguagePair)
 			.addDropdown(dd => {
@@ -350,15 +467,14 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 
 		// ── 详细设置（行内元素间空格） ──
-		el.createEl('h3', { text: locale.headers.detailedSetting });
+		const detailSection = this.createSection(el, locale.headers.detailedSetting);
 
 		// 介绍空格策略
-		const introDiv = el.createDiv({ cls: 'et-space-strategy-intro setting-item-description' });
-		introDiv.setAttribute('style', 'white-space: pre-wrap; margin-bottom: 20px;');
+		const introDiv = detailSection.bodyEl.createDiv({ cls: 'et-settings-note et-space-strategy-intro setting-item-description' });
 		introDiv.innerText = locale.headers.spaceStrategyIntro ||
 			"空格策略说明：\n无要求：对相关区块与左右文本没有空格要求。\n软空格：只要求有软空格。\n严格空格：严格添加真实空格。";
 
-		new Setting(el)
+		new Setting(detailSection.bodyEl)
 			.setName(locale.settings.spaceStrategyInlineCode.name)
 			.setDesc(locale.settings.spaceStrategyInlineCode.desc)
 			.addDropdown((dropdown) => {
@@ -372,7 +488,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			});
 
-		new Setting(el)
+		new Setting(detailSection.bodyEl)
 			.setName(locale.settings.spaceStrategyInlineFormula.name)
 			.setDesc(locale.settings.spaceStrategyInlineFormula.desc)
 			.addDropdown((dropdown) => {
@@ -386,7 +502,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				})
 			});
 
-		new Setting(el)
+		new Setting(detailSection.bodyEl)
 			.setName(locale.settings.spaceStrategyLinkText.name)
 			.setDesc(locale.settings.spaceStrategyLinkText.desc)
 			.addDropdown((dropdown) => {
@@ -410,7 +526,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 
-		new Setting(el)
+		new Setting(detailSection.bodyEl)
 			.setName(locale.settings.softSpaceSymbols.leftName)
 			.setDesc(locale.settings.softSpaceSymbols.leftDesc)
 			.addText(text => {
@@ -421,7 +537,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(el)
+		new Setting(detailSection.bodyEl)
 			.setName(locale.settings.softSpaceSymbols.rightName)
 			.setDesc(locale.settings.softSpaceSymbols.rightDesc)
 			.addText(text => {
@@ -433,14 +549,15 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		// ── 前缀词典 ──
-		el.createEl('h3', { text: locale.headers.prefixDictSection });
-		const prefixSetting = new Setting(el);
-		prefixSetting.settingEl.setAttribute('style', 'display: grid; grid-template-columns: 1fr;');
-		prefixSetting
-			.setName(locale.settings.prefixDictionary.name)
-			.setDesc(locale.settings.prefixDictionary.desc);
+		const prefixSection = this.createSection(
+			el,
+			locale.headers.prefixDictSection,
+			locale.settings.prefixDictionary.desc,
+		);
+		const prefixSetting = new Setting(prefixSection.bodyEl);
+		prefixSetting.settingEl.addClass('et-setting-full-width');
 		const prefixArea = new TextAreaComponent(prefixSetting.controlEl);
-		setAttributes(prefixArea.inputEl, { style: 'margin-top: 8px; width: 100%; height: 12vh;' });
+		prefixArea.inputEl.addClass('et-settings-textarea', 'et-settings-textarea-compact');
 		prefixArea
 			.setValue(this.plugin.settings.PrefixDictionary)
 			.onChange(async (value) => {
@@ -450,10 +567,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 
 		// 自定义正则区块
-		el.createEl('h3', { text: locale.headers.customRegexpBlock });
+		const regexSection = this.createSection(el, locale.headers.customRegexpBlock);
 
-		const regexInfoDiv = el.createDiv({ cls: 'setting-item-description' });
-		regexInfoDiv.style.marginBottom = "10px";
+		const regexInfoDiv = regexSection.bodyEl.createDiv({ cls: 'setting-item-description et-settings-section-desc' });
 		regexInfoDiv.appendChild(createFragment((frag) => {
 			frag.appendText(locale.headers.aboutRegexp.header);
 			const a1 = frag.createEl('a', { text: locale.headers.aboutRegexp.text, href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#" });
@@ -462,21 +578,19 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			const a2 = frag.createEl('a', { text: locale.headers.instructionsRegexp.text, href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md" });
 		}));
 
-		new Setting(el)
+		const regSwitchSetting = new Setting(regexSection.bodyEl)
 			.setName(locale.settings.userDefinedRegexpSwitch.name)
 			.setDesc(locale.settings.userDefinedRegexpSwitch.desc)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.UserDefinedRegSwitch).onChange(async (value) => {
 					this.plugin.settings.UserDefinedRegSwitch = value;
 					await this.plugin.saveSettings();
+					syncRegexContentState();
 				});
 			});
 
-		const regContentAreaSetting = new Setting(el);
-		regContentAreaSetting.settingEl.setAttribute(
-			"style",
-			"display: grid; grid-template-columns: 1fr;"
-		);
+		const regContentAreaSetting = new Setting(regexSection.bodyEl);
+		regContentAreaSetting.settingEl.addClass('et-setting-full-width');
 		regContentAreaSetting
 			.setName(locale.settings.userDefinedRegexp.name)
 			.setDesc(locale.settings.userDefinedRegexp.desc);
@@ -484,9 +598,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			regContentAreaSetting.controlEl
 		);
 
-		setAttributes(regContentArea.inputEl, {
-			style: "margin-top: 12px; width: 100%;  height: 30vh;",
-		});
+		regContentArea.inputEl.addClass('et-settings-textarea', 'et-settings-textarea-tall');
 		regContentArea
 			.setValue(this.plugin.settings.UserDefinedRegExp)
 			.onChange(async (value) => {
@@ -495,18 +607,41 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			});
 
 		// 排除文件/文件夹
-		el.createEl('h3', { text: locale.headers.excludeFoldersFiles });
-		new Setting(el)
-			.setName(locale.settings.excludeFoldersFiles.name)
-			.setDesc(locale.settings.excludeFoldersFiles.desc)
-			.addTextArea((text) =>
-				text
-					.setValue(this.plugin.settings.ExcludeFiles)
-					.onChange(async (value) => {
-						this.plugin.settings.ExcludeFiles = value;
-						this.plugin.saveSettings();
-					})
-			);
+		const excludeSection = this.createSection(
+			el,
+			locale.headers.excludeFoldersFiles,
+			locale.settings.excludeFoldersFiles.desc,
+		);
+		const excludeSetting = new Setting(excludeSection.bodyEl);
+		excludeSetting.settingEl.addClass('et-setting-full-width');
+		excludeSetting
+			.addTextArea((text) => {
+				text.setValue(this.plugin.settings.ExcludeFiles);
+				text.inputEl.addClass('et-settings-textarea');
+				text.onChange(async (value) => {
+					this.plugin.settings.ExcludeFiles = value;
+					this.plugin.saveSettings();
+				});
+			});
+
+		const advancedSections = [
+			languageSection.sectionEl,
+			detailSection.sectionEl,
+			prefixSection.sectionEl,
+			regexSection.sectionEl,
+			excludeSection.sectionEl,
+		];
+		const syncRegexContentState = () => {
+			this.setInteractiveDisabled(regContentAreaSetting.settingEl, !this.plugin.settings.AutoFormat || !this.plugin.settings.UserDefinedRegSwitch);
+		};
+		const syncAutoFormatState = (enabled: boolean) => {
+			this.setInteractiveDisabled(pasteSetting.settingEl, !enabled);
+			this.setInteractiveDisabled(autoCapitalSetting.settingEl, !enabled);
+			advancedSections.forEach(sectionEl => this.setInteractiveDisabled(sectionEl, !enabled));
+			this.setInteractiveDisabled(regSwitchSetting.settingEl, !enabled);
+			syncRegexContentState();
+		};
+		syncAutoFormatState(this.plugin.settings.AutoFormat);
 	}
 
 	/**
@@ -529,28 +664,26 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	// ==================== Tab 3: 内置规则 ====================
 	buildBuiltinRulesSection(el: HTMLElement): void {
 		const locale = getLocale();
-		const headerEl = el.createDiv({ cls: 'setting-item' });
-		const infoEl = headerEl.createDiv({ cls: 'setting-item-info' });
-		infoEl.createEl('h3', { text: locale.headers.builtinRulesSection });
-		const controlEl = headerEl.createDiv({ cls: 'setting-item-control' });
-		const resetBtn = controlEl.createEl('button', {
-			text: locale.toolTip.resetAllRules,
-			cls: 'et-reset-btn'
-		});
-		resetBtn.addEventListener('click', async () => {
-			await this.plugin.ruleManager.resetAllBuiltinRules();
-			new Notice(locale.toolTip.resetSuccess);
-			this.display();
+		const section = this.createSection(el, locale.headers.builtinRulesSection, undefined, (actionsEl) => {
+			const resetBtn = actionsEl.createEl('button', {
+				text: locale.toolTip.resetAllRules,
+				cls: 'et-reset-btn et-section-action-btn'
+			});
+			resetBtn.addEventListener('click', async () => {
+				await this.plugin.ruleManager.resetAllBuiltinRules();
+				new Notice(locale.toolTip.resetSuccess);
+				this.display();
+			});
 		});
 
 		for (const rule of this.plugin.ruleManager.cachedBuiltinRules) {
-			this.buildRuleItem(el, rule, true);
+			this.buildRuleItem(section.bodyEl, rule, true);
 		}
 
 		// Deleted built-in rules section
 		const deletedIds = this.plugin.settings.deletedBuiltinRuleIds || [];
 		if (deletedIds.length > 0) {
-			const details = el.createEl('details', { cls: 'et-deleted-rules' });
+			const details = section.bodyEl.createEl('details', { cls: 'et-deleted-rules' });
 			details.createEl('summary', { text: `${locale.headers.deletedRulesSection} (${deletedIds.length})` });
 			for (const id of deletedIds) {
 				const defaultRule = DEFAULT_BUILTIN_RULES.find(r => r.id === id);
@@ -578,82 +711,83 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	// ==================== Tab 4: 自定义规则 ====================
 	buildUserRulesSection(el: HTMLElement): void {
 		const locale = getLocale();
-		const headerEl = el.createDiv({ cls: 'setting-item' });
-		const infoEl = headerEl.createDiv({ cls: 'setting-item-info' });
-		infoEl.createEl('h3', { text: locale.headers.userRulesSection });
-		const controlEl = headerEl.createDiv({ cls: 'setting-item-control' });
-		const addBtn = controlEl.createEl('button', { text: '+' });
-		addBtn.addEventListener('click', () => {
-			new RuleEditModal(this.app, 'create', {}, async (rule) => {
-				await this.plugin.ruleManager.addUserRule(rule);
-				this.display();
-			}).open();
-		});
-
-		// 导出按钮
-		const exportBtn = controlEl.createEl('button', { cls: 'clickable-icon' });
-		exportBtn.setAttribute('aria-label', locale.toolTip.exportRules);
-		setIcon(exportBtn, 'arrow-up-from-line');
-		exportBtn.addEventListener('click', () => {
-			const rules = this.plugin.ruleManager.cachedUserRules;
-			if (rules.length === 0) {
-				new Notice(locale.toolTip.noRulesToExport);
-				return;
-			}
-			const json = JSON.stringify(rules, null, 2);
-			const blob = new Blob([json], { type: 'application/json' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = 'easy-typing-user-rules.json';
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-			URL.revokeObjectURL(url);
-		});
-
-		// 导入按钮
-		const importBtn = controlEl.createEl('button', { cls: 'clickable-icon' });
-		importBtn.setAttribute('aria-label', locale.toolTip.importRules);
-		setIcon(importBtn, 'arrow-down-to-line');
-		importBtn.addEventListener('click', () => {
-			const input = document.createElement('input');
-			input.type = 'file';
-			input.accept = '.json';
-			input.style.display = 'none';
-			input.addEventListener('change', async () => {
-				const file = input.files?.[0];
-				if (!file) return;
-				try {
-					const text = await file.text();
-					let parsed: any;
-					try {
-						parsed = JSON.parse(text);
-					} catch {
-						new Notice(`[EasyTyping] ${locale.toolTip.importInvalidJson}`);
-						return;
-					}
-					if (!Array.isArray(parsed) || parsed.length === 0) {
-						new Notice(`[EasyTyping] ${locale.toolTip.importNoRules}`);
-						return;
-					}
-					const { imported, skipped } = await this.plugin.ruleManager.importUserRules(parsed);
-					if (imported === 0 && skipped > 0) {
-						new Notice(`[EasyTyping] ${locale.toolTip.importNoRules}`);
-					} else {
-						new Notice(`[EasyTyping] ${sprintf(locale.toolTip.importSuccess, imported, skipped)}`);
-					}
-					this.display();
-				} finally {
-					input.remove();
-				}
+		const section = this.createSection(el, locale.headers.userRulesSection, undefined, (actionsEl) => {
+			const addBtn = actionsEl.createEl('button', {
+				text: '+',
+				cls: 'mod-cta et-section-action-btn',
 			});
-			document.body.appendChild(input);
-			input.click();
+			addBtn.addEventListener('click', () => {
+				new RuleEditModal(this.app, 'create', {}, async (rule) => {
+					await this.plugin.ruleManager.addUserRule(rule);
+					this.display();
+				}).open();
+			});
+
+			// 导出按钮
+			const exportBtn = actionsEl.createEl('button', { cls: 'clickable-icon et-section-icon-btn' });
+			exportBtn.setAttribute('aria-label', locale.toolTip.exportRules);
+			setIcon(exportBtn, 'arrow-up-from-line');
+			exportBtn.addEventListener('click', () => {
+				const rules = this.plugin.ruleManager.cachedUserRules;
+				if (rules.length === 0) {
+					new Notice(locale.toolTip.noRulesToExport);
+					return;
+				}
+				const json = JSON.stringify(rules, null, 2);
+				const blob = new Blob([json], { type: 'application/json' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = 'easy-typing-user-rules.json';
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			});
+
+			// 导入按钮
+			const importBtn = actionsEl.createEl('button', { cls: 'clickable-icon et-section-icon-btn' });
+			importBtn.setAttribute('aria-label', locale.toolTip.importRules);
+			setIcon(importBtn, 'arrow-down-to-line');
+			importBtn.addEventListener('click', () => {
+				const input = document.createElement('input');
+				input.type = 'file';
+				input.accept = '.json';
+				input.style.display = 'none';
+				input.addEventListener('change', async () => {
+					const file = input.files?.[0];
+					if (!file) return;
+					try {
+						const text = await file.text();
+						let parsed: any;
+						try {
+							parsed = JSON.parse(text);
+						} catch {
+							new Notice(`[EasyTyping] ${locale.toolTip.importInvalidJson}`);
+							return;
+						}
+						if (!Array.isArray(parsed) || parsed.length === 0) {
+							new Notice(`[EasyTyping] ${locale.toolTip.importNoRules}`);
+							return;
+						}
+						const { imported, skipped } = await this.plugin.ruleManager.importUserRules(parsed);
+						if (imported === 0 && skipped > 0) {
+							new Notice(`[EasyTyping] ${locale.toolTip.importNoRules}`);
+						} else {
+							new Notice(`[EasyTyping] ${sprintf(locale.toolTip.importSuccess, imported, skipped)}`);
+						}
+						this.display();
+					} finally {
+						input.remove();
+					}
+				});
+				document.body.appendChild(input);
+				input.click();
+			});
 		});
 
 		this.plugin.ruleManager.cachedUserRules.forEach((rule, index) => {
-			this.buildRuleItem(el, rule, false, index);
+			this.buildRuleItem(section.bodyEl, rule, false, index);
 		});
 	}
 
@@ -858,9 +992,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 	// ==================== Tab 5: 其他设置 ====================
 	buildOtherTab(el: HTMLElement): void {
 		const locale = getLocale();
-		el.createEl('h3', { text: locale.headers.experimentalFeatures });
+		const experimentalSection = this.createSection(el, locale.headers.experimentalFeatures);
 
-		new Setting(el)
+		new Setting(experimentalSection.bodyEl)
 			.setName(locale.settings.strictLineBreaks.name)
 			.setDesc(locale.settings.strictLineBreaks.desc)
 			.addDropdown((dropdown) => {
@@ -880,7 +1014,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(el)
+		new Setting(experimentalSection.bodyEl)
 			.setName(locale.settings.collapsePersistentEnter.name)
 			.setDesc(locale.settings.collapsePersistentEnter.desc)
 			.addToggle((toggle) => {
@@ -890,7 +1024,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(el)
+		new Setting(experimentalSection.bodyEl)
 			.setName(locale.settings.fixMicrosoftIME.name)
 			.setDesc(locale.settings.fixMicrosoftIME.desc)
 			.addToggle((toggle) => {
@@ -900,7 +1034,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(el)
+		new Setting(experimentalSection.bodyEl)
 			.setName(locale.settings.fixMacOSContextMenu.name)
 			.setDesc(locale.settings.fixMacOSContextMenu.desc)
 			.addToggle((toggle) => {
@@ -910,7 +1044,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(el)
+		const miscSection = this.createSection(el);
+		new Setting(miscSection.bodyEl)
 			.setName(locale.settings.rulesStoragePath.name)
 			.setDesc(locale.settings.rulesStoragePath.desc)
 			.addText((text) => {
@@ -941,7 +1076,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(el)
+		new Setting(miscSection.bodyEl)
 			.setName(locale.settings.printDebugInfo.name)
 			.setDesc(locale.settings.printDebugInfo.desc)
 			.addToggle((toggle) => {
