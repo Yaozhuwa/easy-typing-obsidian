@@ -151,6 +151,8 @@ const locale: Locale = {
             fieldTriggerMode: "トリガー方式",
             fieldScope: "スコープ",
             fieldScopeLanguage: "言語（任意）",
+            fieldRegexFlags: "正規表現フラグ",
+            fieldRegexFlagsDesc: "i / m / u のみ対応。例: im",
             fieldPriority: "優先度",
             fieldPriorityDesc: "数値が小さいほど優先度が高い、デフォルト100",
             fieldDescription: "説明",

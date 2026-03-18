@@ -151,6 +151,8 @@ const locale: Locale = {
             fieldTriggerMode: "Trigger Mode",
             fieldScope: "Scope",
             fieldScopeLanguage: "Language (optional)",
+            fieldRegexFlags: "Regex Flags",
+            fieldRegexFlagsDesc: "Supports i / m / u only, e.g. im",
             fieldPriority: "Priority",
             fieldPriorityDesc: "Lower number = higher priority, default 100",
             fieldDescription: "Description",

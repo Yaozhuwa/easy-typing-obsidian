@@ -12,6 +12,12 @@ export class RuleManager {
 	private readonly BUILTIN_RULES_FILE = 'builtin-rules.json';
 	private readonly USER_RULES_FILE = 'user-rules.json';
 
+	private getImportDedupKey(rule: SimpleRule): string {
+		const isRegex = (rule.options ?? '').includes('r');
+		const normalizedFlags = isRegex ? RuleEngine.normalizeRegexFlags(rule.regex_flags) : '';
+		return `${rule.trigger}\0${rule.trigger_right ?? ''}\0${isRegex}\0${normalizedFlags}`;
+	}
+
 	constructor(
 		private app: App,
 		private manifest: PluginManifest,
@@ -121,10 +127,7 @@ export class RuleManager {
 
 	async importUserRules(incoming: SimpleRule[]): Promise<{ imported: number; skipped: number }> {
 		const existingSet = new Set(
-			this.cachedUserRules.map(r => {
-				const isRegex = (r.options ?? '').includes('r');
-				return `${r.trigger}\0${r.trigger_right ?? ''}\0${isRegex}`;
-			})
+			this.cachedUserRules.map(r => this.getImportDedupKey(r))
 		);
 
 		let imported = 0;
@@ -135,8 +138,7 @@ export class RuleManager {
 				skipped++;
 				continue;
 			}
-			const isRegex = (rule.options ?? '').includes('r');
-			const key = `${rule.trigger}\0${rule.trigger_right ?? ''}\0${isRegex}`;
+			const key = this.getImportDedupKey(rule);
 			if (existingSet.has(key)) {
 				skipped++;
 				continue;

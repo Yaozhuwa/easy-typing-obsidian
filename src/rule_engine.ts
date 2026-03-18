@@ -32,6 +32,7 @@ export interface ConvertRule {
 	triggerKeys?: string[];
 	scope: RuleScope[];
 	scopeLanguage?: string;
+	regexFlags?: string;
 	priority: number;
 	match: {
 		left: string;
@@ -55,6 +56,7 @@ export interface SimpleRule {
 	description?: string;
 	priority?: number;
 	scope_language?: string;
+	regex_flags?: string;
 }
 
 export interface TxContext {
@@ -140,6 +142,11 @@ export class RuleEngine {
 		return { type, triggerMode, isRegex, isFunctionReplacement, scope };
 	}
 
+	static normalizeRegexFlags(flags: string = ''): string {
+		const normalized = flags.toLowerCase().replace(/[^imu]/g, '');
+		return Array.from(new Set(normalized.split(''))).sort((a, b) => 'imu'.indexOf(a) - 'imu'.indexOf(b)).join('');
+	}
+
 	/**
 	 * Validate regex patterns in a SimpleRule before saving.
 	 * Returns null if valid, or an error message string if invalid.
@@ -147,20 +154,21 @@ export class RuleEngine {
 	static validateRegex(rule: SimpleRule): string | null {
 		const opts = RuleEngine.parseOptions(rule.options);
 		if (!opts.isRegex) return null;
+		const regexFlags = RuleEngine.normalizeRegexFlags(rule.regex_flags);
 
 		const leftPattern = rule.trigger;
 		const rightPattern = rule.trigger_right ?? '';
 
 		if (leftPattern) {
 			try {
-				new RegExp('(?:' + leftPattern + ')$');
+				new RegExp('(?:' + leftPattern + ')', regexFlags);
 			} catch (e) {
 				return `trigger: ${(e as Error).message}`;
 			}
 		}
 		if (rightPattern) {
 			try {
-				new RegExp('^(?:' + rightPattern + ')');
+				new RegExp('(?:' + rightPattern + ')', regexFlags);
 			} catch (e) {
 				return `trigger_right: ${(e as Error).message}`;
 			}
@@ -245,6 +253,7 @@ export class RuleEngine {
 				triggerKeys: RuleEngine.parseSelectKeyRuleTriggerKeys(simple.trigger),
 				scope: opts.scope,
 				scopeLanguage: simple.scope_language,
+				regexFlags: undefined,
 				priority: simple.priority ?? 100,
 				match: { left: '', right: '', isRegex: false },
 				replacement,
@@ -264,6 +273,7 @@ export class RuleEngine {
 			triggerKeys: undefined,
 			scope: opts.scope,
 			scopeLanguage: simple.scope_language,
+			regexFlags: opts.isRegex ? RuleEngine.normalizeRegexFlags(simple.regex_flags) : undefined,
 			priority: simple.priority ?? 100,
 			match: {
 				left: simple.trigger,
@@ -321,7 +331,7 @@ export class RuleEngine {
 		if (!existing) return false;
 
 		// Invalidate regex cache if match pattern changed
-		if (patch.match !== undefined || patch.type !== undefined) {
+		if (patch.match !== undefined || patch.type !== undefined || patch.regexFlags !== undefined) {
 			this.regexCache.delete(id);
 		}
 
@@ -382,10 +392,11 @@ export class RuleEngine {
 			? rule.match.right
 			: escapeRegex(rule.match.right);
 
+		const regexFlags = rule.match.isRegex ? RuleEngine.normalizeRegexFlags(rule.regexFlags) : '';
 		try {
 			const cached: CachedRegex = {
-				left: leftPattern ? new RegExp('(?:' + leftPattern + ')$') : null,
-				right: rightPattern ? new RegExp('^(?:' + rightPattern + ')') : null,
+				left: leftPattern ? new RegExp('(?:' + leftPattern + ')(?![\\s\\S])', regexFlags) : null,
+				right: rightPattern ? new RegExp('(?:' + rightPattern + ')', regexFlags) : null,
 			};
 			this.regexCache.set(rule.id, cached);
 			return cached;
@@ -560,8 +571,8 @@ export class RuleEngine {
 		const leftRegex = cached.left;
 		const rightRegex = cached.right;
 
-		const leftMatch = leftRegex ? leftDoc.match(leftRegex) : [''];
-		const rightMatch = rightRegex ? rightDoc.match(rightRegex) : [''];
+		const leftMatch = leftRegex ? leftRegex.exec(leftDoc) : [''];
+		const rightMatch = rightRegex ? this.matchAtStart(rightDoc, rightRegex) : [''];
 		if (!leftMatch || !rightMatch) return null;
 
 		const matchFrom = from - leftMatch[0].length;
@@ -572,6 +583,13 @@ export class RuleEngine {
 			rightMatches: [...rightMatch],
 			matchRange: { from: matchFrom, to: matchTo },
 		}, ctx);
+	}
+
+	private matchAtStart(doc: string, regex: RegExp): RegExpMatchArray | null {
+		regex.lastIndex = 0;
+		const match = regex.exec(doc);
+		if (!match || match.index !== 0) return null;
+		return match;
 	}
 
 	private applySelectKeyRule(rule: ConvertRule, ctx: TxContext): ApplyResult | null {

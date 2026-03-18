@@ -49,6 +49,8 @@ export interface Locale {
             fieldTriggerMode: string;
             fieldScope: string;
             fieldScopeLanguage: string;
+            fieldRegexFlags: string;
+            fieldRegexFlagsDesc: string;
             fieldPriority: string;
             fieldPriorityDesc: string;
             fieldDescription: string;

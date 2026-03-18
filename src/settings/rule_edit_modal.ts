@@ -145,6 +145,7 @@ export class RuleEditModal extends Modal {
 	triggerRight: string = '';
 	replacement: string = '';
 	isRegex: boolean = false;
+	regexFlags: string = '';
 	scopeLanguage: string = '';
 	priority: number = 100;
 	description: string = '';
@@ -176,6 +177,7 @@ export class RuleEditModal extends Modal {
 		if (initial.trigger !== undefined) this.trigger = RuleEngine.escapeText(initial.trigger);
 		if (initial.trigger_right !== undefined) this.triggerRight = RuleEngine.escapeText(initial.trigger_right);
 		if (typeof initial.replacement === 'string') this.replacement = initial.replacement;
+		if (initial.regex_flags !== undefined) this.regexFlags = RuleEngine.normalizeRegexFlags(initial.regex_flags);
 		if (initial.priority !== undefined) this.priority = initial.priority;
 		if (initial.description !== undefined) this.description = initial.description;
 		if (initial.enabled !== undefined) this.enabled = initial.enabled;
@@ -278,6 +280,16 @@ export class RuleEditModal extends Modal {
 				text.onChange(v => this.triggerRight = v);
 			});
 		triggerRightSetting.settingEl.dataset.field = 'triggerRight';
+
+		const regexFlagsSetting = new Setting(matchGroup)
+			.setName(locale.settings.ruleEditModal.fieldRegexFlags)
+			.setDesc(locale.settings.ruleEditModal.fieldRegexFlagsDesc)
+			.addText(text => {
+				text.setPlaceholder('imu');
+				text.setValue(this.regexFlags);
+				text.onChange(v => this.regexFlags = RuleEngine.normalizeRegexFlags(v));
+			});
+		regexFlagsSetting.settingEl.dataset.field = 'regexFlags';
 
 		// ===== Group: Replacement =====
 		const replacementGroup = contentEl.createDiv({ cls: 'et-modal-group' });
@@ -431,6 +443,10 @@ export class RuleEditModal extends Modal {
 		if (triggerRightEl) {
 			triggerRightEl.classList.toggle('et-hidden', this.ruleType === EngineRuleType.SelectKey);
 		}
+		const regexFlagsEl = contentEl.querySelector('[data-field="regexFlags"]') as HTMLElement;
+		if (regexFlagsEl) {
+			regexFlagsEl.classList.toggle('et-hidden', this.ruleType === EngineRuleType.SelectKey || !this.isRegex);
+		}
 
 		// Trigger Label & Desc
 		const triggerEl = contentEl.querySelector('[data-field="trigger"]') as HTMLElement;
@@ -563,6 +579,7 @@ export class RuleEditModal extends Modal {
 			description: this.description || undefined,
 			enabled: this.enabled,
 			scope_language: (normalizedScopes.includes(RuleScope.Code) && this.scopeLanguage) ? this.scopeLanguage : undefined,
+			regex_flags: this.isRegex ? RuleEngine.normalizeRegexFlags(this.regexFlags) || undefined : undefined,
 		};
 	}
 

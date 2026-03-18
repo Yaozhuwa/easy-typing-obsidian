@@ -151,6 +151,8 @@ const locale: Locale = {
             fieldTriggerMode: "触发方式",
             fieldScope: "作用域",
             fieldScopeLanguage: "语言（可选）",
+            fieldRegexFlags: "正则标志",
+            fieldRegexFlagsDesc: "仅支持 i / m / u，例如 im",
             fieldPriority: "优先级",
             fieldPriorityDesc: "数值越小，优先级越高，默认 100",
             fieldDescription: "描述",

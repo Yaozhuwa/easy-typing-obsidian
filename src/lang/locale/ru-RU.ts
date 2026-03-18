@@ -155,6 +155,8 @@ const locale: Locale = {
             fieldTriggerMode: "Режим запуска",
             fieldScope: "Область",
             fieldScopeLanguage: "Язык (необязательно)",
+            fieldRegexFlags: "Флаги regex",
+            fieldRegexFlagsDesc: "Поддерживаются только i / m / u, например im",
             fieldPriority: "Приоритет",
             fieldPriorityDesc: "Чем меньше число, тем выше приоритет, по умолчанию 100",
             fieldDescription: "Описание",

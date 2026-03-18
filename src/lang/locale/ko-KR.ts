@@ -151,6 +151,8 @@ const locale: Locale = {
             fieldTriggerMode: "트리거 방식",
             fieldScope: "범위",
             fieldScopeLanguage: "언어 (선택사항)",
+            fieldRegexFlags: "정규식 플래그",
+            fieldRegexFlagsDesc: "i / m / u 만 지원, 예: im",
             fieldPriority: "우선순위",
             fieldPriorityDesc: "숫자가 작을수록 우선순위가 높음, 기본값 100",
             fieldDescription: "설명",
