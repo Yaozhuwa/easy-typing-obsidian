@@ -4,7 +4,7 @@ import { AbstractInputSuggest, App, Notice, PluginSettingTab, Setting, TextAreaC
 import EasyTypingPlugin from '../main';
 import { getLocale } from '../lang/locale';
 import { setDebug } from '../utils';
-import { RuleEngine, SimpleRule, RuleType as EngineRuleType, RuleTriggerMode } from '../rule_engine';
+import { RuleEngine, SimpleRule, RuleScope, RuleType as EngineRuleType, RuleTriggerMode } from '../rule_engine';
 import { DEFAULT_BUILTIN_RULES } from '../default_rules';
 import { StrictLineMode } from './settings_types';
 import { RuleEditModal } from './rule_edit_modal';
@@ -799,6 +799,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const enabled = rule.enabled !== false;
 		const isTab = opts.triggerMode === RuleTriggerMode.Tab;
 		const isFn = opts.isFunctionReplacement;
+		const scopeBadges = this.getRuleScopeBadges(opts.scope, rule.scope_language, locale);
 
 		let preview: string;
 		const localeDesc = rule.id ? locale.builtinRuleDescriptions[rule.id] : undefined;
@@ -817,6 +818,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.setClass('et-rule-item')
 			.setName(createFragment(f => {
 				f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
+				scopeBadges.forEach((badge) => {
+					f.createSpan({ cls: `et-rule-scope-tag ${badge.cls}`, text: badge.text });
+				});
 				if (opts.type === EngineRuleType.Input) {
 					const modeTag = f.createSpan({
 						cls: `et-rule-trigger-mode ${isTab ? 'et-trigger-mode-tab' : 'et-trigger-mode-auto'}`,
@@ -970,6 +974,27 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				ruleItems.forEach((item, i) => item.dataset.ruleIndex = String(i));
 			});
 		}
+	}
+
+	private getRuleScopeBadges(
+		scopes: RuleScope[],
+		scopeLanguage?: string,
+		locale = getLocale(),
+	): { text: string; cls: string }[] {
+		const badges: { text: string; cls: string }[] = [];
+		if (scopes.includes(RuleScope.Code)) {
+			badges.push({
+				text: `<${scopeLanguage || locale.dropdownOptions.scopeCode}>`,
+				cls: 'et-rule-scope-code',
+			});
+		}
+		if (scopes.includes(RuleScope.Formula)) {
+			badges.push({
+				text: 'ƒx',
+				cls: 'et-rule-scope-formula',
+			});
+		}
+		return badges;
 	}
 
 	getRuleTypeLabel(type: EngineRuleType): string {

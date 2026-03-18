@@ -516,8 +516,15 @@ export class RuleEngine {
 
 			// Scope check: RuleScope.All on either side means "no restriction"
 			if (ctx.scopeHint !== RuleScope.All && !rule.scope.includes(RuleScope.All) && !rule.scope.includes(ctx.scopeHint)) continue;
-			// Language check: rule specifies language → must match exactly
-			if (rule.scopeLanguage && ctx.scopeLanguage !== rule.scopeLanguage) continue;
+			// Language check only applies when matching inside code scope.
+			// This allows mixed scopes like Text + Code(py) to still match plain text,
+			// while requiring the configured language when the current scope is Code.
+			if (
+				rule.scopeLanguage &&
+				ctx.scopeHint === RuleScope.Code &&
+				rule.scope.includes(RuleScope.Code) &&
+				ctx.scopeLanguage !== rule.scopeLanguage
+			) continue;
 
 			switch (ctx.kind) {
 				case RuleType.SelectKey: {

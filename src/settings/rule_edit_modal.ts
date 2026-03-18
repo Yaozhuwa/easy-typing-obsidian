@@ -145,12 +145,12 @@ export class RuleEditModal extends Modal {
 	triggerRight: string = '';
 	replacement: string = '';
 	isRegex: boolean = false;
-	ruleScope: RuleScope = RuleScope.All;
 	scopeLanguage: string = '';
 	priority: number = 100;
 	description: string = '';
 	enabled: boolean = true;
 	isFunction: boolean = false;
+	ruleScopes: RuleScope[] = [RuleScope.All];
 	private cmEditor: EditorView | null = null;
 
 	constructor(
@@ -171,7 +171,7 @@ export class RuleEditModal extends Modal {
 			this.triggerMode = opts.triggerMode;
 			this.isRegex = opts.isRegex;
 			this.isFunction = opts.isFunctionReplacement;
-			this.ruleScope = opts.scope[0] || RuleScope.All;
+			this.ruleScopes = opts.scope.length > 0 ? [...opts.scope] : [RuleScope.All];
 		}
 		if (initial.trigger !== undefined) this.trigger = RuleEngine.escapeText(initial.trigger);
 		if (initial.trigger_right !== undefined) this.triggerRight = RuleEngine.escapeText(initial.trigger_right);
@@ -334,20 +334,29 @@ export class RuleEditModal extends Modal {
 		const otherHeader = otherGroup.createDiv({ cls: 'et-modal-group-header' });
 		otherHeader.createEl('span', { cls: 'et-modal-group-title', text: locale.settings.ruleEditModal.groupOther });
 
-		// Scope
-		new Setting(otherGroup)
-			.setName(locale.settings.ruleEditModal.fieldScope)
-			.addDropdown(dropdown => {
-				dropdown.addOption(RuleScope.All, locale.dropdownOptions.scopeAll);
-				dropdown.addOption(RuleScope.Text, locale.dropdownOptions.scopeText);
-				dropdown.addOption(RuleScope.Formula, locale.dropdownOptions.scopeFormula);
-				dropdown.addOption(RuleScope.Code, locale.dropdownOptions.scopeCode);
-				dropdown.setValue(this.ruleScope);
-				dropdown.onChange((v: string) => {
-					this.ruleScope = v as RuleScope;
-					this.refreshVisibility(contentEl);
-				});
+		const scopeSetting = new Setting(otherGroup)
+			.setName(locale.settings.ruleEditModal.fieldScope);
+		scopeSetting.settingEl.dataset.field = 'scopeSetting';
+		scopeSetting.settingEl.addClass('et-scope-setting');
+		const scopeControls = scopeSetting.controlEl.createDiv({ cls: 'et-scope-options' });
+		const scopeOptions: { value: RuleScope; label: string }[] = [
+			{ value: RuleScope.All, label: locale.dropdownOptions.scopeAll },
+			{ value: RuleScope.Text, label: locale.dropdownOptions.scopeText },
+			{ value: RuleScope.Formula, label: locale.dropdownOptions.scopeFormula },
+			{ value: RuleScope.Code, label: locale.dropdownOptions.scopeCode },
+		];
+		for (const { value, label } of scopeOptions) {
+			const chip = scopeControls.createEl('button', {
+				cls: `et-pill-chip${this.ruleScopes.includes(value) ? ' et-pill-chip-active' : ''}`,
+				text: label,
+				attr: { type: 'button' },
 			});
+			chip.dataset.scopeValue = value;
+			chip.addEventListener('click', () => {
+				this.toggleRuleScope(value);
+				this.refreshVisibility(contentEl);
+			});
+		}
 
 		// Scope Language (only visible when scope is Code)
 		const scopeLangSetting = new Setting(otherGroup)
@@ -519,11 +528,16 @@ export class RuleEditModal extends Modal {
 			}
 		}
 
-		// Scope Language only visible when scope is Code
+		// Scope Language only visible when scope includes Code
 		const scopeLangEl = contentEl.querySelector('[data-field="scopeLanguage"]') as HTMLElement;
 		if (scopeLangEl) {
-			scopeLangEl.classList.toggle('et-hidden', this.ruleScope !== RuleScope.Code);
+			scopeLangEl.classList.toggle('et-hidden', !this.ruleScopes.includes(RuleScope.Code));
 		}
+
+		contentEl.querySelectorAll('[data-scope-value]').forEach((el: Element) => {
+			const htmlEl = el as HTMLElement;
+			htmlEl.classList.toggle('et-pill-chip-active', this.ruleScopes.includes(htmlEl.dataset.scopeValue as RuleScope));
+		});
 	}
 
 	buildSimpleRule(): SimpleRule {
@@ -533,9 +547,12 @@ export class RuleEditModal extends Modal {
 		if (this.ruleType === EngineRuleType.Input && this.triggerMode === RuleTriggerMode.Tab) options += 'T';
 		if (this.isRegex) options += 'r';
 		if (this.isFunction) options += 'F';
-		if (this.ruleScope === RuleScope.Text) options += 't';
-		else if (this.ruleScope === RuleScope.Formula) options += 'f';
-		else if (this.ruleScope === RuleScope.Code) options += 'c';
+		const normalizedScopes = this.getNormalizedRuleScopes();
+		if (!normalizedScopes.includes(RuleScope.All)) {
+			if (normalizedScopes.includes(RuleScope.Text)) options += 't';
+			if (normalizedScopes.includes(RuleScope.Formula)) options += 'f';
+			if (normalizedScopes.includes(RuleScope.Code)) options += 'c';
+		}
 
 		return {
 			trigger: RuleEngine.unescapeText(this.trigger),
@@ -545,8 +562,29 @@ export class RuleEditModal extends Modal {
 			priority: this.priority,
 			description: this.description || undefined,
 			enabled: this.enabled,
-			scope_language: (this.ruleScope === RuleScope.Code && this.scopeLanguage) ? this.scopeLanguage : undefined,
+			scope_language: (normalizedScopes.includes(RuleScope.Code) && this.scopeLanguage) ? this.scopeLanguage : undefined,
 		};
+	}
+
+	private toggleRuleScope(scope: RuleScope): void {
+		if (scope === RuleScope.All) {
+			this.ruleScopes = [RuleScope.All];
+			return;
+		}
+
+		const nextScopes = this.ruleScopes.filter(item => item !== RuleScope.All);
+		const hasScope = nextScopes.includes(scope);
+		this.ruleScopes = hasScope
+			? nextScopes.filter(item => item !== scope)
+			: [...nextScopes, scope];
+
+		if (this.ruleScopes.length === 0) {
+			this.ruleScopes = [RuleScope.All];
+		}
+	}
+
+	private getNormalizedRuleScopes(): RuleScope[] {
+		return this.ruleScopes.length > 0 ? this.ruleScopes : [RuleScope.All];
 	}
 
 	onClose() {

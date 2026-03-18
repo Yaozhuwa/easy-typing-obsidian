@@ -262,6 +262,30 @@ span[class="easy-typing-cursor-widget"] {
     vertical-align: middle;
 }
 
+.et-rule-scope-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.et-rule-scope-code {
+    background-color: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.24);
+    font-family: var(--font-monospace);
+}
+
+.et-rule-scope-formula {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.12));
+    color: #7c3aed;
+    border: 1px solid rgba(124, 58, 237, 0.26);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .et-rule-type-input {
     background-color: rgba(76, 175, 80, 0.15);
     color: #4caf50;
@@ -728,6 +752,20 @@ span[class="easy-typing-cursor-widget"] {
 .et-pill-chip.et-pill-chip-active::after {
     background-color: var(--text-muted);
     border-color: var(--text-muted);
+}
+
+.et-scope-setting .setting-item-control {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.et-scope-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
 }
 
 /* ========== Rule Edit Modal: Compact Spacing ========== */
