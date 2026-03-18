@@ -1,4 +1,33 @@
 ## 更新日志 Changelog
+- V6.0.5 2026-03-19
+  - 自定义规则增强
+    - 自定义规则新增正则标志支持，当前支持 `i`、`m`、`u` #334
+    - 优化规则作用域设置，支持多选作用域
+    - 规则列表新增作用域标签显示，可更直观地区分代码 / 公式等生效范围
+    - 代码作用域可继续按语言细分，相关显示与行为更清晰
+  - 规则编辑面板与设置面板优化
+    - 优化自定义规则编辑面板样式与分段选择样式
+    - 修复规则编辑弹窗重复打开后焦点异常的问题
+  - Bug 修复与行为调整
+    - 修复 `unknown` 类型文档变化时不触发自动格式化的问题 (#333)
+    - 调整软空格符号默认处理 (#337)
+    - 优化无格式粘贴相关判断逻辑
+  - 文档
+    - 更新中英文规则文档与 README，补充正则标志、匹配行为、作用域多选等说明
+  - Custom Rule Enhancements
+    - Added regex flag support for custom rules, currently supporting `i`, `m`, and `u` #334
+    - Improved rule scope configuration with multi-scope selection
+    - Added scope badges in the rule list for clearer visibility of code / formula applicability
+    - Improved code-scope language filtering behavior and related display
+  - Rule Edit Modal & Settings UI Improvements
+    - Improved custom rule editor styling and segmented selector appearance
+    - Fixed focus issues when reopening the rule edit modal
+  - Bug Fixes & Behavior Adjustments
+    - Fixed auto-formatting not triggering for `unknown` document changes (#333)
+    - Adjusted default handling of soft-space punctuation (#337)
+    - Improved detection logic for paste-without-format behavior
+  - Documentation
+    - Updated Chinese and English rule docs and README to cover regex flags, matching behavior, and multi-scope rules
 - V6.0.4 2026-03-11
   - 支持自定义规则文件存储路径，可将规则文件存储到库目录下的任意文件夹，便于 Obsidian Sync 同步
   - 设置面板提供文件夹选择器（基于 AbstractInputSuggest）和迁移按钮
