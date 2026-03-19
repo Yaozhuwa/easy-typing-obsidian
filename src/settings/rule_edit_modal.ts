@@ -306,12 +306,12 @@ export class RuleEditModal extends Modal {
 		});
 
 		// Replacement (textarea for string mode)
-		const replacementSetting = new Setting(replacementGroup)
-			.setName(locale.settings.ruleEditModal.fieldReplacement);
+		const replacementSetting = new Setting(replacementGroup);
 		replacementSetting.settingEl.addClass('et-replacement-setting');
 		replacementSetting.settingEl.dataset.field = 'replacementTextarea';
 		const replacementArea = new TextAreaComponent(replacementSetting.controlEl);
 		replacementArea.inputEl.addClass('et-replacement-textarea');
+		replacementArea.inputEl.setAttribute('aria-label', locale.settings.ruleEditModal.fieldReplacement);
 		replacementArea.setValue(this.replacement);
 		replacementArea.onChange(v => this.replacement = v);
 
@@ -325,11 +325,8 @@ export class RuleEditModal extends Modal {
 		// CM6 editor for function mode (syntax highlighted)
 		const editorWrapper = replacementGroup.createDiv();
 		editorWrapper.dataset.field = 'fnEditor';
-		editorWrapper.createEl('label', {
-			text: locale.settings.ruleEditModal.fieldReplacement,
-			cls: 'et-fn-editor-label',
-		});
 		const editorContainer = editorWrapper.createDiv({ cls: 'et-fn-editor-container' });
+		editorContainer.setAttribute('aria-label', locale.settings.ruleEditModal.fieldReplacement);
 		this.cmEditor = createJSEditorView(editorContainer, this.replacement, (value) => {
 			this.replacement = value;
 		});

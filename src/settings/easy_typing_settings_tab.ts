@@ -800,10 +800,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		const scopeBadges = this.getRuleScopeBadges(opts.scope, rule.scope_language, locale);
 
 		let preview: string;
-		const localeDesc = rule.id ? locale.builtinRuleDescriptions[rule.id] : undefined;
-		if (localeDesc) {
-			preview = localeDesc;
-		} else if (rule.description) {
+		if (rule.description) {
 			preview = rule.description;
 		} else {
 			const repl = typeof rule.replacement === 'string' ? rule.replacement : '(fn)';

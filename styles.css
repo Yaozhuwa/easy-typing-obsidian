@@ -782,6 +782,14 @@ span[class="easy-typing-cursor-widget"] {
     grid-template-columns: 1fr;
 }
 
+.et-replacement-setting .setting-item-info {
+    display: none;
+}
+
+.et-replacement-setting .setting-item-control {
+    margin-top: 0;
+}
+
 .et-replacement-textarea {
     width: 100%;
     min-height: 96px;

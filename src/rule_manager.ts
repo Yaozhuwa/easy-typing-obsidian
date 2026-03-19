@@ -2,6 +2,7 @@ import { App, PluginManifest } from 'obsidian';
 import { RuleEngine, SimpleRule, RuleTriggerMode } from './rule_engine';
 import { DEFAULT_BUILTIN_RULES } from './default_rules';
 import { EasyTypingSettings } from './settings';
+import { getLocale } from './lang/locale';
 
 export class RuleManager {
 	ruleEngine: RuleEngine;
@@ -11,6 +12,14 @@ export class RuleManager {
 	previousStoragePath: string = '';
 	private readonly BUILTIN_RULES_FILE = 'builtin-rules.json';
 	private readonly USER_RULES_FILE = 'user-rules.json';
+
+	private getLocalizedBuiltinRules(rules: (SimpleRule & { id: string })[] = DEFAULT_BUILTIN_RULES): SimpleRule[] {
+		const localeDescMap = getLocale().builtinRuleDescriptions;
+		return rules.map((rule) => ({
+			...rule,
+			description: localeDescMap[rule.id] ?? rule.description,
+		}));
+	}
 
 	private getImportDedupKey(rule: SimpleRule): string {
 		const isRegex = (rule.options ?? '').includes('r');
@@ -59,7 +68,7 @@ export class RuleManager {
 		);
 		if (newRules.length === 0) return;
 
-		await this.saveRulesFile(this.BUILTIN_RULES_FILE, [...currentRules, ...newRules]);
+		await this.saveRulesFile(this.BUILTIN_RULES_FILE, [...currentRules, ...this.getLocalizedBuiltinRules(newRules)]);
 	}
 
 	async initRuleEngine(): Promise<void> {
@@ -74,7 +83,7 @@ export class RuleManager {
 		const userPath = this.pluginPath(this.USER_RULES_FILE);
 
 		if (!await this.app.vault.adapter.exists(builtinPath)) {
-			await this.saveRulesFile(this.BUILTIN_RULES_FILE, DEFAULT_BUILTIN_RULES);
+			await this.saveRulesFile(this.BUILTIN_RULES_FILE, this.getLocalizedBuiltinRules());
 		} else {
 			await this.mergeBuiltinRules();
 		}
@@ -101,15 +110,16 @@ export class RuleManager {
 	async restoreBuiltinRule(id: string): Promise<void> {
 		const defaultRule = DEFAULT_BUILTIN_RULES.find(r => r.id === id);
 		if (!defaultRule) return;
-		this.ruleEngine.addSimpleRule(defaultRule);
-		this.cachedBuiltinRules.push(defaultRule);
+		const localizedRule = this.getLocalizedBuiltinRules([defaultRule])[0];
+		this.ruleEngine.addSimpleRule(localizedRule);
+		this.cachedBuiltinRules.push(localizedRule);
 		await this.saveRulesFile(this.BUILTIN_RULES_FILE, this.cachedBuiltinRules);
 		this.settings.deletedBuiltinRuleIds = this.settings.deletedBuiltinRuleIds.filter(i => i !== id);
 		await this.savePluginSettings();
 	}
 
 	async resetAllBuiltinRules(): Promise<void> {
-		this.cachedBuiltinRules = [...DEFAULT_BUILTIN_RULES];
+		this.cachedBuiltinRules = this.getLocalizedBuiltinRules();
 		await this.saveRulesFile(this.BUILTIN_RULES_FILE, this.cachedBuiltinRules);
 		this.settings.deletedBuiltinRuleIds = [];
 		await this.savePluginSettings();
