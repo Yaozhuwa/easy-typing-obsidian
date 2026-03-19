@@ -147,10 +147,10 @@ span[class="easy-typing-cursor-widget"] {
 }
 
 .et-settings-section-body {
-    padding: 0 20px 8px;
+    padding: 8px 20px 8px;
 }
 
-.et-settings-section-body > .setting-item:first-child {
+.et-settings-section-body>.setting-item:first-child {
     border-top: none;
 }
 
@@ -161,7 +161,7 @@ span[class="easy-typing-cursor-widget"] {
 
 .et-settings-note {
     white-space: pre-wrap;
-    margin: 16px 0 0;
+    margin: 6px 0 6px;
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid color-mix(in srgb, var(--background-modifier-border) 88%, transparent);
@@ -213,7 +213,7 @@ span[class="easy-typing-cursor-widget"] {
     width: 100%;
 }
 
-.et-inline-form-setting .setting-item-control > * {
+.et-inline-form-setting .setting-item-control>* {
     flex: 1 1 140px;
 }
 
@@ -635,7 +635,7 @@ span[class="easy-typing-cursor-widget"] {
     white-space: nowrap;
 }
 
-.et-pill + .et-pill::before {
+.et-pill+.et-pill::before {
     content: '';
     position: absolute;
     left: 0;
@@ -662,16 +662,15 @@ span[class="easy-typing-cursor-widget"] {
 
 .et-pill.et-pill-active {
     background: linear-gradient(180deg,
-        color-mix(in srgb, var(--interactive-accent) 32%, var(--background-primary)),
-        color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary))
-    );
+            color-mix(in srgb, var(--interactive-accent) 32%, var(--background-primary)),
+            color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary)));
     color: color-mix(in srgb, var(--text-normal) 88%, black);
     font-weight: 600;
     box-shadow: none !important;
 }
 
 .et-pill.et-pill-active::before,
-.et-pill.et-pill-active + .et-pill::before {
+.et-pill.et-pill-active+.et-pill::before {
     opacity: 0;
 }
 
@@ -882,8 +881,7 @@ span[class="easy-typing-cursor-widget"] {
     box-shadow: 0 10px 24px color-mix(in srgb, var(--interactive-accent) 18%, transparent);
 }
 
-@media (max-width: 900px) {
-}
+@media (max-width: 900px) {}
 
 @media (max-width: 700px) {
     .et-settings-section-header {
@@ -895,7 +893,7 @@ span[class="easy-typing-cursor-widget"] {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .et-inline-form-setting .setting-item-control > * {
+    .et-inline-form-setting .setting-item-control>* {
         flex-basis: 100%;
     }
 }

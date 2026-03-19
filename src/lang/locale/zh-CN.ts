@@ -36,9 +36,9 @@ const locale: Locale = {
         },
         softSpaceSymbols: {
             leftName: "自定义左侧软空格额外符号",
-            leftDesc: "常见的全角标点已内置支持。在此添加额外的符号（如-）",
+            leftDesc: "常见的全角标点及英文双引号（\"）已内置支持。在此添加额外的符号（如 -）",
             rightName: "自定义右侧软空格额外符号",
-            rightDesc: "常见的全角标点已内置支持。在此添加额外的符号（如-）"
+            rightDesc: "常见的全角标点及英文双引号（\"）已内置支持。在此添加额外的符号（如 -）"
         },
         customScriptCategories: {
             name: "自定义语言/符号集",

@@ -36,9 +36,9 @@ const locale: Locale = {
         },
         softSpaceSymbols: {
             leftName: "Custom Extra Left Soft Space Symbols",
-            leftDesc: "Common full-width punctuations are built-in. Add extra symbols here (like -).",
+            leftDesc: "Common full-width punctuation and the ASCII double quote (\") are built in. Add extra symbols here (such as -).",
             rightName: "Custom Extra Right Soft Space Symbols",
-            rightDesc: "Common full-width punctuations are built-in. Add extra symbols here (like -)."
+            rightDesc: "Common full-width punctuation and the ASCII double quote (\") are built in. Add extra symbols here (such as -)."
         },
         customScriptCategories: {
             name: "Custom Script Categories",
