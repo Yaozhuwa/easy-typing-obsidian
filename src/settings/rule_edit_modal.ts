@@ -174,8 +174,8 @@ export class RuleEditModal extends Modal {
 			this.isFunction = opts.isFunctionReplacement;
 			this.ruleScopes = opts.scope.length > 0 ? [...opts.scope] : [RuleScope.All];
 		}
-		if (initial.trigger !== undefined) this.trigger = RuleEngine.escapeText(initial.trigger);
-		if (initial.trigger_right !== undefined) this.triggerRight = RuleEngine.escapeText(initial.trigger_right);
+		if (initial.trigger !== undefined) this.trigger = RuleEngine.escapeText(initial.trigger, this.isRegex);
+		if (initial.trigger_right !== undefined) this.triggerRight = RuleEngine.escapeText(initial.trigger_right, this.isRegex);
 		if (typeof initial.replacement === 'string') this.replacement = initial.replacement;
 		if (initial.regex_flags !== undefined) this.regexFlags = RuleEngine.normalizeRegexFlags(initial.regex_flags);
 		if (initial.priority !== undefined) this.priority = initial.priority;
@@ -571,8 +571,8 @@ export class RuleEditModal extends Modal {
 		}
 
 		return {
-			trigger: RuleEngine.unescapeText(this.trigger),
-			trigger_right: RuleEngine.unescapeText(this.triggerRight) || undefined,
+			trigger: this.isRegex ? this.trigger : RuleEngine.unescapeText(this.trigger),
+			trigger_right: (this.isRegex ? this.triggerRight : RuleEngine.unescapeText(this.triggerRight)) || undefined,
 			replacement: this.replacement,
 			options: options || undefined,
 			priority: this.priority,

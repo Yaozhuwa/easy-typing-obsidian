@@ -180,9 +180,12 @@ export class RuleEngine {
 	 * Convert real control characters to visible escape sequences for UI display.
 	 * Inverse of unescapeText: newline → \n, tab → \t, CR → \r, \\ → \\\\
 	 */
-	static escapeText(text: string): string {
-		return text
-			.replace(/\\/g, '\\\\')
+	static escapeText(text: string, preserveBackslashes: boolean = false): string {
+		let result = text;
+		if (!preserveBackslashes) {
+			result = result.replace(/\\/g, '\\\\');
+		}
+		return result
 			.replace(/\n/g, '\\n')
 			.replace(/\t/g, '\\t')
 			.replace(/\r/g, '\\r');

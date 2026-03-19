@@ -691,7 +691,9 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				const opts = RuleEngine.parseOptions(defaultRule.options);
 				const typeLabel = this.getRuleTypeLabel(opts.type);
 				const typeCls = this.getRuleTypeCls(opts.type);
-				const preview = (defaultRule.id && locale.builtinRuleDescriptions[defaultRule.id]) || defaultRule.description || `${RuleEngine.escapeText(defaultRule.trigger)} → ${typeof defaultRule.replacement === 'string' ? defaultRule.replacement : '(fn)'}`;
+				const preview = (defaultRule.id && locale.builtinRuleDescriptions[defaultRule.id])
+					|| defaultRule.description
+					|| `${RuleEngine.escapeText(defaultRule.trigger, opts.isRegex)} → ${typeof defaultRule.replacement === 'string' ? defaultRule.replacement : '(fn)'}`;
 				new Setting(details)
 					.setName(createFragment(f => {
 						f.createSpan({ cls: `et-rule-type-tag ${typeCls}`, text: typeLabel });
@@ -809,7 +811,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			preview = rule.description;
 		} else {
 			const repl = typeof rule.replacement === 'string' ? rule.replacement : '(fn)';
-			preview = `${RuleEngine.escapeText(rule.trigger)}${rule.trigger_right ? ' … ' + RuleEngine.escapeText(rule.trigger_right) : ''} → ${repl}`;
+			const renderMatch = (text: string) => RuleEngine.escapeText(text, opts.isRegex);
+			preview = `${renderMatch(rule.trigger)}${rule.trigger_right ? ' … ' + renderMatch(rule.trigger_right) : ''} → ${repl}`;
 		}
 		// Truncate long previews
 		if (preview.length > 60) preview = preview.substring(0, 57) + '...';
