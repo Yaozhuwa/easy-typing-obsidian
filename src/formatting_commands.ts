@@ -148,9 +148,18 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 	const RE_BLOCKID = /\s\^[\w-]+\s*$/;
 	const RE_HR = /^\s*(?:---+|\*\*\*+|___+)\s*$/;
 
+	type TrailingBlankType = 'list' | 'quote' | 'blockid' | null;
+
+	/** Detect whether a line belongs to a block kind that may preserve one following blank line. */
+	const getTrailingBlankType = (text: string): TrailingBlankType => {
+		if (RE_LIST.test(text)) return 'list';
+		if (RE_QUOTE.test(text)) return 'quote';
+		if (RE_BLOCKID.test(text)) return 'blockid';
+		return null;
+	};
+
 	/** Check whether a line needs a blank line preserved after it. */
-	const needsTrailingBlank = (text: string): boolean =>
-		RE_LIST.test(text) || RE_QUOTE.test(text) || RE_BLOCKID.test(text);
+	const needsTrailingBlank = (text: string): boolean => getTrailingBlankType(text) !== null;
 
 	let start_line = 1;
 	let end_line = doc.lines;
@@ -171,12 +180,15 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 
 	let delete_index: number[] = [];
 	let remain_next_blank = false;
+	let remain_next_blank_type: TrailingBlankType = null;
 	let consecutiveBlanks = 0; // track consecutive blank lines for strict mode
 
 	if (start_line != 1) {
 		const prevText = doc.line(start_line - 1).text;
-		if (needsTrailingBlank(prevText)) {
+		const prevType = getTrailingBlankType(prevText);
+		if (prevType) {
 			remain_next_blank = true;
+			remain_next_blank_type = prevType;
 		}
 	}
 	if (end_line != line_num && !RE_BLANK.test(doc.line(end_line + 1).text)) {
@@ -191,21 +203,22 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 		if (RE_BLANK.test(text)) {
 			consecutiveBlanks++;
 			if (remain_next_blank) {
-				// 前瞻：如果下一个非空行也是列表/引用/blockid，则删除空行（同类块之间不需要空行）
-				let nextNonBlankIsBlock = false;
+				// 前瞻：仅当前后是同类块时才删除空行
+				let nextNonBlankType: TrailingBlankType = null;
 				for (let j = i + 1; j <= end_line; j++) {
 					const jText = doc.line(j).text;
 					if (!RE_BLANK.test(jText)) {
-						nextNonBlankIsBlock = needsTrailingBlank(jText);
+						nextNonBlankType = getTrailingBlankType(jText);
 						break;
 					}
 				}
-				if (nextNonBlankIsBlock) {
+				if (remain_next_blank_type && nextNonBlankType === remain_next_blank_type) {
 					// 同类块之间：删除空行
 					delete_index.push(i);
 				}
 				// 不同类型：保留空行
 				remain_next_blank = false;
+				remain_next_blank_type = null;
 				continue;
 			}
 			if (strictLineBreaks && consecutiveBlanks === 1) {
@@ -224,9 +237,11 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 		}
 		else if (needsTrailingBlank(text)) {
 			remain_next_blank = true;
+			remain_next_blank_type = getTrailingBlankType(text);
 		}
 		else {
 			remain_next_blank = false;
+			remain_next_blank_type = null;
 		}
 	}
 
