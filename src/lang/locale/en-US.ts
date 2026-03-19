@@ -204,10 +204,6 @@ const locale: Locale = {
             header: "For knowledge about regular expressions, see ",
             text: "Yifeng Nguyen: A Concise Tutorial on Regular Expressions",
         },
-        instructionsRegexp: {
-            header: "Instructions and examples for using regular expression rules: ",
-            text: "Customizing Regular Expression Rules",
-        },
         customizeSelectionRule: "Customize Selection Replace Rule",
         customizeDeleteRule: "Customize Delete Rule",
         customizeConvertRule: "Customize Convert Rule",

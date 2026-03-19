@@ -207,10 +207,6 @@ const locale: Locale = {
             header: "正則表達式相關知識，見 ",
             text: "《阮一峰：正則表達式簡明教程》",
         },
-        instructionsRegexp: {
-            header: "正則表達式規則使用說明與示例： ",
-            text: "自定義正則表達式規則",
-        },
         customizeSelectionRule: "自定義選中文本編輯增强規則",
         customizeDeleteRule: "自定義刪除編輯增强規則",
         customizeConvertRule: "自定義編輯轉換規則",

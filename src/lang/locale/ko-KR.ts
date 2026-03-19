@@ -204,10 +204,6 @@ const locale: Locale = {
             header: "정규식에 대한 자세한 내용은 다음을 참조하세요: ",
             text: "정규식 간결 튜토리얼",
         },
-        instructionsRegexp: {
-            header: "정규식 규칙 사용 안내 및 예시: ",
-            text: "정규식 규칙 사용자 정의",
-        },
         customizeSelectionRule: "선택 대체 규칙 사용자 정의",
         customizeDeleteRule: "삭제 규칙 사용자 정의",
         customizeConvertRule: "변환 규칙 사용자 정의",

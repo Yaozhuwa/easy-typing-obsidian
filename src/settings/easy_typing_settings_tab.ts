@@ -568,14 +568,10 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 
 		// 自定义正则区块
 		const regexSection = this.createSection(el, locale.headers.customRegexpBlock);
-
 		const regexInfoDiv = regexSection.bodyEl.createDiv({ cls: 'setting-item-description et-settings-section-desc' });
 		regexInfoDiv.appendChild(createFragment((frag) => {
 			frag.appendText(locale.headers.aboutRegexp.header);
-			const a1 = frag.createEl('a', { text: locale.headers.aboutRegexp.text, href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#" });
-			frag.createEl('br');
-			frag.appendText(locale.headers.instructionsRegexp.header);
-			const a2 = frag.createEl('a', { text: locale.headers.instructionsRegexp.text, href: "https://github.com/Yaozhuwa/easy-typing-obsidian/blob/master/UserDefinedRegExp.md" });
+			frag.createEl('a', { text: locale.headers.aboutRegexp.text, href: "https://javascript.ruanyifeng.com/stdlib/regexp.html#" });
 		}));
 
 		const regSwitchSetting = new Setting(regexSection.bodyEl)

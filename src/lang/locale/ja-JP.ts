@@ -204,10 +204,6 @@ const locale: Locale = {
             header: "正規表現についての詳細は以下を参照してください：",
             text: "正規表現の簡潔なチュートリアル",
         },
-        instructionsRegexp: {
-            header: "正規表現ルールの使用方法と例：",
-            text: "正規表現ルールのカスタマイズ",
-        },
         customizeSelectionRule: "選択置換ルールのカスタマイズ",
         customizeDeleteRule: "削除ルールのカスタマイズ",
         customizeConvertRule: "変換ルールのカスタマイズ",

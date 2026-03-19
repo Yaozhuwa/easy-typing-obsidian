@@ -99,7 +99,6 @@ export interface Locale {
         customScriptSection: string;
         spaceStrategyIntro: string;
         aboutRegexp: { header: string; text: string };
-        instructionsRegexp: { header: string; text: string };
         customizeSelectionRule: string;
         customizeDeleteRule: string;
         customizeConvertRule: string;

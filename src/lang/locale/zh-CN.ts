@@ -204,10 +204,6 @@ const locale: Locale = {
             header: "正则表达式相关知识，见 ",
             text: "《阮一峰：正则表达式简明教程》",
         },
-        instructionsRegexp: {
-            header: "正则表达式规则使用说明与示例： ",
-            text: "自定义正则表达式规则",
-        },
         customizeSelectionRule: "自定义选中文本编辑增强规则",
         customizeDeleteRule: "自定义删除编辑增强规则",
         customizeConvertRule: "自定义编辑转换规则",
