@@ -146,7 +146,7 @@ span[class="easy-typing-cursor-widget"] {
     flex-shrink: 0;
 }
 
-.et-settings-section-actions > * {
+.et-settings-section-actions>* {
     flex: 0 0 auto;
 }
 
@@ -640,13 +640,14 @@ span[class="easy-typing-cursor-widget"] {
     max-width: 100%;
 }
 
-.et-pill {
+.et-rule-edit-modal button.et-pill:not(.clickable-icon) {
     position: relative;
     z-index: 1;
     padding: 7px 14px;
     border-radius: 8px;
     border: 0;
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
     appearance: none;
     -webkit-appearance: none;
     box-shadow: none !important;
@@ -660,7 +661,7 @@ span[class="easy-typing-cursor-widget"] {
     white-space: nowrap;
 }
 
-.et-pill+.et-pill::before {
+.et-rule-edit-modal button.et-pill:not(.clickable-icon)+.et-pill::before {
     content: '';
     position: absolute;
     left: 0;
@@ -671,35 +672,36 @@ span[class="easy-typing-cursor-widget"] {
     transition: opacity 0.18s ease;
 }
 
-.et-pill:hover {
+.et-rule-edit-modal button.et-pill:not(.clickable-icon):hover {
     background-color: var(--background-modifier-hover);
     color: var(--text-normal);
 }
 
-.et-pill:focus {
+.et-rule-edit-modal button.et-pill:not(.clickable-icon):focus {
     outline: none;
 }
 
-.et-pill:focus-visible {
+.et-rule-edit-modal button.et-pill:not(.clickable-icon):focus-visible {
     outline: 2px solid color-mix(in srgb, var(--interactive-accent) 72%, white);
     outline-offset: 1px;
 }
 
-.et-pill.et-pill-active {
+.et-rule-edit-modal button.et-pill.et-pill-active:not(.clickable-icon) {
     background: linear-gradient(180deg,
             color-mix(in srgb, var(--interactive-accent) 32%, var(--background-primary)),
             color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary)));
+    background-color: color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary)) !important;
     color: color-mix(in srgb, var(--text-normal) 88%, black);
     font-weight: 600;
     box-shadow: none !important;
 }
 
-.et-pill.et-pill-active::before,
-.et-pill.et-pill-active+.et-pill::before {
+.et-rule-edit-modal button.et-pill.et-pill-active:not(.clickable-icon)::before,
+.et-rule-edit-modal button.et-pill.et-pill-active:not(.clickable-icon)+.et-pill::before {
     opacity: 0;
 }
 
-.et-pill.et-pill-active::after {
+.et-rule-edit-modal button.et-pill.et-pill-active:not(.clickable-icon)::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -914,8 +916,6 @@ span[class="easy-typing-cursor-widget"] {
     box-shadow: 0 10px 24px color-mix(in srgb, var(--interactive-accent) 18%, transparent);
 }
 
-@media (max-width: 900px) {}
-
 @media (max-width: 700px) {
     .et-settings-section-header {
         flex-direction: column;
@@ -959,5 +959,4 @@ span[class="easy-typing-cursor-widget"] {
     .et-inline-form-setting .setting-item-control>* {
         flex-basis: 100%;
     }
-
 }
