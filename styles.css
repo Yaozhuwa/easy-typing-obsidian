@@ -146,6 +146,10 @@ span[class="easy-typing-cursor-widget"] {
     flex-shrink: 0;
 }
 
+.et-settings-section-actions > * {
+    flex: 0 0 auto;
+}
+
 .et-settings-section-body {
     padding: 8px 20px 8px;
 }
@@ -258,7 +262,7 @@ span[class="easy-typing-cursor-widget"] {
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
-    margin-right: 6px;
+    margin-right: 2px;
     vertical-align: middle;
 }
 
@@ -268,7 +272,7 @@ span[class="easy-typing-cursor-widget"] {
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
-    margin-right: 6px;
+    margin-right: 2px;
     vertical-align: middle;
 }
 
@@ -317,7 +321,7 @@ span[class="easy-typing-cursor-widget"] {
     border-radius: 4px;
     font-size: 10px;
     font-weight: 500;
-    margin-right: 6px;
+    margin-right: 2px;
     vertical-align: middle;
     cursor: pointer;
     user-select: none;
@@ -344,10 +348,12 @@ span[class="easy-typing-cursor-widget"] {
 .et-rule-drag-handle {
     display: flex;
     align-items: center;
+    justify-content: center;
     cursor: grab;
     color: var(--text-faint);
-    padding: 4px 2px;
-    margin-right: 4px;
+    padding: 1px 0;
+    margin-right: 0;
+    width: 14px;
     border-radius: 4px;
     flex-shrink: 0;
 }
@@ -374,9 +380,28 @@ span[class="easy-typing-cursor-widget"] {
 }
 
 .et-rule-item .setting-item-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+.et-rule-item .setting-item-info {
+    min-width: 0;
+}
+
+.et-rule-item .setting-item-control {
+    flex-shrink: 0;
+}
+
+.et-rule-preview-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.4;
+    margin-left: 2px;
 }
 
 .et-deleted-rules summary {
@@ -897,6 +922,36 @@ span[class="easy-typing-cursor-widget"] {
         align-items: stretch;
     }
 
+    .et-settings-section-actions {
+        width: auto;
+        align-self: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .et-user-rules-section .et-settings-section-header,
+    .et-builtin-rules-section .et-settings-section-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        row-gap: 10px;
+    }
+
+    .et-user-rules-section .et-settings-section-actions,
+    .et-builtin-rules-section .et-settings-section-actions {
+        margin-left: auto;
+        align-self: auto;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
+
+    .et-user-rules-section .et-settings-section-heading,
+    .et-builtin-rules-section .et-settings-section-heading {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
     .et-inline-form-setting {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -904,4 +959,5 @@ span[class="easy-typing-cursor-widget"] {
     .et-inline-form-setting .setting-item-control>* {
         flex-basis: 100%;
     }
+
 }

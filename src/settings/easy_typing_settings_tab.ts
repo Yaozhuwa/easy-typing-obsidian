@@ -670,7 +670,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				new Notice(locale.toolTip.resetSuccess);
 				this.display();
 			});
-		});
+		}, 'et-builtin-rules-section');
 
 		for (const rule of this.plugin.ruleManager.cachedBuiltinRules) {
 			this.buildRuleItem(section.bodyEl, rule, true);
@@ -782,7 +782,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				document.body.appendChild(input);
 				input.click();
 			});
-		});
+		}, 'et-user-rules-section');
 
 		this.plugin.ruleManager.cachedUserRules.forEach((rule, index) => {
 			this.buildRuleItem(section.bodyEl, rule, false, index);
@@ -807,8 +807,6 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			const renderMatch = (text: string) => RuleEngine.escapeText(text, opts.isRegex);
 			preview = `${renderMatch(rule.trigger)}${rule.trigger_right ? ' … ' + renderMatch(rule.trigger_right) : ''} → ${repl}`;
 		}
-		// Truncate long previews
-		if (preview.length > 60) preview = preview.substring(0, 57) + '...';
 
 		const setting = new Setting(container)
 			.setClass('et-rule-item')
@@ -833,7 +831,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				if (isFn) {
 					f.createSpan({ cls: 'et-rule-type-tag et-rule-type-fn', text: 'Fn' });
 				}
-				f.createSpan({ text: preview });
+				f.createSpan({ cls: 'et-rule-preview-text', text: preview });
 			}))
 			.addToggle(toggle => {
 				toggle.setValue(enabled)
