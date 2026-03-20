@@ -348,7 +348,8 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
 		if (ctx.compose_need_handle) {
 			ctx.compose_need_handle = false;
 			const cursor = update.view.state.selection.asSingle().main;
-			if (cursor.head === cursor.anchor) {
+			// 光标未前进说明 compose 被取消（空格删除），跳过规则触发
+			if (cursor.head === cursor.anchor && cursor.anchor > ctx.compose_begin_pos) {
 				if (tryProcessInput(ctx, update, ctx.compose_begin_pos, cursor.anchor)) return;
 			}
 		}
