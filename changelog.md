@@ -1,4 +1,31 @@
 ## 更新日志 Changelog
+- V6.0.6 2026-03-20
+  - 规则编辑与规则列表优化
+    - 修复正则规则编辑显示时反斜杠被重复转义的问题
+    - 修复内置规则描述显示异常，并调整编辑弹窗相关样式
+    - 修复规则编辑面板中类型选择与触发模式按钮的颜色显示问题
+    - 优化规则列表预览展示，信息层次更清晰
+  - 设置面板与响应式适配
+    - 优化设置面板间距与软空格说明文案
+    - 删除自定义正则区块中的失效说明链接
+    - 改进设置面板在窄宽度下的自适应布局，减少对固定断点样式的依赖
+    - 优化移动端和小窗口场景下的设置项排版
+  - Bug 修复
+    - 修复删除空白行时误删引用与列表间空行的问题
+    - 修复 IME 取消输入时误触发转换规则的问题
+  - Rule Editor & Rule List Improvements
+    - Fixed duplicated backslash escaping in regex rule editor display
+    - Fixed built-in rule description display issues and adjusted related modal styling
+    - Fixed color display issues for rule type and trigger mode buttons in the rule editor
+    - Improved rule list preview display with clearer visual hierarchy
+  - Settings UI & Responsive Layout
+    - Improved settings panel spacing and soft-space helper copy
+    - Removed the broken help link from the custom regex section
+    - Improved adaptive behavior of the settings panel in narrow layouts, reducing reliance on fixed breakpoint styles
+    - Optimized settings item layout for mobile and small-window scenarios
+  - Bug Fixes
+    - Fixed blank-line deletion incorrectly removing spacing between blockquotes and lists
+    - Fixed conversion rules being triggered incorrectly when IME input was cancelled
 - V6.0.5 2026-03-19
   - 自定义规则增强
     - 自定义规则新增正则标志支持，当前支持 `i`、`m`、`u` #334
