@@ -71,7 +71,7 @@ const locale: Locale = {
             name: "User-defined Regular Expression, one expression per line",
             desc: "User-defined regular expression, matched to the content is not formatted, one expression per line, do not feel free to add spaces at the end of the line." +
                 "The end of each line of three characters fixed as | and two space strategy symbols, space strategy symbols for - = +, respectively, on behalf of not requiring spaces (-), soft spaces (=), strict spaces (+)." +
-                "These two space strategy symbols are the space strategy for the left and right sides of the matching block respectively"
+                "These two space strategy symbols are the space strategy for the left and right sides of the matching block respectively. Lines starting with // are treated as comments"
         },
         excludeFoldersFiles: {
             name: "Exclude Folders/Files",
