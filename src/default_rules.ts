@@ -76,6 +76,7 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 		replacement: "const m={',':'，','.':'。','?':'？','!':'！',':':'：',';':'；','(':'（$0）'}; return leftMatches[1] + m[leftMatches[2]];",
 		options: 'rF',
 		priority: 15,
+		enabled: false,
 		description: 'CJK字符后半角标点转全角',
 	},
 
