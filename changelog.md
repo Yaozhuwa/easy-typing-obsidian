@@ -1,4 +1,8 @@
 ## 更新日志 Changelog
+- Unreleased
+  - 自动格式化 Auto Formatting
+    - 将常见英文半角标点内置为右软空格符号，减少行内代码等软空格场景下的额外设置需求 (#345)
+    - Built common half-width English punctuation into right soft-space symbols to reduce extra setup in soft-space scenarios such as inline code (#345)
 - V6.0.6 2026-03-20
   - 规则编辑与规则列表优化
     - 修复正则规则编辑显示时反斜杠被重复转义的问题

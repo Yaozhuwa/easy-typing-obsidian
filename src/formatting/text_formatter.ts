@@ -291,24 +291,21 @@ export function applyLanguagePairSpacing(
 
 // ──────────── Boundary Space Detection ────────────
 
-/**
- * Detect the SpaceState at the start and end of a text content.
- * Uses configurable soft-space symbol sets.
- */
 export function detectBoundarySpaceState(
     content: string,
     leftSymbols: string,
     rightSymbols: string,
 ): { start: SpaceState; end: SpaceState } {
-    const builtInSymbols = '【】（）《》，。、？：；‘’“”「『』」！"';
-    // Build dynamic regexps from the configured symbols
-    const escapedLeft = escapeForCharClass(leftSymbols + builtInSymbols);
-    const escapedRight = escapeForCharClass(rightSymbols + builtInSymbols);
+    const builtInBothSymbols = '"\'';
+    const builtInLeftSoftSymbols = `【】（）《》，。、？：；‘’“”「『』」！${builtInBothSymbols}[({`;
+    const builtInRightSoftSymbols = `【】（）《》，。、？：；‘’“”「『』」！${builtInBothSymbols},.?!:;])}`;
+    const escapedStart = escapeForCharClass(rightSymbols + builtInRightSoftSymbols);
+    const escapedEnd = escapeForCharClass(leftSymbols + builtInLeftSoftSymbols);
 
     const regStrictSpaceStart = /^\0?\s/;
     const regStrictSpaceEnd = /\s\0?$/;
-    const regStartWithSpace = new RegExp(`^\\0?[\\s${escapedLeft}]`);
-    const regEndWithSpace = new RegExp(`[\\s${escapedRight}]\\0?$`);
+    const regStartWithSpace = new RegExp(`^\\0?[\\s${escapedStart}]`);
+    const regEndWithSpace = new RegExp(`[\\s${escapedEnd}]\\0?$`);
 
     let start = SpaceState.none;
     let end = SpaceState.none;

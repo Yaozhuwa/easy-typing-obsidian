@@ -112,7 +112,7 @@ Entries can be separated by commas, spaces, or newlines. Two formats are support
 
 ### Soft Space Symbols
 
-You can configure additional symbols that should be treated as soft-space separators (in addition to the built-in ones like common punctuation). Configure separately for left-side and right-side soft spaces.
+You can configure additional symbols that should be treated as soft-space separators. Common full-width punctuation is built in on both sides. Quotes (' \") are built in on both sides, opening brackets ([ ( {) are built in on the left side, and closing brackets (] ) }) plus half-width punctuation (. , ? ! : ;) are built in on the right side. Configure extra symbols separately for left-side and right-side soft spaces.
 
 ### User-defined Regular Expression Blocks
 
