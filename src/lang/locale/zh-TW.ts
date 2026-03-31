@@ -76,6 +76,10 @@ const locale: Locale = {
                 "每行末尾3個字符的固定為|和兩個空格策略符號，空格策略符號為-=+，分別代表不要求空格(-)，軟空格(=)，嚴格空格(+)。" +
                 "這兩個空格策略符號分別為匹配區塊的左右兩邊的空格策略。以 // 開頭的行作為註釋"
         },
+        userRulesRespectUserDefinedRegexBlocks: {
+            name: "自定義正則區塊同時阻止用戶規則",
+            desc: "啟用後，命中自定義正則區塊的文本將不會觸發自動用戶規則。"
+        },
         excludeFoldersFiles: {
             name: "排除文件夾/文件",
             desc: "該插件將每行解析為一個排除文件夾或文件。例如：DailyNote/, DailyNote/WeekNotes/, DailyNote/test.md"

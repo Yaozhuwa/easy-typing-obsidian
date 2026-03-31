@@ -18,6 +18,7 @@ export interface Locale {
         spaceStrategyLinkText: { name: string; desc: string };
         userDefinedRegexpSwitch: { name: string; desc: string };
         userDefinedRegexp: { name: string; desc: string };
+        userRulesRespectUserDefinedRegexBlocks: { name: string; desc: string };
         excludeFoldersFiles: { name: string; desc: string };
         fixMacOSContextMenu: { name: string; desc: string };
         fixMicrosoftIME: { name: string; desc: string };

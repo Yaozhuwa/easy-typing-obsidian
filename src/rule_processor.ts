@@ -4,6 +4,7 @@ import { RuleType, TxContext } from './rule_engine';
 import { tabstopSpecsToTabstopGroups } from './tabstop';
 import { addTabstopsEffect } from './tabstops_state_field';
 import { detectRuleScope } from './syntax';
+import { isCursorInUserDefinedRegexBlock } from './core';
 
 export function triggerCvtRule(ctx: PluginContext, view: EditorView, cursor_pos: number, changeType: string = 'input.type'): boolean {
 	const inputScope = detectRuleScope(view.state, cursor_pos);
@@ -17,6 +18,15 @@ export function triggerCvtRule(ctx: PluginContext, view: EditorView, cursor_pos:
 		scopeLanguage: inputScope.language,
 		debug: ctx.settings?.debug,
 	};
+
+	if (ctx.settings?.UserDefinedRegSwitch && ctx.settings?.UserRulesRespectUserDefinedRegexBlocks) {
+		const line = view.state.doc.lineAt(cursor_pos);
+		const column = cursor_pos - line.from;
+		const checkColumn = changeType.startsWith('input') ? Math.max(0, column - 1) : column;
+		if (isCursorInUserDefinedRegexBlock(line.text, checkColumn, ctx.settings.UserDefinedRegExp)) {
+			return false;
+		}
+	}
 	const cvtResult = ctx.ruleEngine.process(cvtCtx);
 	if (cvtResult) {
 		const tabstopGroups = tabstopSpecsToTabstopGroups(cvtResult.tabstops);
@@ -46,5 +56,3 @@ export function triggerCvtRule(ctx: PluginContext, view: EditorView, cursor_pos:
 	}
 	return false;
 }
-
-

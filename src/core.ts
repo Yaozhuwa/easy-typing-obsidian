@@ -618,9 +618,19 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
     }
 
     // 6. 合并文本部分和其他部分
-    retArray = retArray.concat(textArray);
-    retArray = retArray.sort((a, b): number => a.begin - b.begin);
-    return retArray
+	retArray = retArray.concat(textArray);
+	retArray = retArray.sort((a, b): number => a.begin - b.begin);
+	return retArray
+}
+
+export function isCursorInUserDefinedRegexBlock(lineText: string, column: number, regExps?: string): boolean {
+	const parts = splitTextWithLinkAndUserDefined(lineText, regExps);
+	for (const part of parts) {
+		if (part.type === InlineType.user && column >= part.begin && column < part.end) {
+			return true;
+		}
+	}
+	return false;
 }
 
 // 字符转化成空格状态要求

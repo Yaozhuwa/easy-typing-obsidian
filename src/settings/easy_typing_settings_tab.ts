@@ -602,6 +602,17 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				this.plugin.saveSettings();
 			});
 
+		new Setting(regexSection.bodyEl)
+			.setName(locale.settings.userRulesRespectUserDefinedRegexBlocks.name)
+			.setDesc(locale.settings.userRulesRespectUserDefinedRegexBlocks.desc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.UserRulesRespectUserDefinedRegexBlocks)
+					.onChange(async (value) => {
+						this.plugin.settings.UserRulesRespectUserDefinedRegexBlocks = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
 		// 排除文件/文件夹
 		const excludeSection = this.createSection(
 			el,

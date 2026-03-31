@@ -73,6 +73,10 @@ const locale: Locale = {
                 "각 줄의 마지막 3자는 |와 두 개의 간격 전략 기호로 고정됩니다. 간격 전략 기호는 - = +이며, 각각 간격 불필요(-), 소프트웨어 스페이스(=), 엄격한 스페이스(+)를 의미합니다." +
                 "이 두 간격 전략 기호는 매칭 블록의 왼쪽과 오른쪽의 간격 전략입니다. // 로 시작하는 줄은 주석으로 처리됩니다."
         },
+        userRulesRespectUserDefinedRegexBlocks: {
+            name: "사용자 규칙이 커스텀 정규식 블록을 준수",
+            desc: "활성화 시 커스텀 정규식 블록에 매칭된 텍스트는 자동 사용자 규칙을 트리거하지 않습니다."
+        },
         excludeFoldersFiles: {
             name: "제외 폴더/파일",
             desc: "이 플러그인은 각 줄을 제외 폴더 또는 파일로 파싱합니다. 예: DailyNote/, DailyNote/WeekNotes/, DailyNote/test.md"

@@ -73,6 +73,10 @@ const locale: Locale = {
                 "The end of each line of three characters fixed as | and two space strategy symbols, space strategy symbols for - = +, respectively, on behalf of not requiring spaces (-), soft spaces (=), strict spaces (+)." +
                 "These two space strategy symbols are the space strategy for the left and right sides of the matching block respectively. Lines starting with // are treated as comments"
         },
+        userRulesRespectUserDefinedRegexBlocks: {
+            name: "User rules respect custom regex blocks",
+            desc: "When enabled, text matched by custom regex blocks will not trigger auto user rules."
+        },
         excludeFoldersFiles: {
             name: "Exclude Folders/Files",
             desc: "This plugin will parse each line as an exclude folder or file. For example: DailyNote/, DailyNote/WeekNotes/, DailyNote/test.md"

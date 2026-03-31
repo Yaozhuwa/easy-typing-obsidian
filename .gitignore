@@ -18,5 +18,6 @@ user-rules.json
 .DS_Store
 .vscode
 .claude
+.worktrees/
 docs/
 CLAUDE.md

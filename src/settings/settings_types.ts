@@ -35,6 +35,7 @@ export interface EasyTypingSettings {
 	InlineLinkSmartSpace: boolean;
 	UserDefinedRegSwitch: boolean;
 	UserDefinedRegExp: string;
+	UserRulesRespectUserDefinedRegexBlocks: boolean;
 	debug: boolean;
 
 	StrictModeEnter: boolean;
@@ -79,6 +80,7 @@ export const DEFAULT_SETTINGS: EasyTypingSettings = {
 		"\n[a-zA-Z0-9_\\-.]+@[a-zA-Z0-9_\\-.]+|++\n" +
 		"// Tags in Obsidian" +
 		"//(?<!#)#[\\u4e00-\\u9fa5\\w-\\/]+|++",
+	UserRulesRespectUserDefinedRegexBlocks: false,
 	debug: false,
 
 	StrictModeEnter: false,
