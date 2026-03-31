@@ -1,8 +1,21 @@
 ## 更新日志 Changelog
-- Unreleased
-  - 自动格式化 Auto Formatting
-    - 将常见英文半角标点内置为右软空格符号，减少行内代码等软空格场景下的额外设置需求 (#345)
-    - Built common half-width English punctuation into right soft-space symbols to reduce extra setup in soft-space scenarios such as inline code (#345)
+- V6.0.7 2026-03-31
+  - 自动格式化与规则行为调整
+    - 新增全局设置，可在自定义正则区域内阻止自动用户规则触发 (#340)
+    - 调整内置软空格符号的默认分组，并修复左右软空格判断策略 (#345)
+    - 默认关闭「CJK字符后半角标点转全角」内置规则
+    - 修复粘贴内容时仍可能误触发输入转换规则的问题 (#342)
+    - 在默认自定义正则区域配置中补充注释说明，并默认注释掉 Tags 规则
+  - 文档与说明
+    - 更新软空格相关设置说明与自动格式化文档
+  - Auto Formatting & Rule Behavior
+    - Added a global option to block auto user rules inside custom regex blocks (#340)
+    - Adjusted the built-in soft-space symbol groups and fixed the left/right soft-space decision strategy (#345)
+    - Disabled the built-in "convert half-width punctuation to full-width after CJK characters" rule by default
+    - Fixed pasted text still being able to trigger input conversion rules unexpectedly (#342)
+    - Added clarifying comments to the default custom regex block config and commented out the Tags rule by default
+  - Documentation
+    - Updated soft-space related setting descriptions and auto-formatting docs
 - V6.0.6 2026-03-20
   - 规则编辑与规则列表优化
     - 修复正则规则编辑显示时反斜杠被重复转义的问题
