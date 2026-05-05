@@ -247,6 +247,9 @@ export class LineFormater {
 
                 // 3.6 Handle spacing from previous part to this text
                 if (prevPartType !== InlineType.none) {
+                    // Pure formatting chars (* _ ~ ` ^) should not trigger spacing
+                    const isPureFormatting = /^[*_~`^]+$/.test(content.replace(/\0/g, ''));
+                    if (!isPureFormatting) {
                     if (prevPartType === InlineType.wikilink || prevPartType === InlineType.mdlink) {
                         // Smart link spacing (complex logic preserved from original)
                         if (!settings.InlineLinkSmartSpace && settings.InlineLinkSpaceMode > boundary.start) {
@@ -275,6 +278,7 @@ export class LineFormater {
                         lineParts[i].content = ' ' + lineParts[i].content;
                         content = lineParts[i].content;
                     }
+                    } // end !isPureFormatting
                 }
 
                 // 3.7 Find cursor position
