@@ -95,25 +95,53 @@ export function capitalizeMidSentence(ctx: TextFormatContext): TextFormatContext
  * Find the token boundaries [left, right) surrounding a given position.
  * A token is a contiguous run of non-whitespace characters (excluding \0 marker).
  */
-function isCJKCategory(cat: ScriptCategory): boolean {
-    return cat === ScriptCategory.Chinese || cat === ScriptCategory.Japanese || cat === ScriptCategory.Korean;
+/**
+ * Check whether a character belongs to CJK context (CJK characters + CJK punctuation).
+ * classifyChar returns Unknown for CJK punctuation like 。：、 etc.,
+ * so we need explicit Unicode range checks for those.
+ */
+function isCJKContext(ch: string): boolean {
+    const cat = classifyChar(ch);
+    if (cat === ScriptCategory.Chinese || cat === ScriptCategory.Japanese || cat === ScriptCategory.Korean) {
+        return true;
+    }
+    if (ch.length > 0) {
+        const code = ch.charCodeAt(0);
+        // CJK Symbols and Punctuation (U+3000–U+303F): 。、【】、《》 etc.
+        // Fullwidth punctuation: U+FF01–U+FF0F, U+FF1A–U+FF20, U+FF3B–U+FF40, U+FF5B–U+FF60
+        //   (excluding fullwidth digits U+FF10–U+FF19 and fullwidth letters U+FF21–U+FF3A/U+FF41–U+FF5A)
+        // CJK Compatibility Forms: U+FE30–U+FE4F
+        // Fullwidth symbols: U+FFE0–U+FFE6
+        if ((code >= 0x3000 && code <= 0x303F) ||
+            (code >= 0xFF01 && code <= 0xFF0F) ||
+            (code >= 0xFF1A && code <= 0xFF20) ||
+            (code >= 0xFF3B && code <= 0xFF40) ||
+            (code >= 0xFF5B && code <= 0xFF60) ||
+            (code >= 0xFFE0 && code <= 0xFFE6) ||
+            (code >= 0xFE30 && code <= 0xFE4F)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function findTokenBounds(content: string, pos: number): [number, number] {
+    // Clamp pos to content bounds (cursor may be in a different inline part)
+    pos = Math.max(0, Math.min(pos, content.length));
     // Determine reference script group from the character just before cursor
     let refIdx = pos > 0 ? pos - 1 : 0;
     if (refIdx >= content.length) refIdx = content.length - 1;
     if (refIdx < 0) return [0, 0];
-    const refIsCJK = isCJKCategory(classifyChar(content.charAt(refIdx)));
+    const refIsCJK = isCJKContext(content.charAt(refIdx));
 
     let left = pos;
     while (left > 0 && !/[\s\0]/.test(content.charAt(left - 1))) {
-        if (isCJKCategory(classifyChar(content.charAt(left - 1))) !== refIsCJK) break;
+        if (isCJKContext(content.charAt(left - 1)) !== refIsCJK) break;
         left--;
     }
     let right = pos;
     while (right < content.length && !/[\s\0]/.test(content.charAt(right))) {
-        if (isCJKCategory(classifyChar(content.charAt(right))) !== refIsCJK) break;
+        if (isCJKContext(content.charAt(right)) !== refIsCJK) break;
         right++;
     }
     return [left, right];
