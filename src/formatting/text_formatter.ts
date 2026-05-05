@@ -3,7 +3,7 @@
  * Each function processes text content within an InlinePart of type 'text'.
  */
 
-import { buildPairRegexps, classifyChar, ScriptCategory, CustomScriptDef } from './script_category';
+import { buildPairRegexps, classifyChar, resolveCharClass, ScriptCategory, CustomScriptDef } from './script_category';
 import { PrefixDictionary } from './prefix_dictionary';
 import { SpaceState } from '../core';
 import { isParamDefined } from '../utils';
@@ -125,16 +125,6 @@ function isCJKContext(ch: string): boolean {
     return false;
 }
 
-/**
- * A character can belong to a token if it is a word char (\w) or CJK context.
- * Symbols like *, -, ~, etc. are excluded so markdown formatting markers
- * (e.g. **bold**) don't get merged into adjacent words.
- */
-function isTokenChar(ch: string): boolean {
-    if (/\w/.test(ch)) return true;          // [a-zA-Z0-9_]
-    return isCJKContext(ch);
-}
-
 function findTokenBounds(content: string, pos: number): [number, number] {
     // Clamp pos to content bounds (cursor may be in a different inline part)
     pos = Math.max(0, Math.min(pos, content.length));
@@ -147,15 +137,17 @@ function findTokenBounds(content: string, pos: number): [number, number] {
     let left = pos;
     while (left > 0 && !/[\s\0]/.test(content.charAt(left - 1))) {
         const ch = content.charAt(left - 1);
-        if (!isTokenChar(ch)) break;
-        if (isCJKContext(ch) !== refIsCJK) break;
+        const isCJK = isCJKContext(ch);
+        if (!isCJK && !/\w/.test(ch)) break;
+        if (isCJK !== refIsCJK) break;
         left--;
     }
     let right = pos;
     while (right < content.length && !/[\s\0]/.test(content.charAt(right))) {
         const ch = content.charAt(right);
-        if (!isTokenChar(ch)) break;
-        if (isCJKContext(ch) !== refIsCJK) break;
+        const isCJK = isCJKContext(ch);
+        if (!isCJK && !/\w/.test(ch)) break;
+        if (isCJK !== refIsCJK) break;
         right++;
     }
     return [left, right];
@@ -188,6 +180,109 @@ function collectAllBoundaries(
     return positions;
 }
 
+const FORMATTING_CHARS_RE = /[*_~`^]/;
+
+function isFormattingChar(ch: string): boolean {
+    return FORMATTING_CHARS_RE.test(ch);
+}
+
+/**
+ * Collect language-pair boundaries that are separated by markdown formatting
+ * symbols (e.g. *A*中文 → boundary between * and 中).
+ */
+function collectFormattingSeparatedBoundaries(
+    content: string,
+    languagePairs: LanguagePair[],
+    customCategories?: CustomScriptDef[],
+): Set<number> {
+    const positions = new Set<number>();
+    // Early exit if no formatting chars in the content
+    if (!FORMATTING_CHARS_RE.test(content)) return positions;
+
+    // Pre-compute pair character-class regexps once outside the hot loop
+    const pairTests: { test(classA: string, classB: string): boolean }[] = [];
+    for (const pair of languagePairs) {
+        const classA = resolveCharClass(pair.a, customCategories);
+        const classB = resolveCharClass(pair.b, customCategories);
+        if (!classA || !classB) continue;
+        const regA = new RegExp(`^[${classA}]$`);
+        const regB = new RegExp(`^[${classB}]$`);
+        pairTests.push({
+            test(a: string, b: string) {
+                return (regA.test(a) && regB.test(b)) || (regA.test(b) && regB.test(a));
+            },
+        });
+    }
+    if (pairTests.length === 0) return positions;
+
+    const len = content.length;
+    let i = 0;
+    while (i < len) {
+        if (!isFormattingChar(content[i])) { i++; continue; }
+
+        // Find contiguous formatting block
+        let blockStart = i;
+        while (blockStart > 0 && isFormattingChar(content[blockStart - 1])) {
+            blockStart--;
+        }
+        let blockEnd = i;
+        while (blockEnd < len - 1 && isFormattingChar(content[blockEnd + 1])) {
+            blockEnd++;
+        }
+        i = blockEnd + 1;
+
+        // Find left non-formatting char, skipping \0 cursor marker
+        let leftIdx = blockStart - 1;
+        while (leftIdx >= 0 && (isFormattingChar(content[leftIdx]) || content[leftIdx] === '\0')) {
+            leftIdx--;
+        }
+        if (leftIdx < 0) continue;
+
+        // Find right non-formatting char, skipping \0 cursor marker
+        let rightIdx = blockEnd + 1;
+        while (rightIdx < len && (isFormattingChar(content[rightIdx]) || content[rightIdx] === '\0')) {
+            rightIdx++;
+        }
+        if (rightIdx >= len) continue;
+
+        const leftChar = content[leftIdx];
+        const rightChar = content[rightIdx];
+
+        // Check if they form a language pair
+        let pairMatched = false;
+        for (const pt of pairTests) {
+            if (pt.test(leftChar, rightChar)) { pairMatched = true; break; }
+        }
+        if (!pairMatched) continue;
+
+        // Determine which side the formatting block belongs to
+        // by looking for a matching formatting char (markdown pair).
+        // Scan through non-formatting content (the text inside the pair).
+        // Pick the closer match; if equidistant, prefer left.
+        const fmtChar = content[blockStart];
+        let matchedLeftDist = -1;
+        let matchedRightDist = -1;
+        for (let j = blockStart - 1; j >= 0; j--) {
+            if (content[j] === fmtChar) { matchedLeftDist = blockStart - j; break; }
+            if (/[\s\0]/.test(content[j])) break;
+        }
+        for (let j = blockEnd + 1; j < len; j++) {
+            if (content[j] === fmtChar) { matchedRightDist = j - blockEnd; break; }
+            if (/[\s\0]/.test(content[j])) break;
+        }
+        if (matchedLeftDist >= 0 && (matchedRightDist < 0 || matchedLeftDist <= matchedRightDist)) {
+            positions.add(blockEnd + 1);
+        } else if (matchedRightDist >= 0) {
+            positions.add(blockStart);
+        } else {
+            if (isCJKContext(leftChar)) positions.add(blockStart);
+            if (isCJKContext(rightChar)) positions.add(blockEnd + 1);
+        }
+    }
+
+    return positions;
+}
+
 /**
  * Insert spaces between language pairs in the text content.
  * Uses prefix dictionary to suppress spaces for tokens still being typed.
@@ -214,6 +309,11 @@ export function applyLanguagePairSpacing(
 
     // 1. Collect ALL boundary positions in the original content
     const allBoundaries = collectAllBoundaries(content, languagePairs, customCategories);
+    // Also collect boundaries separated by markdown formatting symbols
+    const fmtBoundaries = collectFormattingSeparatedBoundaries(content, languagePairs, customCategories);
+    for (const pos of fmtBoundaries) {
+        allBoundaries.add(pos);
+    }
     if (allBoundaries.size === 0) return ctx;
 
     // 2. Find the cursor token boundaries
