@@ -95,13 +95,25 @@ export function capitalizeMidSentence(ctx: TextFormatContext): TextFormatContext
  * Find the token boundaries [left, right) surrounding a given position.
  * A token is a contiguous run of non-whitespace characters (excluding \0 marker).
  */
+function isCJKCategory(cat: ScriptCategory): boolean {
+    return cat === ScriptCategory.Chinese || cat === ScriptCategory.Japanese || cat === ScriptCategory.Korean;
+}
+
 function findTokenBounds(content: string, pos: number): [number, number] {
+    // Determine reference script group from the character just before cursor
+    let refIdx = pos > 0 ? pos - 1 : 0;
+    if (refIdx >= content.length) refIdx = content.length - 1;
+    if (refIdx < 0) return [0, 0];
+    const refIsCJK = isCJKCategory(classifyChar(content.charAt(refIdx)));
+
     let left = pos;
     while (left > 0 && !/[\s\0]/.test(content.charAt(left - 1))) {
+        if (isCJKCategory(classifyChar(content.charAt(left - 1))) !== refIsCJK) break;
         left--;
     }
     let right = pos;
     while (right < content.length && !/[\s\0]/.test(content.charAt(right))) {
+        if (isCJKCategory(classifyChar(content.charAt(right))) !== refIsCJK) break;
         right++;
     }
     return [left, right];
@@ -246,7 +258,7 @@ export function applyLanguagePairSpacing(
 
         if (inCursorToken) {
             const posInToken = pos - tokLeft;
-            if (posInToken < protectedUpTo) {
+            if (posInToken > 0 && posInToken < protectedUpTo) {
                 continue; // protected by dictionary word
             }
             // Insert if within the typing range, or if the prefix dict
