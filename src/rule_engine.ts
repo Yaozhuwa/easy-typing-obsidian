@@ -440,7 +440,7 @@ export class RuleEngine {
 	private findMatchingBrace(text: string, openIdx: number): number {
 		let depth = 1;
 		for (let i = openIdx + 1; i < text.length; i++) {
-			if (text[i] === '{' && i > 0 && text[i - 1] === '$') depth++;
+			if (text[i] === '{') depth++;
 			else if (text[i] === '}') { depth--; if (depth === 0) return i; }
 		}
 		return -1;
