@@ -125,6 +125,16 @@ function isCJKContext(ch: string): boolean {
     return false;
 }
 
+/**
+ * A character can belong to a token if it is a word char (\w) or CJK context.
+ * Symbols like *, -, ~, etc. are excluded so markdown formatting markers
+ * (e.g. **bold**) don't get merged into adjacent words.
+ */
+function isTokenChar(ch: string): boolean {
+    if (/\w/.test(ch)) return true;          // [a-zA-Z0-9_]
+    return isCJKContext(ch);
+}
+
 function findTokenBounds(content: string, pos: number): [number, number] {
     // Clamp pos to content bounds (cursor may be in a different inline part)
     pos = Math.max(0, Math.min(pos, content.length));
@@ -136,12 +146,16 @@ function findTokenBounds(content: string, pos: number): [number, number] {
 
     let left = pos;
     while (left > 0 && !/[\s\0]/.test(content.charAt(left - 1))) {
-        if (isCJKContext(content.charAt(left - 1)) !== refIsCJK) break;
+        const ch = content.charAt(left - 1);
+        if (!isTokenChar(ch)) break;
+        if (isCJKContext(ch) !== refIsCJK) break;
         left--;
     }
     let right = pos;
     while (right < content.length && !/[\s\0]/.test(content.charAt(right))) {
-        if (isCJKContext(content.charAt(right)) !== refIsCJK) break;
+        const ch = content.charAt(right);
+        if (!isTokenChar(ch)) break;
+        if (isCJKContext(ch) !== refIsCJK) break;
         right++;
     }
     return [left, right];
