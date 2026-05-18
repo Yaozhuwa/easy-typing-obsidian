@@ -31,6 +31,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 	plainPasteInProgress: boolean;
 	pasteDetected: boolean;
 	private pasteTimerId: ReturnType<typeof setTimeout> | null = null;
+	private configReloadTimerId: ReturnType<typeof setTimeout> | null = null;
 	TaboutPairStrs: PairString[];
 	ruleManager: RuleManager;
 	get ruleEngine(): RuleEngine { return this.ruleManager.ruleEngine; }
@@ -192,6 +193,11 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new EasyTypingSettingTab(this.app, this));
 
+		// Watch for external config/rule file changes (e.g. synced from another device)
+		this.registerEvent(this.app.vault.on('raw' as any, (path: string) => {
+			this.onConfigFileChange(path);
+		}));
+
 		this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf: WorkspaceLeaf) => {
 			if (leaf.view.getViewType() == 'markdown') {
 				let file = this.app.workspace.getActiveFile();
@@ -239,7 +245,30 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 	onunload() {
 		if (this.pasteTimerId) clearTimeout(this.pasteTimerId);
+		if (this.configReloadTimerId) clearTimeout(this.configReloadTimerId);
 		console.log("Easy Typing Plugin unloaded.")
+	}
+
+	private onConfigFileChange(path: string) {
+		if (Date.now() - this.ruleManager.lastSaveTime < 2000) return;
+
+		const builtinRulesPath = this.ruleManager.pluginPath('builtin-rules.json');
+		const userRulesPath = this.ruleManager.pluginPath('user-rules.json');
+
+		if (path !== builtinRulesPath && path !== userRulesPath) return;
+
+		if (this.configReloadTimerId) clearTimeout(this.configReloadTimerId);
+		this.configReloadTimerId = setTimeout(async () => {
+			this.configReloadTimerId = null;
+			try {
+				await this.ruleManager.initRuleEngine();
+				if (this.settings.debug) {
+					console.log('[EasyTyping] Rules reloaded from external change:', path);
+				}
+			} catch (e) {
+				console.error('[EasyTyping] Failed to reload rules:', e);
+			}
+		}, 1000);
 	}
 
 	private markPaste(plain: boolean) {

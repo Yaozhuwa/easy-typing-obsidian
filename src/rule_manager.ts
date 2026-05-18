@@ -10,6 +10,8 @@ export class RuleManager {
 	cachedUserRules: SimpleRule[] = [];
 	/** The storage path that was active when rules were last loaded. */
 	previousStoragePath: string = '';
+	/** Timestamp of the last rule file write by this plugin instance. */
+	lastSaveTime = 0;
 	private readonly BUILTIN_RULES_FILE = 'builtin-rules.json';
 	private readonly USER_RULES_FILE = 'user-rules.json';
 
@@ -36,11 +38,11 @@ export class RuleManager {
 		this.previousStoragePath = settings.rulesStoragePath;
 	}
 
-	private pluginPath(filename: string): string {
+	pluginPath(filename: string): string {
 		const base = this.settings.rulesStoragePath
 			? this.settings.rulesStoragePath
 			: this.manifest.dir!;
-		return `${base}/${filename}`;
+		return `${base}/${filename}`.replace(/\/+/g, '/');
 	}
 
 	async loadRulesFile(filename: string): Promise<SimpleRule[]> {
@@ -55,6 +57,7 @@ export class RuleManager {
 
 	async saveRulesFile(filename: string, rules: SimpleRule[]): Promise<void> {
 		const path = this.pluginPath(filename);
+		this.lastSaveTime = Date.now();
 		await this.app.vault.adapter.write(path, JSON.stringify(rules, null, 2));
 	}
 
