@@ -1,4 +1,19 @@
 ## 更新日志 Changelog
+- V6.0.8 2026-05-18
+  - 自动格式化改进
+    - 支持穿透 Markdown 格式标记（如 `**`、`*`、`~~`）检测语言对边界并插入空格
+    - 修复前缀词典在中文语境下失效导致 L1/n8n 等词被错误添加空格的问题
+    - 修复中文标点符号未被识别为 CJK 上下文导致 token 切分不准确的问题
+    - 修复 Markdown 格式标记被合并到相邻英文 token 导致前缀词典保护失效
+  - Bug 修复
+    - 修复选中包裹符号时内容含花括号导致闭合位置错误的问题 (#352)
+  - Auto Formatting Improvements
+    - Support detecting language-pair boundaries across Markdown formatting marks (`**`, `*`, `~~`) and inserting spaces accordingly
+    - Fixed prefix dictionary failing in CJK context, causing incorrect spacing for words like L1/n8n
+    - Fixed CJK punctuation not being recognized as CJK context, leading to inaccurate token boundary detection
+    - Fixed Markdown formatting marks being merged into adjacent English tokens, breaking prefix dictionary protection
+  - Bug Fixes
+    - Fixed selection-wrapping with braces producing incorrect closing position when content contains curly braces (#352)
 - V6.0.7 2026-03-31
   - 自动格式化与规则行为调整
     - 新增全局设置，可在自定义正则区域内阻止自动用户规则触发 (#340)
