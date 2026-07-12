@@ -1,4 +1,9 @@
 ## 更新日志 Changelog
+- V6.0.9 2026-07-12
+  - 自动格式化改进
+    - 修复前缀词典无法匹配跨脚本词典词（如 `b站`、`Python3中文`）导致词内被错误插入空格的问题。原 token 切分在 CJK 与非 CJK 边界处断开，使词典永远拿不到完整词；新增词典引导的 token 扩展，让跨脚本词典词被整体匹配并抑制内部空格
+  - Auto Formatting Improvements
+    - Fixed prefix dictionary failing to match cross-script dictionary words (e.g. `b站`, `Python3中文`), which caused incorrect spaces inserted inside the word. The original token splitter broke at CJK↔non-CJK boundaries so the dictionary never saw the whole word; added dictionary-guided token extension so cross-script dictionary words are matched as a whole and their inner spaces are suppressed
 - V6.0.8 2026-05-18
   - 自动格式化改进
     - 支持穿透 Markdown 格式标记（如 `**`、`*`、`~~`）检测语言对边界并插入空格
