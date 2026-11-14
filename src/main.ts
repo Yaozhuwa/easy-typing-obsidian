@@ -17,6 +17,7 @@ import type { ComposeState } from './plugin_context';
 import { handleTabDown, handleEnter, handleBackspace, handleShiftEnter, handleModA, goNewLineAfterCurLine, selectBlockInCursor } from './keyboard_handlers';
 import { createTransactionFilter, createViewUpdatePlugin } from './cm_extensions';
 import { getLocale } from './lang/locale';
+import { getCustomRegexConfig, migrateLegacyDefaultRegexConfig } from './formatting/custom_regex_config';
 
 
 export default class EasyTypingPlugin extends Plugin implements PluginContext {
@@ -38,6 +39,13 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 	async onload() {
 		await this.loadSettings();
+		if (this.settings.UserDefinedRegSwitch) {
+			const errors = getCustomRegexConfig(this.settings.UserDefinedRegExp).errors;
+			if (errors.length) {
+				const lines = errors.slice(0, 5).map(error => error.line).join(', ') + (errors.length > 5 ? ', …' : '');
+				new Notice(`EasyTyping: ${getLocale().settings.userDefinedRegexp.startupWarning.replace('{lines}', lines)}`, 8000);
+			}
+		}
 		this.ruleManager = new RuleManager(this.app, this.manifest, this.settings, () => this.saveSettings());
 		await this.ruleManager.initRuleEngine();
 
@@ -307,6 +315,8 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 		try {
 			const userData = await this.loadData();
 			this.settings = Object.assign({}, DEFAULT_SETTINGS, userData || {});
+			this.settings.UserDefinedRegExp = migrateLegacyDefaultRegexConfig(
+				this.settings.UserDefinedRegExp, userData?.UserPartSpace !== false);
 		} catch (error) {
 			console.error('EasyTyping: Failed to load settings, using defaults:', error);
 			this.settings = Object.assign({}, DEFAULT_SETTINGS);

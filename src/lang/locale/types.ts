@@ -17,7 +17,14 @@ export interface Locale {
         spaceStrategyInlineFormula: { name: string; desc: string };
         spaceStrategyLinkText: { name: string; desc: string };
         userDefinedRegexpSwitch: { name: string; desc: string };
-        userDefinedRegexp: { name: string; desc: string };
+        userDefinedRegexp: {
+            name: string;
+            desc: string;
+            validationSummary: string;
+            invalidFormatLine: string;
+            invalidRegexLine: string;
+            startupWarning: string;
+        };
         userRulesRespectUserDefinedRegexBlocks: { name: string; desc: string };
         excludeFoldersFiles: { name: string; desc: string };
         fixMacOSContextMenu: { name: string; desc: string };

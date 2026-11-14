@@ -71,7 +71,11 @@ const locale: Locale = {
             name: "User-defined Regular Expression, one expression per line",
             desc: "User-defined regular expression, matched to the content is not formatted, one expression per line, do not feel free to add spaces at the end of the line." +
                 "The end of each line of three characters fixed as | and two space strategy symbols, space strategy symbols for - = +, respectively, on behalf of not requiring spaces (-), soft spaces (=), strict spaces (+)." +
-                "These two space strategy symbols are the space strategy for the left and right sides of the matching block respectively. Lines starting with // are treated as comments"
+                "These two space strategy symbols are the space strategy for the left and right sides of the matching block respectively. Lines starting with // are treated as comments",
+            validationSummary: "The invalid lines below are skipped. Other valid rules still apply.",
+            invalidFormatLine: "Line %d: missing or invalid suffix. End the line with | and two spacing symbols (-, =, or +), for example |-- or |=+.",
+            invalidRegexLine: "Line %d: invalid regular expression.",
+            startupWarning: "Custom regex errors on lines {lines}. Invalid rules were skipped. Check Easy Typing → Custom regex settings."
         },
         userRulesRespectUserDefinedRegexBlocks: {
             name: "User rules respect custom regex blocks",

@@ -1,5 +1,6 @@
 import { SpaceState, string2SpaceState } from 'src/core';
 import { ScriptCategory } from '../formatting/script_category';
+import { getCustomRegexConfig } from '../formatting/custom_regex_config';
 import { AbstractInputSuggest, App, Notice, PluginSettingTab, Setting, TextAreaComponent, setIcon } from 'obsidian';
 import EasyTypingPlugin from '../main';
 import { getLocale } from '../lang/locale';
@@ -580,8 +581,8 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.UserDefinedRegSwitch).onChange(async (value) => {
 					this.plugin.settings.UserDefinedRegSwitch = value;
-					await this.plugin.saveSettings();
 					syncRegexContentState();
+					await this.plugin.saveSettings();
 				});
 			});
 
@@ -595,11 +596,34 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		);
 
 		regContentArea.inputEl.addClass('et-settings-textarea', 'et-settings-textarea-tall');
+		const regexValidationEl = regContentAreaSetting.settingEl.createDiv({
+			cls: 'setting-item-description mod-warning',
+			attr: { role: 'status', 'aria-live': 'polite' },
+		});
+		const refreshRegexValidation = () => {
+			const { errors } = getCustomRegexConfig(this.plugin.settings.UserDefinedRegExp);
+			const regexEnabled = this.plugin.settings.UserDefinedRegSwitch &&
+				(this.plugin.settings.AutoFormat || this.plugin.settings.UserRulesRespectUserDefinedRegexBlocks);
+			const showErrors = regexEnabled && errors.length > 0;
+			regexValidationEl.empty();
+			regexValidationEl.hidden = !showErrors;
+			regContentArea.inputEl.setAttribute('aria-invalid', String(showErrors));
+			if (!showErrors) return;
+			regexValidationEl.createDiv({ text: locale.settings.userDefinedRegexp.validationSummary });
+			for (const error of errors) {
+				const label = error.kind === 'format'
+					? locale.settings.userDefinedRegexp.invalidFormatLine
+					: locale.settings.userDefinedRegexp.invalidRegexLine;
+				const detail = error.kind === 'regex' && error.message ? ` ${error.message}` : '';
+				regexValidationEl.createDiv({ text: sprintf(label, error.line) + detail });
+			}
+		};
 		regContentArea
 			.setValue(this.plugin.settings.UserDefinedRegExp)
 			.onChange(async (value) => {
 				this.plugin.settings.UserDefinedRegExp = value;
-				this.plugin.saveSettings();
+				refreshRegexValidation();
+				await this.plugin.saveSettings();
 			});
 
 		new Setting(regexSection.bodyEl)
@@ -609,6 +633,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.UserRulesRespectUserDefinedRegexBlocks)
 					.onChange(async (value) => {
 						this.plugin.settings.UserRulesRespectUserDefinedRegexBlocks = value;
+						refreshRegexValidation();
 						await this.plugin.saveSettings();
 					});
 			});
@@ -640,6 +665,7 @@ export class EasyTypingSettingTab extends PluginSettingTab {
 		];
 		const syncRegexContentState = () => {
 			this.setInteractiveDisabled(regContentAreaSetting.settingEl, !this.plugin.settings.AutoFormat || !this.plugin.settings.UserDefinedRegSwitch);
+			refreshRegexValidation();
 		};
 		const syncAutoFormatState = (enabled: boolean) => {
 			this.setInteractiveDisabled(pasteSetting.settingEl, !enabled);

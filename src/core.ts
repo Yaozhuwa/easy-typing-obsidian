@@ -1,4 +1,3 @@
-import { Notice } from "obsidian"
 import { EasyTypingSettings } from './settings'
 import { Annotation, EditorState, Extension, StateField, Transaction, TransactionSpec, Text, Line } from '@codemirror/state';
 import { offsetToPos, posToOffset, stringDeleteAt, stringInsertAt, isParamDefined } from './utils'
@@ -13,6 +12,7 @@ import {
 import { shouldInsertSpaceBetweenParts, shouldPrependSpaceToText } from './formatting/inline_spacing'
 import { PrefixDictionary } from './formatting/prefix_dictionary'
 import { inlineSyntaxNodeType, isCodeBlockSyntaxNode, isMathSyntaxNode, syntaxNodeTokens } from './syntax_node_types'
+import { getCustomRegexConfig } from './formatting/custom_regex_config'
 
 export enum LineType {
     text = 'text', codeblock = 'codeblock', formula = 'formula',
@@ -434,11 +434,17 @@ function matchWithReg(text: string, regExp: RegExp, type: InlineType, inlineType
     checkArray = false, leftSpaceRe: SpaceState = SpaceState.none, rightSpaceRe: SpaceState = SpaceState.none): InlinePart[] {
     let retArray = inlineTypeArray;
     let matchArray: InlinePart[] = [];
+    regExp.lastIndex = 0;
     retArray = retArray.sort((a, b): number => a.begin - b.begin);
     // console.log('before-----------\n',retArray)
     while (true) {
         let match = regExp.exec(text);
         if (!match) break;
+        // Zero-width matches protect no text and exec() does not advance them.
+        if (match[0].length === 0) {
+            regExp.lastIndex = match.index + 1;
+            continue;
+        }
         let valid = true;
         // 检查冲突
         if (checkArray) {
@@ -527,45 +533,9 @@ function splitTextWithLinkAndUserDefined(text: string, regExps?: string): Inline
     retArray = matchWithReg(text, regMdLink, InlineType.mdlink, retArray);
 
     // 3. 匹配用户自定义正则
-    let regExpList: RegExp[] = [];
-    let leftSRequireList: SpaceState[] = [];
-    let rightSRequireList: SpaceState[] = [];
-    let regNull = /^\s*$|^\/\//g;
-    let regSRequire = /\|[\-=\+][\-=\+]$/;
-    if (regExps) {
-        let regs = regExps.split('\n');
-        for (let i = 0; i < regs.length; i++) {
-
-            if (regNull.test(regs[i])) continue;
-
-            if ((!regSRequire.test(regs[i])) || regs[i].length <= 3) {
-                new Notice("EasyTyping: 第" + String(i) + "行自定义正则不符合规范\n" + regs[i]);
-                continue;
-            }
-            let regItem = regs[i].substring(0, regs[i].length - 3);
-            let spaceReqString = regs[i].substring(regs[i].length - 3);
-
-            let isValidReg = true;
-            try {
-                let regTemp = new RegExp(regItem, 'g')
-            }
-            catch (error) {
-                isValidReg = false;
-                // 记录正则表达式错误到控制台，而不依赖于设置
-                console.error("EasyTyping: Invalid RegExp:", regItem, error);
-            }
-
-            if (isValidReg) {
-                regExpList.push(new RegExp(regItem, 'g'));
-                leftSRequireList.push(str2SpaceState(spaceReqString.charAt(1)));
-                rightSRequireList.push(str2SpaceState(spaceReqString.charAt(2)));
-            }
-        }
-        let regLen = regExpList.length;
-
-        for (let i = 0; i < regLen; i++) {
-            retArray = matchWithReg(text, regExpList[i], InlineType.user, retArray, true, leftSRequireList[i], rightSRequireList[i]);
-        }
+    for (const rule of getCustomRegexConfig(regExps).rules) {
+        retArray = matchWithReg(text, rule.regex, InlineType.user, retArray, true,
+            str2SpaceState(rule.left), str2SpaceState(rule.right));
     }
 
     // 匹配时间戳
