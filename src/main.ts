@@ -13,6 +13,7 @@ import { RuleManager } from './rule_manager';
 import { toggleComment } from './comment_toggle';
 import { isCurrentFileExclude as isCurrentFileExcludeFn, formatArticle, formatSelectionOrCurLine, deleteBlankLines, convert2CodeBlock, switchAutoFormatting } from './formatting_commands';
 import { PluginContext } from './plugin_context';
+import type { ComposeState } from './plugin_context';
 import { handleTabDown, handleEnter, handleBackspace, handleShiftEnter, handleModA, goNewLineAfterCurLine, selectBlockInCursor } from './keyboard_handlers';
 import { createTransactionFilter, createViewUpdatePlugin } from './cm_extensions';
 import { getLocale } from './lang/locale';
@@ -23,9 +24,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 	Formater: LineFormater;
 	CurActiveMarkdown: string;
 
-	compose_begin_pos: number;
-	compose_end_pos: number;
-	compose_need_handle: boolean;
+	composeStates: WeakMap<EditorView, ComposeState>;
 
 	onFormatArticle: boolean;
 	plainPasteInProgress: boolean;
@@ -49,7 +48,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 
 		this.CurActiveMarkdown = "";
 
-		this.compose_need_handle = false;
+		this.composeStates = new WeakMap();
 
 		this.Formater = new LineFormater();
 

@@ -7,6 +7,7 @@ import {
 import { Editor, Platform } from "obsidian";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { PluginContext } from "./plugin_context";
+import type { ComposeState } from "./plugin_context";
 import { triggerCvtRule } from "./rule_processor";
 import { isCurrentFileExclude } from "./formatting_commands";
 import { RuleType, TxContext } from "./rule_engine";
@@ -447,6 +448,22 @@ function tryProcessInput(
   return false;
 }
 
+function getComposeState(
+  ctx: PluginContext,
+  view: EditorView,
+): ComposeState {
+  let state = ctx.composeStates.get(view);
+  if (!state) {
+    state = {
+      compose_need_handle: false,
+      compose_begin_pos: 0,
+      compose_end_pos: 0,
+    };
+    ctx.composeStates.set(view, state);
+  }
+  return state;
+}
+
 export function createViewUpdatePlugin(ctx: PluginContext): Extension {
   return EditorView.updateListener.of((update: ViewUpdate) => {
     if (ctx.onFormatArticle) return;
@@ -478,11 +495,12 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
       if (update.docChanged) {
         let tr = update.transactions[0];
         tr.changes.iterChanges((fromA) => {
-          if (!ctx.compose_need_handle) {
-            ctx.compose_need_handle = true;
-            ctx.compose_begin_pos = fromA;
+          const composeState = getComposeState(ctx, update.view);
+          if (!composeState.compose_need_handle) {
+            composeState.compose_need_handle = true;
+            composeState.compose_begin_pos = fromA;
           }
-          ctx.compose_end_pos =
+          composeState.compose_end_pos =
             update.view.state.selection.asSingle().main.anchor;
         });
       }
@@ -490,15 +508,16 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
     }
 
     // --- Compose end 处理（无论 docChanged 与否） ---
-    if (ctx.compose_need_handle) {
-      ctx.compose_need_handle = false;
+    const composeState = ctx.composeStates.get(update.view);
+    if (composeState && composeState.compose_need_handle) {
+      composeState.compose_need_handle = false;
       const cursor = update.view.state.selection.asSingle().main;
       // 光标未前进说明 compose 被取消（空格删除），跳过规则触发
       if (
         cursor.head === cursor.anchor &&
-        cursor.anchor > ctx.compose_begin_pos
+        cursor.anchor > composeState.compose_begin_pos
       ) {
-        if (tryProcessInput(ctx, update, ctx.compose_begin_pos, cursor.anchor))
+        if (tryProcessInput(ctx, update, composeState.compose_begin_pos, cursor.anchor))
           return;
       }
     }
