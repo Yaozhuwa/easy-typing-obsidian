@@ -579,7 +579,14 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
           insertedStr,
         );
         if (changes) {
-          update.view.dispatch(...changes[0]);
+          const allSpecs = changes[0];
+          if (allSpecs.length > 0) {
+            allSpecs[allSpecs.length - 1] = {
+              ...allSpecs[allSpecs.length - 1],
+              ...changes[1],
+            };
+          }
+          update.view.dispatch(...allSpecs);
           return;
         }
       } else {
@@ -596,7 +603,14 @@ export function createViewUpdatePlugin(ctx: PluginContext): Extension {
             real_inserted,
           );
           if (changes) {
-            all_changes.push(...changes[0]);
+            let specs = changes[0];
+            if (i === updateLineEnd && specs.length > 0) {
+              specs[specs.length - 1] = {
+                ...specs[specs.length - 1],
+                ...changes[1],
+              };
+            }
+            all_changes.push(...specs);
           }
           update_start += real_inserted.length + 1;
         }
