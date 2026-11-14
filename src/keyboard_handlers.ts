@@ -512,7 +512,51 @@ export function handleShiftEnter(ctx: PluginContext, view: EditorView): boolean 
 // handleModA
 // =====================================================
 
+function selectInlineCode(view: EditorView): boolean {
+	const state = view.state;
+	if (state.selection.ranges.length !== 1) return false;
+	const selection = state.selection.main;
+	const tree = syntaxTree(state);
+	const isContent = (name: string) =>
+		name.split('_').includes('inline-code') && !isInlineCodeFormatting(name);
+
+	// At either edge of the content, resolve toward the inside of the span.
+	let content = tree.resolve(selection.from, 1);
+	if (!isContent(content.name)) content = tree.resolve(selection.from, -1);
+	if (!isContent(content.name)) return false;
+
+	let first = content;
+	let opening = first.prevSibling;
+	while (opening && opening.to === first.from && isContent(opening.name)) {
+		first = opening;
+		opening = first.prevSibling;
+	}
+	let last = content;
+	let closing = last.nextSibling;
+	while (closing && closing.from === last.to && isContent(closing.name)) {
+		last = closing;
+		closing = last.nextSibling;
+	}
+	if (!opening || !closing ||
+		!isInlineCodeFormatting(opening.name) || !isInlineCodeFormatting(closing.name) ||
+		opening.to !== first.from || closing.from !== last.to ||
+		state.doc.lineAt(opening.from).number !== state.doc.lineAt(closing.to).number) return false;
+
+	// Use parser-delimited spans, not a search for the next backtick: code can
+	// contain literal backticks, escaped markers, or an unmatched opening marker.
+	const delimiter = state.sliceDoc(opening.from, opening.to);
+	if (!/^`+$/.test(delimiter) || state.sliceDoc(closing.from, closing.to) !== delimiter) return false;
+	const from = opening.to;
+	const to = closing.from;
+	if (selection.from < from || selection.to > to ||
+		(selection.from === from && selection.to === to)) return false;
+
+	view.dispatch({ selection: { anchor: from, head: to }, userEvent: "EasyTyping.handleModA" });
+	return true;
+}
+
 export function handleModA(ctx: PluginContext, view: EditorView): boolean {
+	if (ctx.settings.BetterCodeEdit && selectInlineCode(view)) return true;
 	let selection = view.state.selection.main;
 	let line = view.state.doc.lineAt(selection.anchor);
 	let line_type = getPosLineType2(view.state, selection.anchor);

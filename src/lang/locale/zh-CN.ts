@@ -8,7 +8,7 @@ const locale: Locale = {
         },
         codeblockEdit: {
             name: "增强代码块编辑",
-            desc: "增强代码块内的编辑（Cmd/Ctrl+A 选中、Tab、删除、粘贴）"
+            desc: "增强代码块内的编辑（Cmd/Ctrl+A 选中、Tab、删除、粘贴）；在行内代码中，首次按 Cmd/Ctrl+A 选中内容，不含反引号"
         },
         backspaceEdit: {
             name: "智能退格键",

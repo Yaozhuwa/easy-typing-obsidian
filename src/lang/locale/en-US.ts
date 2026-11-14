@@ -8,7 +8,7 @@ const locale: Locale = {
         },
         codeblockEdit: {
             name: "Enhance Codeblock Edit",
-            desc: "Improve editing in codeblocks (Tab, delete, paste, Cmd/Ctrl+A select)."
+            desc: "Improve editing in codeblocks (Tab, delete, paste, Cmd/Ctrl+A select). In inline code, Cmd/Ctrl+A first selects the content without backticks."
         },
         backspaceEdit: {
             name: "Smart Backspace",

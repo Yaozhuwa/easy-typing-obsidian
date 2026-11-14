@@ -8,7 +8,7 @@ const locale: Locale = {
         },
         codeblockEdit: {
             name: "增强代碼塊編輯",
-            desc: "增强代碼塊內的編輯（Cmd/Ctrl+A 選中、Tab、刪除、粘貼）"
+            desc: "增强代碼塊內的編輯（Cmd/Ctrl+A 選中、Tab、刪除、粘貼）；在行內代碼中，首次按 Cmd/Ctrl+A 選中內容，不含反引號"
         },
         backspaceEdit: {
             name: "智慧退格鍵",

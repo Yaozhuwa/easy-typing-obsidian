@@ -41,7 +41,7 @@ Supports Chinese, Japanese, Korean, English, Russian, digits, and user-defined s
 ### 2. Edit Enhancements
 
 Smart editing features that work as you type:
-- **Better Code Edit**: Enhanced editing inside code blocks (Cmd/Ctrl+A selection, Tab indent, delete, paste)
+- **Better Code Edit**: Enhanced editing inside code blocks (Cmd/Ctrl+A selection, Tab indent, delete, paste). In inline code, Cmd/Ctrl+A first selects the content without backticks; press again to continue the usual selection behavior.
 - **Better Backspace**: Enhanced deletion of empty list items and empty quote lines
 - **Tabout**: Press Tab to jump out of paired symbols (`【】`, `（）`, `《》`, quotes, inline code, etc.)
 - **Enhanced Mod+A**: Progressive selection expansion (current line → current block → entire document)
