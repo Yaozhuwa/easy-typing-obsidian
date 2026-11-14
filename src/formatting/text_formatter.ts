@@ -166,65 +166,47 @@ function extractToken(content: string, left: number, right: number): string {
  * suppress the space inside it. The dictionary word spans runs; tokenization
  * alone cannot know how far to extend without consulting the dictionary.
  *
- * Solution: within the maximal run of (ASCII-word | CJK) chars around the
- * seed, find the longest sub-range CONTAINING the seed that the dictionary
- * considers suppressible (exact match, or prefix when usePrefix). If none
- * matches, return the seed unchanged so all downstream logic (protectedUpTo,
- * prefixDictExpired, typing-range checks) behaves exactly as before.
- *
- * Only used for the cursor token; findTokenBounds (script-aware) still
- * governs where spaces are actually inserted.
+ * Share a lazy dictionary matcher across all seeds in the same run. A paste
+ * can contain hundreds of script boundaries in one run; searching every
+ * containing substring again for each boundary makes that case prohibitively
+ * expensive. Keep the script-aware seeds and longest-containing-match rule.
+ * The lookup and its caches live only for this formatting call.
  */
-function extendCursorTokenForDict(
+function createDictionaryTokenLookup(
     content: string,
-    seedL: number,
-    seedR: number,
     prefixDict: PrefixDictionary,
-    usePrefix: boolean,
-): { left: number; right: number; token: string } {
-    const seedToken = extractToken(content, seedL, seedR);
-
-    // Relaxed run bounds: maximal run of (ASCII word | CJK) chars, stopping
-    // at whitespace, \0, or non-word/non-CJK symbols.
-    let runL = seedL;
-    while (runL > 0) {
-        const ch = content.charAt(runL - 1);
-        if (/[\s\0]/.test(ch) || (!/\w/.test(ch) && !isCJKContext(ch))) break;
-        runL--;
+): (seedL: number, seedR: number, usePrefix: boolean) => { left: number; right: number; token: string } {
+    // Precompute run boundaries once instead of rescanning the same run for
+    // every CJK/ASCII boundary. Cursor markers and whitespace remain barriers.
+    const leftBounds = new Int32Array(content.length + 1);
+    const rightBounds = new Int32Array(content.length + 1);
+    rightBounds[content.length] = content.length;
+    for (let i = 0; i < content.length; i++) {
+        const ch = content.charAt(i);
+        const inRun = !/[\s\0]/.test(ch) && (/\w/.test(ch) || isCJKContext(ch));
+        leftBounds[i + 1] = inRun ? leftBounds[i] : i + 1;
+        // A temporary flag reused by the right-to-left pass.
+        rightBounds[i] = inRun ? -1 : i;
     }
-    let runR = seedR;
-    while (runR < content.length) {
-        const ch = content.charAt(runR);
-        if (/[\s\0]/.test(ch) || (!/\w/.test(ch) && !isCJKContext(ch))) break;
-        runR++;
+    for (let i = content.length - 1; i >= 0; i--) {
+        if (rightBounds[i] === -1) rightBounds[i] = rightBounds[i + 1];
     }
 
-    let bestL = seedL, bestR = seedR, bestToken = seedToken;
-    let bestMatched = prefixDict.shouldSuppressSpace(seedToken, usePrefix);
-    let bestSpan = bestMatched ? (seedR - seedL) : -1;
-
-    // Sub-ranges containing the seed: l ∈ [runL, seedL], r ∈ [seedR, runR].
-    // Pick the longest that the dictionary suppresses. n is tiny (one inline
-    // text part), so the nested scan is negligible.
-    for (let l = seedL; l >= runL; l--) {
-        for (let r = seedR; r <= runR; r++) {
-            if (l === seedL && r === seedR) continue; // seed already checked
-            const token = extractToken(content, l, r);
-            if (prefixDict.shouldSuppressSpace(token, usePrefix)) {
-                const span = r - l;
-                if (span > bestSpan) {
-                    bestL = l; bestR = r; bestToken = token;
-                    bestMatched = true; bestSpan = span;
-                }
-            }
+    const matchers = new Map<string, ReturnType<PrefixDictionary['createRangeMatcher']>>();
+    return (seedL, seedR, usePrefix) => {
+        const runL = leftBounds[seedL];
+        const runR = rightBounds[seedR];
+        const key = `${runL}:${runR}`;
+        let matcher = matchers.get(key);
+        if (!matcher) {
+            matcher = prefixDict.createRangeMatcher(content, runL, runR);
+            matchers.set(key, matcher);
         }
-    }
-
-    if (!bestMatched) {
-        // No extension (nor the seed) matches — keep seed for structural logic.
-        return { left: seedL, right: seedR, token: seedToken };
-    }
-    return { left: bestL, right: bestR, token: bestToken };
+        const match = matcher(seedL, seedR, usePrefix);
+        const left = match?.left ?? seedL;
+        const right = match?.right ?? seedR;
+        return { left, right, token: extractToken(content, left, right) };
+    };
 }
 
 /**
@@ -385,6 +367,7 @@ export function applyLanguagePairSpacing(
         allBoundaries.add(pos);
     }
     if (allBoundaries.size === 0) return ctx;
+    const findDictionaryToken = createDictionaryTokenLookup(content, prefixDict);
 
     // 2. Find the cursor token boundaries
     let [tokLeft, tokRight] = findTokenBounds(content, cursorInContent);
@@ -413,9 +396,7 @@ export function applyLanguagePairSpacing(
     // If no extension matches, behavior is unchanged from the seed token.
     const isActivelyTyping = curCh !== prevCh;
     const usePrefix = isActivelyTyping && !tokenIsFinalized;
-    const extended = extendCursorTokenForDict(
-        content, tokLeft, tokRight, prefixDict, usePrefix,
-    );
+    const extended = findDictionaryToken(tokLeft, tokRight, usePrefix);
     let tokLeftExt = extended.left;
     let tokRightExt = extended.right;
     let cursorTokenExt = extended.token;
@@ -504,7 +485,7 @@ export function applyLanguagePairSpacing(
                 // (e.g. "b站") to the left of the cursor is matched as a
                 // whole rather than split by findTokenBounds.
                 const [seedL, seedR] = findTokenBounds(content, pos);
-                const ext = extendCursorTokenForDict(content, seedL, seedR, prefixDict, false);
+                const ext = findDictionaryToken(seedL, seedR, false);
                 if (!prefixDict.shouldSuppressSpace(ext.token, false)) {
                     toInsert.push(pos);
                 }
