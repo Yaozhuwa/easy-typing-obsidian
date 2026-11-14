@@ -95,6 +95,17 @@ Easy Typing 是一个 [Obsidian](https://obsidian.md/) 书写体验增强插件�
 
 ## 更新记录
 
+### 6.0.10 · 2026-11-14
+
+- 开启「增强代码块编辑」后，在行内代码中按 Cmd/Ctrl+A，可先选中内容，不包含两侧反引号。([#373](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/373))
+- 修复 Obsidian 1.15 中无法用 Tab 跳出行内代码的问题。
+- 修复启用前缀词典后，粘贴中英文混合文本时严重卡顿的问题。([#378](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/378))
+- 修复输入法输入时误触发其他已打开笔记中的规则的问题。感谢 [GuiLuan](https://github.com/GuiLuan) 提交 [#372](https://github.com/Yaozhuwa/easy-typing-obsidian/pull/372)。
+- 删除多余空行时，保留代码块内的空行和表格前的必要空行。([#349](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/349)、[#375](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/375))
+- 修复带标题等附加信息的代码块无法切换注释、按语言匹配规则的问题。([#377](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/377))
+- 修复 `#a_code` 等标签被误判为代码或公式，导致错误加空格或匹配规则的问题。([#367](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/367))
+- 修复自定义正则区块对旧版默认配置、换行符、注释及行尾空白的误报。错误直接显示在设置项旁，插件加载时只提醒一次，输入时不再反复弹窗。([#379](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/379))
+
 完整的更新记录见 [changelog.md](./changelog.md)
 
 ## 致谢

@@ -94,6 +94,17 @@ The plugin ships with rich **built-in rules** (auto-pairing, full-width/half-wid
 
 ## Changelog
 
+### 6.0.10 · 2026-11-14
+
+- With **Better Code Edit** enabled, Cmd/Ctrl+A inside inline code selects its contents first, without the backticks. ([#373](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/373))
+- Restored Tab navigation out of inline code on Obsidian 1.15.
+- Fixed severe lag when pasting mixed Chinese/English text with a prefix dictionary. ([#378](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/378))
+- Fixed IME input in one editor triggering rules in another open note. Thanks to [GuiLuan](https://github.com/GuiLuan) for [#372](https://github.com/Yaozhuwa/easy-typing-obsidian/pull/372).
+- Deleting blank lines now preserves blank lines inside code blocks and the separator before tables. ([#349](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/349), [#375](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/375))
+- Fixed comment toggling and language-scoped rules in code blocks with titles or other metadata. ([#377](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/377))
+- Fixed tags such as `#a_code` being mistaken for code or math, causing incorrect spacing or rule matching. ([#367](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/367))
+- Fixed custom regex configuration errors caused by legacy defaults, line endings, comments, and trailing whitespace. Errors now appear beside the setting, with one summary when the plugin loads, instead of repeated notices while typing. ([#379](https://github.com/Yaozhuwa/easy-typing-obsidian/issues/379))
+
 For a full changelog, see [changelog.md](./changelog.md)
 
 ## Acknowledgements

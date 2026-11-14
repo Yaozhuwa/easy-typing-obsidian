@@ -1,4 +1,31 @@
 ## 更新日志 Changelog
+- V6.0.10 2026-11-14
+  - 编辑增强与修复
+    - 开启「增强代码块编辑」后，在行内代码中按 Cmd/Ctrl+A 先选中代码内容，不包含两侧反引号；再次按下继续扩选或全选 (#373)
+    - 修复 Obsidian 1.15 中无法用 Tab 跳出行内代码的问题
+    - 修复输入法输入时误触发其他已打开笔记中的规则的问题，感谢 GuiLuan 的贡献 (PR #372)
+    - 删除多余空行时保留代码块内的空行，以及表格前的必要空行 (#349, #375)
+    - 修复带标题等附加信息的代码块无法切换注释、按语言匹配规则的问题 (#377)
+  - 自动格式化
+    - 修复启用前缀词典后，粘贴中英文混合文本时严重卡顿的问题 (#378)
+    - 修复 `#a_code` 等标签被误判为代码或公式，导致错误加空格或匹配规则的问题 (#367)
+    - 兼容已知旧版默认正则配置，修复换行符、连续注释及策略后空白引起的误报 (#379)
+    - 正则配置错误直接显示在设置项旁，插件加载时只提醒一次，输入时不再反复弹窗；无效规则会被跳过，其余有效规则继续生效 (#379)
+  - 开发维护
+    - 更新 TypeScript、esbuild 和 Obsidian API 类型依赖，固定依赖锁文件，并增加回归测试
+  - Editing Improvements & Fixes
+    - With Better Code Edit enabled, Cmd/Ctrl+A inside inline code selects the contents without backticks first; pressing it again continues the usual selection behavior (#373)
+    - Restored Tab navigation out of inline code on Obsidian 1.15
+    - Fixed IME input in one editor triggering rules in another open note; thanks to GuiLuan (PR #372)
+    - Preserve blank lines inside code blocks and the required separator before tables when deleting extra blank lines (#349, #375)
+    - Fixed comment toggling and language-scoped rules in code blocks with titles or other metadata (#377)
+  - Auto Formatting
+    - Fixed severe lag when pasting mixed Chinese/English text with a prefix dictionary (#378)
+    - Fixed tags such as `#a_code` being mistaken for code or math, causing incorrect spacing or rule matching (#367)
+    - Added compatibility for known legacy default regex configurations and fixed false errors caused by line endings, consecutive comments, and whitespace after spacing policies (#379)
+    - Show regex errors beside the setting and one summary when the plugin loads, instead of repeated notices while typing; invalid rules are skipped while valid rules continue to work (#379)
+  - Development
+    - Updated TypeScript, esbuild, and Obsidian API types, committed a dependency lockfile, and added regression tests
 - V6.0.9 2026-07-12
   - 自动格式化改进
     - 修复前缀词典无法匹配跨脚本词典词（如 `b站`、`Python3中文`）导致词内被错误插入空格的问题。原 token 切分在 CJK 与非 CJK 边界处断开，使词典永远拿不到完整词；新增词典引导的 token 扩展，让跨脚本词典词被整体匹配并抑制内部空格
