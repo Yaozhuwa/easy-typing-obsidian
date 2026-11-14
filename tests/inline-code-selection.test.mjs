@@ -41,6 +41,7 @@ const syntax = loadSource('syntax.ts', {
   '@codemirror/language': language,
   './core': core,
   './rule_engine': { RuleScope: { Text: 'text', Code: 'code', Formula: 'formula' } },
+  './syntax_node_types': loadSource('syntax_node_types.ts', {}),
 });
 const { handleModA } = loadSource('keyboard_handlers.ts', {
   '@codemirror/state': stateModule,

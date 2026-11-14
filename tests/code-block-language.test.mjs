@@ -32,6 +32,7 @@ const syntax = loadSource('syntax.ts', {
   },
   './core': { getPosLineType2: () => 'text' },
   './rule_engine': ruleEngine,
+  './syntax_node_types': loadSource('syntax_node_types.ts', {}),
 });
 const { toggleComment } = loadSource('comment_toggle.ts', { './syntax': syntax });
 

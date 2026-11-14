@@ -12,6 +12,7 @@ import {
 } from './formatting/text_formatter'
 import { shouldInsertSpaceBetweenParts, shouldPrependSpaceToText } from './formatting/inline_spacing'
 import { PrefixDictionary } from './formatting/prefix_dictionary'
+import { inlineSyntaxNodeType, isCodeBlockSyntaxNode, isMathSyntaxNode, syntaxNodeTokens } from './syntax_node_types'
 
 export enum LineType {
     text = 'text', codeblock = 'codeblock', formula = 'formula',
@@ -57,15 +58,7 @@ export interface InlinePart {
 export class LineFormater {
     constructor() { }
     syntaxTreeNodeNameType(name: string): InlineType {
-        if (name.contains('code') && !name.contains("link")) {
-            return InlineType.code;
-        }
-        else if (name.contains('math')) {
-            return InlineType.formula;
-        }
-        else {
-            return InlineType.text;
-        }
+        return InlineType[inlineSyntaxNodeType(name)];
     }
 
     // param lineNum: 1-based line number
@@ -661,7 +654,8 @@ export function getPosLineType(state: EditorState, pos: number): LineType {
     // const tree = syntaxTree(state);
     const tree = ensureSyntaxTree(state, line.to);
     if (!tree) return LineType.text;
-    const token = tree.resolve(line.from, 1).name
+    const nodeNameAt = (pos: number) => syntaxNodeTokens(tree.resolve(pos, 1).name).join('_');
+    const token = nodeNameAt(line.from);
 
     // for (let p=line.from; p<line.to; p+=1){
     //     console.log(p-line.from, tree.resolve(p, 1).name)
@@ -675,18 +669,18 @@ export function getPosLineType(state: EditorState, pos: number): LineType {
         return LineType.frontmatter;
     }
 
-    if (token.contains('math')) {
+    if (isMathSyntaxNode(token)) {
         for (let p = line.from + 1; p < line.to; p += 1) {
-            if (!tree.resolve(p, 1).name.contains('math')) {
+            if (!isMathSyntaxNode(nodeNameAt(p))) {
                 return LineType.text;
             }
         }
         return LineType.formula
     }
-    else if (token.contains('code') && token.contains('block')) {
+    else if (isCodeBlockSyntaxNode(token)) {
         for (let p = line.from + 1; p < line.to; p += 1) {
-            let t = tree.resolve(p, 1).name
-            if (!(t.contains('code') && t.contains('block'))) {
+            let t = nodeNameAt(p);
+            if (!isCodeBlockSyntaxNode(t)) {
                 return LineType.text
             }
         }
@@ -698,7 +692,7 @@ export function getPosLineType(state: EditorState, pos: number): LineType {
         let callout_start_line = -1;
         for (let l = line_number - 1; l >= 1; l -= 1) {
             let l_line = state.doc.line(l)
-            let l_token = tree.resolve(l_line.from, 1).name
+            let l_token = nodeNameAt(l_line.from);
             if (!l_token.contains('quote')) {
                 break;
             }
@@ -735,8 +729,8 @@ export function getPosLineType(state: EditorState, pos: number): LineType {
     }
     else if (token.contains('list')) {
         for (let p = line.from + 1; p < line.to; p += 1) {
-            let t = tree.resolve(p, 1).name
-            if ((t.contains('code') && t.contains('block'))) {
+            let t = nodeNameAt(p);
+            if (isCodeBlockSyntaxNode(t)) {
                 return LineType.codeblock
             }
         }
@@ -748,23 +742,24 @@ export function getPosLineType(state: EditorState, pos: number): LineType {
 export function getPosLineType2(state: EditorState, pos: number): LineType {
     const line = state.doc.lineAt(pos)
     const tree = syntaxTree(state);
-    const token = tree.resolve(line.from, 1).name
+    const nodeNameAt = (pos: number) => syntaxNodeTokens(tree.resolve(pos, 1).name).join('_');
+    const token = nodeNameAt(line.from);
     if (token.contains('hmd-frontmatter')) {
         return LineType.frontmatter
     }
 
-    if (token.contains('math')) {
+    if (isMathSyntaxNode(token)) {
         for (let p = line.from + 1; p < line.to; p += 1) {
-            if (!tree.resolve(p, 1).name.contains('math')) {
+            if (!isMathSyntaxNode(nodeNameAt(p))) {
                 return LineType.text
             }
         }
         return LineType.formula
     }
-    else if (token.contains('code') && token.contains('block')) {
+    else if (isCodeBlockSyntaxNode(token)) {
         for (let p = line.from + 1; p < line.to; p += 1) {
-            let t = tree.resolve(p, 1).name
-            if (!(t.contains('code') && t.contains('block'))) {
+            let t = nodeNameAt(p);
+            if (!isCodeBlockSyntaxNode(t)) {
                 return LineType.text
             }
         }
@@ -772,10 +767,10 @@ export function getPosLineType2(state: EditorState, pos: number): LineType {
     }
 
     for (let p = line.from; p < line.to; p += 1) {
-        if (tree.resolve(p, 1).name.contains('list')) {
+        if (nodeNameAt(p).contains('list')) {
             return LineType.list
         }
-        else if (tree.resolve(p, 1).name.contains('callout')) {
+        else if (nodeNameAt(p).contains('callout')) {
             return LineType.callout_title;
         }
     }

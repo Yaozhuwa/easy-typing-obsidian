@@ -3,6 +3,7 @@ import { EditorView } from '@codemirror/view';
 import { EditorState, SelectionRange } from '@codemirror/state';
 import { getPosLineType2 } from "./core";
 import { RuleScope } from './rule_engine';
+import { inlineSyntaxNodeType } from './syntax_node_types';
 export interface CodeBlockInfo {
     start_pos: number;
     end_pos: number;
@@ -211,19 +212,17 @@ export interface ScopeInfo {
 export function detectRuleScope(state: EditorState, pos: number): ScopeInfo {
     const tree = syntaxTree(state);
     const node = tree.resolveInner(pos, -1);
-    const name = node.name;
+    const nodeType = inlineSyntaxNodeType(node.name);
 
-    if (name.contains('math')) {
-        return { scope: RuleScope.Formula };
-    }
-
-    if (name.contains('code') && !name.contains('link')) {
+    if (nodeType === 'code') {
         const codeBlockInfo = getCodeBlockInfoInPos(state, pos);
         return {
             scope: RuleScope.Code,
             language: codeBlockInfo?.language || undefined,
         };
     }
+
+    if (nodeType === 'formula') return { scope: RuleScope.Formula };
 
     return { scope: RuleScope.Text };
 }
