@@ -100,10 +100,13 @@ export function getCodeBlocksInfos(state: EditorState): CodeBlockInfo[]{
                 const fenceMatch = nodeText.match(/[`~]{3,}/);
                 let start_pos = nodeFrom + (fenceMatch?.index ?? 0);
                 let indent = start_pos - state.doc.lineAt(start_pos).from;
-                let language = nodeText
-                    .trim()
-                    .replace(/^[`~]{3,}/, '')
-                    .trim();
+                // The info string starts after the fence, including in lists
+                // and quotes. Only its first token names the language; titles
+                // and other Code Styler metadata must not affect matching.
+                const info = fenceMatch
+                    ? nodeText.slice((fenceMatch.index ?? 0) + fenceMatch[0].length).trim()
+                    : '';
+                const language = info.split(/\s+/, 1)[0];
                 curCodeBlockInfo = {
                     start_pos: start_pos,
                     end_pos: -1,
