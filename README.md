@@ -80,7 +80,7 @@ The plugin ships with rich **built-in rules** (auto-pairing, full-width/half-wid
 |---------|---------------|-------------|
 | Format Article | `Mod+Shift+S` | Apply auto-formatting to the entire document |
 | Format Selection/Line | `Mod+Shift+L` | Format selected text or current line |
-| Delete Blank Lines | `Mod+Shift+K` | Remove extra blank lines |
+| Delete Blank Lines | `Mod+Shift+K` | Remove extra blank lines while preserving code blocks and the blank line before tables |
 | New Line After Current | `Mod+Enter` | Create new line below and jump to it |
 | Insert Code Block | `Mod+Shift+N` | Convert selection to code block |
 | Toggle Auto-format | `Ctrl+Tab` | Enable/disable auto-formatting |

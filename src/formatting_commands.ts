@@ -141,12 +141,66 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 	let state = editorView.state;
 	let doc = state.doc;
 
-	// Text-based line classification regexes (no syntax tree needed)
+	// Keep the existing text-based cleanup rules, but protect structural blanks
+	// using the complete document, even when the selection starts inside a block.
 	const RE_BLANK = /^\s*$/;
 	const RE_LIST = /^\s*(?:[-*+]|\d+[.)]) /;
 	const RE_QUOTE = /^\s*>/;
 	const RE_BLOCKID = /\s\^[\w-]+\s*$/;
 	const RE_HR = /^\s*(?:---+|\*\*\*+|___+)\s*$/;
+	const tree = ensureSyntaxTree(state, doc.length);
+	if (!tree) {
+		new Notice('EasyTyping: Syntax tree is not ready yet, please wait a moment and try again later!', 5000);
+		return;
+	}
+	const protectedBlankLines = new Set<number>();
+	const blockStarts = new Set<number>();
+	const indentedCodeLines = new Set<number>();
+	let fenceStart: number | null = null;
+	const protectBlanks = (fromLine: number, toLine: number) => {
+		for (let i = fromLine; i <= toLine; i++) {
+			if (RE_BLANK.test(doc.line(i).text)) protectedBlankLines.add(i);
+		}
+	};
+	tree.iterate({
+		enter(node) {
+			const tokens = node.name.split('_');
+			if (tokens.includes('HyperMD-codeblock-begin') || tokens.includes('hmd-codeblock-begin')) {
+				fenceStart = doc.lineAt(node.from).number;
+			} else if (tokens.includes('HyperMD-codeblock-end') || tokens.includes('hmd-codeblock-end')) {
+				if (fenceStart !== null) protectBlanks(fenceStart, doc.lineAt(node.to).number);
+				fenceStart = null;
+			}
+			if (tokens.includes('hmd-indented-code')) {
+				for (let i = doc.lineAt(node.from).number; i <= doc.lineAt(node.to).number; i++) {
+					indentedCodeLines.add(i);
+				}
+			}
+			if (tokens.includes('HyperMD-table-row-0')) blockStarts.add(doc.lineAt(node.from).number);
+		}
+	});
+	if (fenceStart !== null) protectBlanks(fenceStart, doc.lines);
+
+	// Indented code has no fence nodes. Blank gaps between its content lines
+	// belong to the code; a blank before the first line separates it from prose.
+	let previousCodeLine = 0;
+	for (const lineNumber of Array.from(indentedCodeLines).sort((a, b) => a - b)) {
+		let firstBlank = lineNumber;
+		while (firstBlank > 1 && RE_BLANK.test(doc.line(firstBlank - 1).text)) firstBlank--;
+		if (previousCodeLine > 0 && firstBlank === previousCodeLine + 1) {
+			protectBlanks(firstBlank, lineNumber - 1);
+		} else {
+			blockStarts.add(lineNumber);
+		}
+		previousCodeLine = lineNumber;
+	}
+	for (const lineNumber of blockStarts) {
+		let firstBlank = lineNumber;
+		while (firstBlank > 1 && RE_BLANK.test(doc.line(firstBlank - 1).text)) firstBlank--;
+		// Preserve the first blank, as strict mode already does, so a run still
+		// collapses to one line rather than retaining both ends of the run.
+		if (firstBlank < lineNumber) protectedBlankLines.add(firstBlank);
+	}
 
 	type TrailingBlankType = 'list' | 'quote' | 'blockid' | null;
 
@@ -245,13 +299,15 @@ export function deleteBlankLines(ctx: PluginContext, editor: Editor): void {
 		}
 	}
 
+	const deletedLines = new Set(delete_index.filter(i => !protectedBlankLines.has(i)));
+	if (deletedLines.size === 0) return;
 	let newContent = "";
 	for (let i = 1; i < line_num; i++) {
-		if (!delete_index.contains(i)) {
+		if (!deletedLines.has(i)) {
 			newContent += doc.line(i).text + '\n';
 		}
 	}
-	if (!delete_index.contains(line_num)) {
+	if (!deletedLines.has(line_num)) {
 		newContent += doc.line(line_num).text;
 	}
 
