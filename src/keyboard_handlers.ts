@@ -53,6 +53,12 @@ function tabCodeBlockIndent(ctx: PluginContext, view: EditorView): boolean {
 	return false;
 }
 
+function isInlineCodeFormatting(name: string): boolean {
+	// Obsidian 1.15 adds formatting-code-end between these independent tokens.
+	const tokens = name.split('_');
+	return tokens.includes('formatting-code') && tokens.includes('inline-code');
+}
+
 function tabInlineCodeEscape(ctx: PluginContext, view: EditorView): boolean {
 	if (!ctx.settings.Tabout) return false;
 	if (!ctx.settings.BetterCodeEdit) return false;
@@ -67,7 +73,7 @@ function tabInlineCodeEscape(ctx: PluginContext, view: EditorView): boolean {
 
 	// 当光标在行内代码内部
 	if (pos - line.from != 0 && tree.resolve(pos - 1, 1).name.contains('inline-code')) {
-		if (tree.resolve(pos, 1).name.contains('formatting-code_inline-code')) {
+		if (isInlineCodeFormatting(tree.resolve(pos, 1).name)) {
 			view.dispatch({
 				selection: { anchor: pos + 1, head: pos + 1 }
 			});
@@ -75,8 +81,8 @@ function tabInlineCodeEscape(ctx: PluginContext, view: EditorView): boolean {
 		}
 
 		for (let p = pos + 1; p < line.to && tree.resolve(p, 1).name.contains('inline-code'); p += 1) {
-			// 如果找到 ` 则光标跳到其后
-			if (tree.resolve(p, 1).name.contains('formatting-code_inline-code')) {
+			// 如果找到 ` 则光标先停在其前，再次按 Tab 跳出
+			if (isInlineCodeFormatting(tree.resolve(p, 1).name)) {
 				view.dispatch({
 					selection: { anchor: p, head: p }
 				});
