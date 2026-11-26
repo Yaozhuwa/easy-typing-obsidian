@@ -13,26 +13,26 @@ export const DEFAULT_BUILTIN_RULES: (SimpleRule & { id: string })[] = [
 	// ===== 自动配对 (priority 10) =====
 	{
 		id: 'builtin-autopair-input',
-		trigger: '[（《「『“”‘’《]',
-		replacement: "const p={'【':'【$0】','（':'（$0）','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','”':'“$0”','‘':'‘$0’','’':'‘$0’','《':'《$0》'}; return p[leftMatches[0]];",
+		trigger: '[（《「『“”‘’《〔]',
+		replacement: "const p={'【':'【$0】','（':'（$0）','〔':'〔$0〕','《':'《$0》','「':'「$0」','『':'『$0』','“':'“$0”','”':'“$0”','‘':'‘$0’','’':'‘$0’','《':'《$0》'}; return p[leftMatches[0]];",
 		options: 'rF',
 		priority: 10,
 		description: '输入全角括号/引号时自动补全配对',
 	},
 	{
 		id: 'builtin-autopair-jump',
-		trigger: "《》|“”|““|‘’|‘‘|（）",
+		trigger: "《》|“”|““|‘’|‘‘|（）|〔〕",
 		trigger_right: "》|”|’|）",
-		replacement: "const map = {\n  \"《》\": [\"》\", \"《》\"],\n  \"（）\": [\"）\", \"（）\"],\n  \"“”\": [\"”\", \"“”\"],\n  \"““\": [\"”\", \"“”\"],\n  \"‘’\": [\"’\", \"‘’\"],\n  \"‘‘\": [\"’\", \"‘’\"]\n}\nif(map[leftMatches[0]][0]==rightMatches[0]){\n  return map[leftMatches[0]][1];\n}\nreturn undefined;",
+		replacement: "const map = {\n  \"《》\": [\"》\", \"《》\"],\n  \"（）\": [\"）\", \"（）\"],\n  \"〔〕\": [\"〕\", \"〔〕\"],\n  \"“”\": [\"”\", \"“”\"],\n  \"““\": [\"”\", \"“”\"],\n  \"‘’\": [\"’\", \"‘’\"],\n  \"‘‘\": [\"’\", \"‘’\"]\n}\nif(map[leftMatches[0]][0]==rightMatches[0]){\n  return map[leftMatches[0]][1];\n}\nreturn undefined;",
 		options: 'rF',
 		priority: 5,
 		description: '输入右侧配对符号时自动跳过，避免重复插入'
 	},
 	{
 		id: 'builtin-autopair-delete',
-		trigger: "[【（《「『“‘]",
-		trigger_right: "[】）》」』”’]",
-		replacement: "const p={'【':'】','（':'）','《':'》','「':'」','『':'』','“':'”','‘':'’'}; return p[leftMatches[0]]===rightMatches[0] ? '' : undefined;",
+		trigger: "[【（《「『“‘〔]",
+		trigger_right: "[】）》」』”’〕]",
+		replacement: "const p={'【':'】','（':'）','《':'》','〔':'〕','「':'」','『':'』','“':'”','‘':'’'}; return p[leftMatches[0]]===rightMatches[0] ? '' : undefined;",
 		options: 'drF',
 		priority: 10,
 		description: '删除全角括号/引号时同时删除配对',
