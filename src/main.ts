@@ -49,7 +49,7 @@ export default class EasyTypingPlugin extends Plugin implements PluginContext {
 		this.ruleManager = new RuleManager(this.app, this.manifest, this.settings, () => this.saveSettings());
 		await this.ruleManager.initRuleEngine();
 
-		let TaboutPairStrs = ["【|】", "（|）", "《|》", "\u201C|\u201D", "\u2018|\u2019",
+		let TaboutPairStrs = ["【|】", "（|）", "〔|〕", "《|》", "\u201C|\u201D", "\u2018|\u2019",
 			"「|」", "『|』", "'|'", "\"|\"", "$$|$$", '$|$', '__|__', '_|_',
 			"==|==", "~~|~~", "**|**", '*|*', "[[|]]", '[|]', "{|}", "(|)", "<|>"];
 		this.TaboutPairStrs = TaboutPairStrs.map((s: string) => string2pairstring(s));

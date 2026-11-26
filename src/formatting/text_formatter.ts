@@ -522,8 +522,8 @@ export function detectBoundarySpaceState(
     rightSymbols: string,
 ): { start: SpaceState; end: SpaceState } {
     const builtInBothSymbols = '"\'';
-    const builtInLeftSoftSymbols = `【】（）《》，。、？：；‘’“”「『』」！${builtInBothSymbols}[({`;
-    const builtInRightSoftSymbols = `【】（）《》，。、？：；‘’“”「『』」！${builtInBothSymbols},.?!:;])}`;
+    const builtInLeftSoftSymbols = `【】（）〔〕《》，。、？：；‘’“”「『』」！${builtInBothSymbols}[({`;
+    const builtInRightSoftSymbols = `【】（）〔〕《》，。、？：；‘’“”「『』」！${builtInBothSymbols},.?!:;])}`;
     const escapedStart = escapeForCharClass(rightSymbols + builtInRightSoftSymbols);
     const escapedEnd = escapeForCharClass(leftSymbols + builtInLeftSoftSymbols);
 
