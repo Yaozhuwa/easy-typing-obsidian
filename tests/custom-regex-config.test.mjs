@@ -201,6 +201,22 @@ test('custom regex core: a disabled custom rule no longer protects mixed-languag
   assert.equal(format('前#中文code。', source, false), '前#中文 code。');
 });
 
+test('custom regex core: a rule that contains a link also protects the link spacing (#380)', () => {
+  withoutDiagnostics(() => {
+    // The whole {{...}} block is one user part; the link inside it is not split out.
+    assert.deepEqual(userParts('{{文本 [[note]] text}}', '{{.*?}}|++'), [
+      { content: '{{文本 [[note]] text}}', begin: 0, end: 20, left: core.SpaceState.strict, right: core.SpaceState.strict },
+    ]);
+    // Nothing inside the block is reformatted, link spacing included.
+    assert.equal(format('{{文本[[note]]text}}', '{{.*?}}|++'), '{{文本[[note]]text}}');
+    assert.equal(format('{{text[[note]]文本}}', '{{.*?}}|++'), '{{text[[note]]文本}}');
+    // Outside a rule, links are still spaced as before.
+    assert.equal(format('text[[note]]文本', '{{.*?}}|++'), 'text [[note]] 文本');
+    // A rule that only matches part of a link does not break the link.
+    assert.deepEqual(userParts('[[note1]]', '\\d|++'), []);
+  });
+});
+
 test('custom regex core: an invalid regex does not log again for every input', () => {
   withoutDiagnostics(() => {
     for (let attempt = 0; attempt < 3; attempt++) {

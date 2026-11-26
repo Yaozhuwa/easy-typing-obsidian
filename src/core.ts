@@ -446,16 +446,27 @@ function matchWithReg(text: string, regExp: RegExp, type: InlineType, inlineType
             continue;
         }
         let valid = true;
+        let containedLinks: InlinePart[] = [];
         // 检查冲突
         if (checkArray) {
             for (let i = 0; i < retArray.length; i++) {
                 if (regExp.lastIndex > retArray[i].begin && retArray[i].end > match.index) {
+                    // 用户自定义区域完整包含的链接归入该区域，不再单独处理链接空格 (#380)
+                    const isLink = retArray[i].type === InlineType.wikilink || retArray[i].type === InlineType.mdlink;
+                    if (type === InlineType.user && isLink
+                        && match.index <= retArray[i].begin && retArray[i].end <= regExp.lastIndex) {
+                        containedLinks.push(retArray[i]);
+                        continue;
+                    }
                     valid = false;
                     break;
                 }
             }
         }
         if (!valid) continue;
+        if (containedLinks.length > 0) {
+            retArray = retArray.filter(part => !containedLinks.includes(part));
+        }
         matchArray.push(
             {
                 content: match[0],
